@@ -1,0 +1,10 @@
+Stripe webhooks
+1. First, install Stripe CLI:
+Windows: Download from Stripe CLI releases
+Mac: brew install stripe/stripe-cli/stripe
+Linux: Follow instructions on Stripe CLI GitHub
+
+2. stripe login
+3. stripe listen --forward-to localhost:3000/api/webhooks/stripe
+4. The CLI will show you a webhook signing secret. Copy it and add it to your .env file:
+STRIPE_WEBHOOK_SECRET=whsec_...
