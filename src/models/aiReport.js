@@ -17,7 +17,7 @@ const aiReportSchema = new mongoose.Schema(
       ref: "Session",
       required: false, // Only required for session-specific reports
     },
-    type: {
+    agentType: {
       type: String,
       required: true,
       enum: [
@@ -26,13 +26,10 @@ const aiReportSchema = new mongoose.Schema(
         "treatment",
         "progress",
         "documentation",
-        "conversational",
       ],
     },
-    content: {
-      type: mongoose.Schema.Types.Mixed,
-      required: true,
-    },
+    summary: { type: String, required: true },
+    payload: { type: mongoose.Schema.Types.Mixed, required: true },
     source: {
       type: String,
       required: true,
@@ -49,6 +46,8 @@ const aiReportSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+aiReportSchema.index({ clientId: 1, agentType: 1, createdAt: -1 });
 
 // Prevent model recompilation error in development
 const AIReport = mongoose.models.AIReport || mongoose.model("AIReport", aiReportSchema);
