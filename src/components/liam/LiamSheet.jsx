@@ -53,7 +53,7 @@ export function LiamSheet() {
                 const text = msg.parts.filter((p) => p.type === "text").map((p) => p.text).join("");
                 return (
                   <div key={msg.id} className={msg.role === "user" ? "mb-3 text-right" : "mb-3"}>
-                    <div className={`inline-block rounded-lg px-3 py-2 text-sm ${
+                    <div className={`inline-block whitespace-pre-wrap rounded-lg px-3 py-2 text-sm ${
                       msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
                       {msg.role === "assistant" ? renderWithCitations(text, clientId) : text}
                     </div>
