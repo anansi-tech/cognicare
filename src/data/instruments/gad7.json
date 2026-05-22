@@ -1,0 +1,31 @@
+{
+  "id": "gad7",
+  "name": "Generalized Anxiety Disorder-7",
+  "construct": "Anxiety",
+  "recallWindow": "Over the last 2 weeks",
+  "stem": "Over the last 2 weeks, how often have you been bothered by the following problems?",
+  "responseOptions": [
+    { "label": "Not at all", "value": 0 },
+    { "label": "Several days", "value": 1 },
+    { "label": "More than half the days", "value": 2 },
+    { "label": "Nearly every day", "value": 3 }
+  ],
+  "items": [
+    { "id": "gad7_1", "text": "Feeling nervous, anxious, or on edge" },
+    { "id": "gad7_2", "text": "Not being able to stop or control worrying" },
+    { "id": "gad7_3", "text": "Worrying too much about different things" },
+    { "id": "gad7_4", "text": "Trouble relaxing" },
+    { "id": "gad7_5", "text": "Being so restless that it is hard to sit still" },
+    { "id": "gad7_6", "text": "Becoming easily annoyed or irritable" },
+    { "id": "gad7_7", "text": "Feeling afraid, as if something awful might happen" }
+  ],
+  "scoring": { "method": "sum", "min": 0, "max": 21 },
+  "bands": [
+    { "min": 0, "max": 4, "label": "Minimal" },
+    { "min": 5, "max": 9, "label": "Mild" },
+    { "min": 10, "max": 14, "label": "Moderate" },
+    { "min": 15, "max": 21, "label": "Severe" }
+  ],
+  "reliableChange": 4,
+  "criticalItems": []
+}
