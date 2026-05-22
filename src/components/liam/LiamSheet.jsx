@@ -1,0 +1,80 @@
+"use client";
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
+import { useState } from "react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { useLiam } from "./LiamProvider";
+import { renderWithCitations } from "./citations";
+
+export function LiamSheet() {
+  const { open, setOpen, clientId, clientName } = useLiam();
+  const [input, setInput] = useState("");
+
+  // `id` keyed by clientId resets the view when the bound client changes.
+  // Server memory is per-(user,client) anyway, so each client has its own thread.
+  const { messages, sendMessage, status } = useChat({
+    id: clientId ?? "none",
+    transport: new DefaultChatTransport({
+      api: "/api/liam/chat",
+      body: () => ({ clientId }),
+    }),
+  });
+
+  const send = () => {
+    const text = input.trim();
+    if (!text || !clientId) return;
+    sendMessage({ text });
+    setInput("");
+  };
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetContent side="right" className="flex w-full flex-col sm:w-96">
+        <SheetHeader>
+          <SheetTitle>Ask LIAM{clientName ? ` · ${clientName}` : ""}</SheetTitle>
+        </SheetHeader>
+
+        {!clientId ? (
+          <p className="text-sm text-muted-foreground">Open a client to consult LIAM about them.</p>
+        ) : (
+          <>
+            <ScrollArea className="flex-1 pr-3">
+              {messages.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  Ask about this client — risk flags, recent sessions, intervention ideas.
+                </p>
+              )}
+              {messages.map((msg) => {
+                const text = msg.parts.filter((p) => p.type === "text").map((p) => p.text).join("");
+                return (
+                  <div key={msg.id} className={msg.role === "user" ? "mb-3 text-right" : "mb-3"}>
+                    <div className={`inline-block rounded-lg px-3 py-2 text-sm ${
+                      msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+                      {msg.role === "assistant" ? renderWithCitations(text, clientId) : text}
+                    </div>
+                  </div>
+                );
+              })}
+              {status === "streaming" && <p className="text-xs text-muted-foreground">LIAM is thinking…</p>}
+            </ScrollArea>
+
+            <div className="mt-2 flex gap-2">
+              <Textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+                placeholder="Ask LIAM…"
+                rows={2}
+                className="resize-none"
+              />
+              <Button onClick={send} disabled={!input.trim() || status === "streaming"}>Send</Button>
+            </div>
+          </>
+        )}
+      </SheetContent>
+    </Sheet>
+  );
+}

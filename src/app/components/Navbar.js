@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { isAdmin } from "@/lib/client-auth";
 import { useState, useRef, useEffect } from "react";
 import { signOut } from "next-auth/react";
+import { useLiam } from "@/components/liam/LiamProvider";
 
 export default function Navbar() {
   const { data: session } = useSession();
@@ -14,6 +15,7 @@ export default function Navbar() {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef(null);
+  const { setOpen: setLiamOpen } = useLiam();
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -129,7 +131,15 @@ export default function Navbar() {
               )}
             </div>
           </div>
-          <div className="flex items-center">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setLiamOpen(true)}
+              className="inline-flex items-center gap-2 rounded-md bg-white/10 px-3 py-1.5 text-sm font-medium text-white hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/40"
+            >
+              Ask LIAM
+              <span className="hidden sm:inline rounded bg-white/10 px-1.5 py-0.5 text-[10px] text-indigo-100">⌘K</span>
+            </button>
             <div className="flex-shrink-0">
               <div className="relative" ref={userMenuRef}>
                 <button

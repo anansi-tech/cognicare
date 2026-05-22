@@ -4,6 +4,7 @@ import { Providers } from "./providers";
 import Navbar from "./components/Navbar";
 import { Toaster } from "react-hot-toast";
 import { LiamProvider } from "@/components/liam/LiamProvider";
+import { LiamSheet } from "@/components/liam/LiamSheet";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -23,6 +24,7 @@ export default function RootLayout({ children }) {
             <main className="min-h-screen bg-gray-75">
               <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">{children}</div>
             </main>
+            <LiamSheet />
           </LiamProvider>
         </Providers>
       </body>
