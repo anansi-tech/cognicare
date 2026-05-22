@@ -2,8 +2,8 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useEffect, useRef, useState } from "react";
+import { ArrowUp } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useLiam } from "./LiamProvider";
 import { renderWithCitations } from "./citations";
@@ -75,16 +75,29 @@ export function LiamSheet() {
               {status === "streaming" && <p className="text-xs text-muted-foreground">LIAM is thinking…</p>}
             </div>
 
-            <div className="flex gap-2">
+            <div className="relative flex items-end rounded-2xl border border-input bg-background shadow-sm focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 transition-colors">
               <Textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    send();
+                  }
+                }}
                 placeholder="Ask LIAM…"
                 rows={2}
-                className="resize-none"
+                className="resize-none border-0 bg-transparent pr-12 shadow-none focus-visible:ring-0 focus-visible:border-transparent"
               />
-              <Button onClick={send} disabled={!input.trim() || status === "streaming"}>Send</Button>
+              <button
+                type="button"
+                onClick={send}
+                disabled={!input.trim() || status === "streaming"}
+                aria-label="Send"
+                className="absolute bottom-1.5 right-1.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-foreground text-background transition-opacity hover:opacity-90 disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <ArrowUp className="h-4 w-4" strokeWidth={2.5} />
+              </button>
             </div>
           </div>
         )}
