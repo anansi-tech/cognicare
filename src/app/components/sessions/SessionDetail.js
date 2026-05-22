@@ -9,6 +9,7 @@ import { useLiam } from "@/components/liam/LiamProvider";
 import { AutoSessionPrep } from "@/components/ai/AutoSessionPrep";
 import { AutoPostSession } from "@/components/ai/AutoPostSession";
 import { SessionNote } from "@/components/sessions/SessionNote";
+import { MeasuresPanel } from "@/components/measures/MeasuresPanel";
 
 export default function SessionDetail({ sessionId }) {
   const router = useRouter();
@@ -350,6 +351,15 @@ export default function SessionDetail({ sessionId }) {
             />
           </div>
           {!isEditing && <SessionNote sessionId={session._id} refreshKey={aiRefreshKey} />}
+          {!isEditing && (
+            <div className="mt-6 space-y-2">
+              <h3 className="text-lg font-semibold text-gray-900">Measures</h3>
+              <MeasuresPanel
+                clientId={typeof session.clientId === "object" ? session.clientId?._id : session.clientId}
+                sessionId={session._id}
+              />
+            </div>
+          )}
           {!isEditing && <SessionAIInsights session={session} refreshKey={aiRefreshKey} />}
         </div>
       </div>
