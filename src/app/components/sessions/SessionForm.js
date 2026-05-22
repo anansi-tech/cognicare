@@ -185,7 +185,7 @@ export default function SessionForm({
             selected={new Date(formData.date)}
             onChange={handleDateChange}
             showTimeSelect
-            timeFormat="HH:mm"
+            timeFormat="h:mm aa"
             timeIntervals={15}
             dateFormat="MMMM d, yyyy h:mm aa"
             className={`w-full p-2 border rounded ${

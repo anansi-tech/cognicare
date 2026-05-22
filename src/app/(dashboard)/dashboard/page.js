@@ -66,12 +66,12 @@ export default function DashboardPage() {
   };
 
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString(undefined, {
+    return new Date(dateString).toLocaleString(undefined, {
       month: "short",
       day: "numeric",
-      hour: "2-digit",
+      hour: "numeric",
       minute: "2-digit",
+      hour12: true,
     });
   };
 

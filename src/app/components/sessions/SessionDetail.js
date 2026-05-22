@@ -112,16 +112,16 @@ export default function SessionDetail({ sessionId }) {
     }
   };
 
-  // Format date for display
+  // Format date for display — local time, 12-hour AM/PM.
   const formatDate = (dateString) => {
-    const options = {
+    return new Date(dateString).toLocaleString(undefined, {
       year: "numeric",
       month: "long",
       day: "numeric",
-      hour: "2-digit",
+      hour: "numeric",
       minute: "2-digit",
-    };
-    return new Date(dateString).toLocaleDateString(undefined, options);
+      hour12: true,
+    });
   };
 
   // Format duration in hours and minutes
