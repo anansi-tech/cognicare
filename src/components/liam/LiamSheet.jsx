@@ -38,9 +38,11 @@ export function LiamSheet() {
         </SheetHeader>
 
         {!clientId ? (
-          <p className="text-sm text-muted-foreground">Open a client to consult LIAM about them.</p>
+          <p className="px-4 pb-4 text-sm text-muted-foreground">
+            Open a client to consult LIAM about them.
+          </p>
         ) : (
-          <>
+          <div className="flex flex-1 min-h-0 flex-col gap-2 px-4 pb-4">
             <ScrollArea className="flex-1 pr-3">
               {messages.length === 0 && (
                 <p className="text-sm text-muted-foreground">
@@ -61,7 +63,7 @@ export function LiamSheet() {
               {status === "streaming" && <p className="text-xs text-muted-foreground">LIAM is thinking…</p>}
             </ScrollArea>
 
-            <div className="mt-2 flex gap-2">
+            <div className="flex gap-2">
               <Textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -72,7 +74,7 @@ export function LiamSheet() {
               />
               <Button onClick={send} disabled={!input.trim() || status === "streaming"}>Send</Button>
             </div>
-          </>
+          </div>
         )}
       </SheetContent>
     </Sheet>
