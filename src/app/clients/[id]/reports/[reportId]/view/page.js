@@ -4,33 +4,423 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { format } from "date-fns";
 
+// Renders a compiled Report. Report.content is the array of AIReport envelopes
+// gathered by gatherAgentReports (newest first); each entry has summary, payload,
+// agentType, createdAt.
+
+const titleCase = (s) =>
+  typeof s === "string" && s.length > 0 ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+
+const riskBadgeClass = (level) =>
+  ({
+    none: "bg-green-100 text-green-800",
+    low: "bg-blue-100 text-blue-800",
+    moderate: "bg-yellow-100 text-yellow-800",
+    high: "bg-orange-100 text-orange-800",
+    imminent: "bg-red-100 text-red-800",
+  })[level] || "bg-gray-100 text-gray-800";
+
+const goalStatusClass = (status) =>
+  ({
+    "not-started": "bg-gray-100 text-gray-800",
+    emerging: "bg-blue-100 text-blue-800",
+    progressing: "bg-yellow-100 text-yellow-800",
+    met: "bg-green-100 text-green-800",
+    regressed: "bg-red-100 text-red-800",
+  })[status] || "bg-gray-100 text-gray-800";
+
+function Section({ title, children }) {
+  return (
+    <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+      <h4 className="text-md font-semibold text-gray-700 mb-3">{title}</h4>
+      {children}
+    </div>
+  );
+}
+
+function BulletList({ items, color = "blue" }) {
+  if (!items?.length) return null;
+  return (
+    <ul className="space-y-2">
+      {items.map((item, i) => (
+        <li key={i} className="flex items-start gap-2">
+          <span className={`text-${color}-500 mt-1`}>•</span>
+          <span className="text-gray-700">{item}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function AssessmentBody({ ap }) {
+  if (!ap) return null;
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <Section title="Risk Level">
+          <span
+            className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${riskBadgeClass(
+              ap.riskLevel
+            )}`}
+          >
+            {titleCase(ap.riskLevel)}
+          </span>
+        </Section>
+        <Section title="Primary Concerns">
+          <BulletList items={ap.primaryConcerns} color="blue" />
+        </Section>
+      </div>
+      {ap.immediateAttention?.length > 0 && (
+        <Section title="Immediate Attention">
+          <BulletList items={ap.immediateAttention} color="red" />
+        </Section>
+      )}
+      {ap.riskFactors?.length > 0 && (
+        <Section title="Risk Factors">
+          <BulletList items={ap.riskFactors} color="red" />
+        </Section>
+      )}
+      {ap.protectiveFactors?.length > 0 && (
+        <Section title="Protective Factors">
+          <BulletList items={ap.protectiveFactors} color="green" />
+        </Section>
+      )}
+      {ap.recommendedInstruments?.length > 0 && (
+        <Section title="Recommended Measures">
+          <BulletList items={ap.recommendedInstruments} color="purple" />
+        </Section>
+      )}
+      {ap.clinicalObservations && (
+        <Section title="Clinical Observations">
+          <p className="text-gray-700">{ap.clinicalObservations}</p>
+        </Section>
+      )}
+      {ap.suggestedNextSteps?.length > 0 && (
+        <Section title="Suggested Next Steps">
+          <BulletList items={ap.suggestedNextSteps} color="green" />
+        </Section>
+      )}
+    </div>
+  );
+}
+
+function DiagnosticBody({ dp }) {
+  if (!dp) return null;
+  return (
+    <div className="space-y-3">
+      {dp.primaryDiagnosis && (
+        <Section title="Primary Diagnosis">
+          <div className="bg-gray-50 p-3 rounded">
+            <div className="flex items-start justify-between mb-2">
+              <div>
+                <p className="font-medium text-gray-800">{dp.primaryDiagnosis.name}</p>
+                <p className="text-sm text-gray-500">Code: {dp.primaryDiagnosis.code}</p>
+              </div>
+              <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
+                {titleCase(dp.primaryDiagnosis.confidence)} confidence
+              </span>
+            </div>
+            {dp.primaryDiagnosis.rationale && (
+              <p className="text-gray-700 mt-2">{dp.primaryDiagnosis.rationale}</p>
+            )}
+            {dp.primaryDiagnosis.criteriaMet?.length > 0 && (
+              <div className="mt-3">
+                <h5 className="text-sm font-medium text-gray-700 mb-2">Criteria Met</h5>
+                <BulletList items={dp.primaryDiagnosis.criteriaMet} color="blue" />
+              </div>
+            )}
+          </div>
+        </Section>
+      )}
+      {dp.differentials?.length > 0 && (
+        <Section title="Differential Diagnoses">
+          <ul className="space-y-2">
+            {dp.differentials.map((d, i) => (
+              <li key={i} className="bg-gray-50 p-3 rounded">
+                <div className="flex justify-between">
+                  <span className="font-medium text-gray-800">
+                    {d.name} <span className="text-xs text-gray-500">({d.code})</span>
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    {titleCase(d.confidence)} confidence
+                  </span>
+                </div>
+                {d.rationale && <p className="text-sm text-gray-700 mt-1">{d.rationale}</p>}
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
+      {dp.ruleOut?.length > 0 && (
+        <Section title="Rule Out">
+          <BulletList items={dp.ruleOut} color="red" />
+        </Section>
+      )}
+      {dp.comorbidities?.length > 0 && (
+        <Section title="Comorbidities">
+          <ul className="space-y-2">
+            {dp.comorbidities.map((c, i) => (
+              <li key={i} className="bg-gray-50 p-3 rounded">
+                <span className="font-medium text-gray-800">
+                  {c.name} <span className="text-xs text-gray-500">({c.code})</span>
+                </span>
+                {c.rationale && <p className="text-sm text-gray-700 mt-1">{c.rationale}</p>}
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
+      {dp.culturalConsiderations?.length > 0 && (
+        <Section title="Cultural Considerations">
+          <BulletList items={dp.culturalConsiderations} color="purple" />
+        </Section>
+      )}
+      {dp.clinicalJustification && (
+        <Section title="Clinical Justification">
+          <p className="text-gray-700">{dp.clinicalJustification}</p>
+        </Section>
+      )}
+    </div>
+  );
+}
+
+function TreatmentBody({ tp }) {
+  if (!tp) return null;
+  return (
+    <div className="space-y-3">
+      {tp.approach && (
+        <Section title="Approach">
+          <p className="text-gray-700">{tp.approach}</p>
+        </Section>
+      )}
+      {tp.goals?.length > 0 && (
+        <Section title="Goals">
+          <ul className="space-y-3">
+            {tp.goals.map((g, i) => (
+              <li key={i} className="bg-gray-50 p-3 rounded">
+                <p className="font-medium text-gray-800">{g.goal}</p>
+                {g.measurable && (
+                  <p className="text-sm text-gray-700 mt-1">
+                    <span className="text-gray-500">Measurable:</span> {g.measurable}
+                  </p>
+                )}
+                {g.targetTimeframe && (
+                  <p className="text-sm text-gray-700">
+                    <span className="text-gray-500">Timeframe:</span> {g.targetTimeframe}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
+      {tp.interventions?.length > 0 && (
+        <Section title="Interventions">
+          <BulletList items={tp.interventions} color="blue" />
+        </Section>
+      )}
+      {tp.homework?.length > 0 && (
+        <Section title="Homework">
+          <BulletList items={tp.homework} color="green" />
+        </Section>
+      )}
+      {tp.referrals?.length > 0 && (
+        <Section title="Referrals">
+          <BulletList items={tp.referrals} color="purple" />
+        </Section>
+      )}
+      {tp.reviewCadence && (
+        <Section title="Review Cadence">
+          <p className="text-gray-700">{tp.reviewCadence}</p>
+        </Section>
+      )}
+    </div>
+  );
+}
+
+function ProgressBody({ pp }) {
+  if (!pp) return null;
+  return (
+    <div className="space-y-3">
+      {pp.goalProgress?.length > 0 && (
+        <Section title="Goal Progress">
+          <ul className="space-y-2">
+            {pp.goalProgress.map((g, i) => (
+              <li key={i} className="bg-gray-50 p-3 rounded">
+                <div className="flex justify-between items-start gap-3">
+                  <span className="text-gray-800">{g.goal}</span>
+                  <span
+                    className={`shrink-0 px-2 py-1 rounded-full text-xs font-medium ${goalStatusClass(
+                      g.status
+                    )}`}
+                  >
+                    {titleCase(g.status)}
+                  </span>
+                </div>
+                {g.notes && <p className="text-sm text-gray-600 mt-1">{g.notes}</p>}
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
+      {pp.measureInterpretation?.length > 0 && (
+        <Section title="Measure Interpretation">
+          <ul className="space-y-2">
+            {pp.measureInterpretation.map((m, i) => (
+              <li key={i} className="bg-gray-50 p-3 rounded">
+                <div className="flex justify-between">
+                  <span className="font-medium text-gray-800">{m.instrumentId}</span>
+                  <span className="text-xs text-gray-500">
+                    {titleCase(m.direction)}
+                    {m.reliableChange ? " · reliable" : ""}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-700 mt-1">
+                  {m.latestScore}
+                  {m.previousScore != null && (
+                    <span className="text-gray-500"> (was {m.previousScore})</span>
+                  )}
+                </p>
+                {m.interpretation && (
+                  <p className="text-sm text-gray-700 mt-1">{m.interpretation}</p>
+                )}
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
+      {pp.treatmentEffectiveness && (
+        <Section title="Treatment Effectiveness">
+          <p className="text-gray-700">{pp.treatmentEffectiveness}</p>
+        </Section>
+      )}
+      {pp.barriers?.length > 0 && (
+        <Section title="Barriers">
+          <BulletList items={pp.barriers} color="red" />
+        </Section>
+      )}
+      {pp.recommendations?.length > 0 && (
+        <Section title="Recommendations">
+          <BulletList items={pp.recommendations} color="green" />
+        </Section>
+      )}
+      {pp.nextSessionFocus && (
+        <Section title="Next Session Focus">
+          <p className="text-gray-700">{pp.nextSessionFocus}</p>
+        </Section>
+      )}
+      {pp.reassessmentRecommended !== undefined && (
+        <div
+          className={`p-3 rounded border ${
+            pp.reassessmentRecommended
+              ? "bg-yellow-50 border-yellow-200"
+              : "bg-green-50 border-green-200"
+          }`}
+        >
+          <p className="font-medium text-gray-800">
+            {pp.reassessmentRecommended ? "Reassessment Recommended" : "No Reassessment Needed"}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DocumentationBody({ doc }) {
+  if (!doc) return null;
+  return (
+    <div className="space-y-3">
+      {doc.soap && (
+        <Section title="SOAP">
+          <dl className="space-y-2">
+            {["subjective", "objective", "assessment", "plan"].map((k) =>
+              doc.soap[k] ? (
+                <div key={k}>
+                  <dt className="text-xs font-medium text-gray-500 capitalize">{k}</dt>
+                  <dd className="text-sm text-gray-700 whitespace-pre-wrap">{doc.soap[k]}</dd>
+                </div>
+              ) : null
+            )}
+          </dl>
+        </Section>
+      )}
+      {doc.measuresAdministered?.length > 0 && (
+        <Section title="Measures Administered">
+          <ul className="space-y-1">
+            {doc.measuresAdministered.map((m, i) => (
+              <li key={i} className="text-sm text-gray-700">
+                <span className="font-medium">{m.instrumentId}</span>: {m.score} · {m.severityBand}
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
+      {doc.riskStatement && (
+        <Section title="Risk Statement">
+          <p className="text-gray-700">{doc.riskStatement}</p>
+        </Section>
+      )}
+      {doc.followUp?.length > 0 && (
+        <Section title="Follow-up">
+          <BulletList items={doc.followUp} color="blue" />
+        </Section>
+      )}
+      {doc.cptHint && (
+        <Section title="CPT Hint (advisory)">
+          <p className="text-gray-700">{doc.cptHint}</p>
+        </Section>
+      )}
+    </div>
+  );
+}
+
+function EnvelopeCard({ envelope, agentType, index }) {
+  const p = envelope?.payload;
+  return (
+    <div className="bg-white p-6 rounded-lg shadow border border-gray-100">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold">
+          {titleCase(agentType)} Report #{index + 1}
+        </h2>
+        {envelope?.createdAt && (
+          <p className="text-sm text-gray-500">
+            {format(new Date(envelope.createdAt), "MMM d, yyyy")}
+          </p>
+        )}
+      </div>
+      {envelope?.summary && (
+        <div className="bg-blue-50 p-4 rounded-lg mb-4">
+          <h3 className="text-sm font-medium text-gray-700 mb-1">Summary</h3>
+          <p className="text-gray-700">{envelope.summary}</p>
+        </div>
+      )}
+      {agentType === "assessment" && <AssessmentBody ap={p} />}
+      {agentType === "diagnostic" && <DiagnosticBody dp={p} />}
+      {agentType === "treatment" && <TreatmentBody tp={p} />}
+      {agentType === "progress" && <ProgressBody pp={p} />}
+      {agentType === "documentation" && <DocumentationBody doc={p} />}
+    </div>
+  );
+}
+
 export default function ReportViewPage() {
   const params = useParams();
   const [report, setReport] = useState(null);
   const [client, setClient] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showDebug, setShowDebug] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch report
         const reportResponse = await fetch(`/api/clients/${params.id}/reports/${params.reportId}`);
-        if (!reportResponse.ok) {
-          throw new Error("Failed to fetch report");
-        }
+        if (!reportResponse.ok) throw new Error("Failed to fetch report");
         const reportData = await reportResponse.json();
-        console.log("Report data:", reportData); // Debug log
         setReport(reportData.report);
 
-        // Fetch client information
         const clientResponse = await fetch(`/api/clients/${params.id}`);
-        if (!clientResponse.ok) {
-          throw new Error("Failed to fetch client information");
-        }
+        if (!clientResponse.ok) throw new Error("Failed to fetch client information");
         const clientData = await clientResponse.json();
-        console.log("Client data:", clientData); // Debug log
         setClient(clientData.client);
       } catch (err) {
         setError(err.message);
@@ -38,7 +428,6 @@ export default function ReportViewPage() {
         setLoading(false);
       }
     };
-
     fetchData();
   }, [params.id, params.reportId]);
 
@@ -66,792 +455,8 @@ export default function ReportViewPage() {
     );
   }
 
-  const renderAssessmentReport = () => {
-    const { content } = report;
-    const allAnalyses = content?.aiAnalysis || [];
-
-    return (
-      <div className="space-y-6">
-        {/* Reports List */}
-        {allAnalyses.map((analysis, index) => (
-          <div key={index} className="bg-white p-6 rounded-lg shadow">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Assessment Report #{index + 1}</h2>
-              <p className="text-sm text-gray-500">
-                {format(new Date(analysis.date), "MMM d, yyyy")}
-              </p>
-            </div>
-
-            <div className="space-y-6">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h3 className="text-lg font-semibold mb-2">Summary</h3>
-                <p className="text-gray-700">{analysis.content?.summary || "N/A"}</p>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4">Risk Assessment</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-500">Risk Level</p>
-                    <p className="font-medium">{analysis.content?.riskLevel || "N/A"}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Suicide Risk</p>
-                    <p className="font-medium">
-                      {client?.riskFactors?.suicideRisk?.level || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Violence Risk</p>
-                    <p className="font-medium">{client?.riskFactors?.violence?.risk || "N/A"}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4">Primary Concerns</h3>
-                <ul className="list-disc pl-5 space-y-1">
-                  {analysis.content?.primaryConcerns?.map((concern, i) => (
-                    <li key={i} className="text-gray-700">
-                      {concern}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4">Initial Clinical Observations</h3>
-                <p className="text-gray-700">
-                  {analysis.content?.initialClinicalObservations || "N/A"}
-                </p>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4">Areas Requiring Immediate Attention</h3>
-                <ul className="list-disc pl-5 space-y-1">
-                  {analysis.content?.areasRequiringImmediateAttention?.map((area, i) => (
-                    <li key={i} className="text-gray-700">
-                      {area}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4">Recommended Assessment Tools</h3>
-                <ul className="list-disc pl-5 space-y-1">
-                  {analysis.content?.recommendedAssessmentTools?.map((tool, i) => (
-                    <li key={i} className="text-gray-700">
-                      {tool}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4">Suggested Next Steps</h3>
-                <ul className="list-disc pl-5 space-y-1">
-                  {analysis.content?.suggestedNextSteps?.map((step, i) => (
-                    <li key={i} className="text-gray-700">
-                      {step}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
-  const renderDiagnosticReport = () => {
-    const { content } = report;
-    const allAnalyses = content?.aiAnalysis || [];
-
-    return (
-      <div className="space-y-6">
-        {/* Reports List */}
-        {allAnalyses.map((analysis, index) => (
-          <div key={index} className="bg-white p-6 rounded-lg shadow">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Diagnostic Report #{index + 1}</h2>
-              <p className="text-sm text-gray-500">
-                {format(new Date(analysis.date), "MMM d, yyyy")}
-              </p>
-            </div>
-
-            <div className="space-y-6">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h3 className="text-lg font-semibold mb-2">Diagnostic Summary</h3>
-                <p className="text-gray-700">{analysis.content?.summary || "N/A"}</p>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4">Primary Diagnosis</h3>
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="font-medium mb-2">
-                      {analysis.content?.primaryDiagnosis?.name || "N/A"}
-                    </h4>
-                    <p className="text-sm text-gray-500">
-                      Code: {analysis.content?.primaryDiagnosis?.code || "N/A"}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Confidence: {analysis.content?.primaryDiagnosis?.confidence || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <h4 className="font-medium mb-2">Diagnostic Criteria</h4>
-                    <ul className="list-disc pl-5 space-y-1">
-                      {analysis.content?.primaryDiagnosis?.criteria?.map((criterion, i) => (
-                        <li key={i} className="text-gray-700">
-                          {criterion}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div>
-                    <h4 className="font-medium mb-2">Rationale</h4>
-                    <p className="text-gray-700">
-                      {analysis.content?.primaryDiagnosis?.rationale || "N/A"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4">Differential Diagnoses</h3>
-                <ul className="list-disc pl-5 space-y-1">
-                  {analysis.content?.differentialDiagnoses?.map((diagnosis, i) => (
-                    <li key={i} className="text-gray-700">
-                      {diagnosis}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4">Rule Out Conditions</h3>
-                <ul className="list-disc pl-5 space-y-1">
-                  {analysis.content?.ruleOutConditions?.map((condition, i) => (
-                    <li key={i} className="text-gray-700">
-                      {condition}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4">Severity Indicators</h3>
-                <ul className="list-disc pl-5 space-y-1">
-                  {analysis.content?.severityIndicators?.map((indicator, i) => (
-                    <li key={i} className="text-gray-700">
-                      {indicator}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4">Risk Factors</h3>
-                <ul className="list-disc pl-5 space-y-1">
-                  {analysis.content?.riskFactors?.map((factor, i) => (
-                    <li key={i} className="text-gray-700">
-                      {factor}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4">Cultural Considerations</h3>
-                <ul className="list-disc pl-5 space-y-1">
-                  {analysis.content?.culturalConsiderations?.map((consideration, i) => (
-                    <li key={i} className="text-gray-700">
-                      {consideration}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4">Recommended Assessments</h3>
-                <ul className="list-disc pl-5 space-y-1">
-                  {analysis.content?.recommendedAssessments?.map((assessment, i) => (
-                    <li key={i} className="text-gray-700">
-                      {assessment}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4">Clinical Justification</h3>
-                <p className="text-gray-700">{analysis.content?.clinicalJustification || "N/A"}</p>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4">Treatment Implications</h3>
-                <ul className="list-disc pl-5 space-y-1">
-                  {analysis.content?.treatmentImplications?.map((implication, i) => (
-                    <li key={i} className="text-gray-700">
-                      {implication}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
-  const renderTreatmentReport = () => {
-    const { content } = report;
-    const allAnalyses = content?.aiAnalysis || [];
-
-    return (
-      <div className="space-y-6">
-        {/* Reports List */}
-        {allAnalyses.map((analysis, index) => (
-          <div key={index} className="bg-white p-6 rounded-lg shadow">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Treatment Report #{index + 1}</h2>
-              <p className="text-sm text-gray-500">
-                {format(new Date(analysis.date), "MMM d, yyyy")}
-              </p>
-            </div>
-
-            <div className="space-y-6">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h3 className="text-lg font-semibold mb-2">Treatment Summary</h3>
-                <p className="text-gray-700">{analysis.content?.summary || "N/A"}</p>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4">Treatment Goals</h3>
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="font-medium mb-2">Short-term Goals</h4>
-                    <ul className="list-disc pl-5 space-y-1">
-                      {analysis.content?.goals?.shortTerm?.map((goal, i) => (
-                        <li key={i} className="text-gray-700">
-                          {goal}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div>
-                    <h4 className="font-medium mb-2">Long-term Goals</h4>
-                    <ul className="list-disc pl-5 space-y-1">
-                      {analysis.content?.goals?.longTerm?.map((goal, i) => (
-                        <li key={i} className="text-gray-700">
-                          {goal}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4">Interventions</h3>
-                <ul className="list-disc pl-5 space-y-1">
-                  {analysis.content?.interventions?.map((intervention, i) => (
-                    <li key={i} className="text-gray-700">
-                      {intervention}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4">Treatment Timeline</h3>
-                <div className="space-y-4">
-                  {analysis.content?.timeline?.map((item, i) => (
-                    <div key={i} className="border-b pb-4 last:border-b-0">
-                      <h4 className="font-medium">{item.milestone}</h4>
-                      <p className="text-gray-700">Timeframe: {item.timeframe}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4">Measurable Outcomes</h3>
-                <ul className="list-disc pl-5 space-y-1">
-                  {analysis.content?.measurableOutcomes?.map((outcome, i) => (
-                    <li key={i} className="text-gray-700">
-                      {outcome}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4">Progress Indicators</h3>
-                <ul className="list-disc pl-5 space-y-1">
-                  {analysis.content?.progressIndicators?.map((indicator, i) => (
-                    <li key={i} className="text-gray-700">
-                      {indicator}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4">Recommended Approaches</h3>
-                <ul className="list-disc pl-5 space-y-1">
-                  {analysis.content?.recommendedApproaches?.map((approach, i) => (
-                    <li key={i} className="text-gray-700">
-                      {approach}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4">Potential Barriers</h3>
-                <ul className="list-disc pl-5 space-y-1">
-                  {analysis.content?.potentialBarriers?.map((barrier, i) => (
-                    <li key={i} className="text-gray-700">
-                      {barrier}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4">Success Metrics</h3>
-                <ul className="list-disc pl-5 space-y-1">
-                  {analysis.content?.successMetrics?.map((metric, i) => (
-                    <li key={i} className="text-gray-700">
-                      {metric}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
-  const renderProgressReport = () => {
-    const { content } = report;
-    const allAnalyses = content?.aiAnalysis || [];
-
-    return (
-      <div className="space-y-6">
-        {/* Reports List */}
-        {allAnalyses.map((analysis, index) => (
-          <div key={index} className="bg-white p-6 rounded-lg shadow">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Progress Report #{index + 1}</h2>
-              <p className="text-sm text-gray-500">
-                {format(new Date(analysis.date), "MMM d, yyyy")}
-              </p>
-            </div>
-
-            <div className="space-y-6">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h3 className="text-lg font-semibold mb-2">Progress Summary</h3>
-                <p className="text-gray-700">{analysis.content?.summary || "N/A"}</p>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4">Key Metrics</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-500">Overall Progress</p>
-                    <p className="font-medium">
-                      {analysis.content?.metrics?.overallProgress || 0}%
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Symptom Severity</p>
-                    <p className="font-medium">
-                      {analysis.content?.metrics?.symptomSeverity || 0}/10
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Treatment Adherence</p>
-                    <p className="font-medium">
-                      {analysis.content?.metrics?.treatmentAdherence || 0}%
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Risk Level</p>
-                    <p className="font-medium">{analysis.content?.metrics?.riskLevel || 0}/10</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4">Goal Achievement Status</h3>
-                <div className="space-y-4">
-                  {analysis.content?.goalAchievementStatus?.map((goal, i) => (
-                    <div key={i} className="border-b pb-4 last:border-b-0">
-                      <h4 className="font-medium">{goal.goal}</h4>
-                      <p className="text-gray-700">Status: {goal.status}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4">Key Observations</h3>
-                <ul className="list-disc pl-5 space-y-1">
-                  {analysis.content?.keyObservations?.map((observation, i) => (
-                    <li key={i} className="text-gray-700">
-                      {observation}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4">Treatment Effectiveness</h3>
-                <p className="text-gray-700">{analysis.content?.treatmentEffectiveness || "N/A"}</p>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4">Areas of Focus</h3>
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="font-medium mb-2">Areas of Improvement</h4>
-                    <ul className="list-disc pl-5 space-y-1">
-                      {analysis.content?.areasOfImprovement?.map((area, i) => (
-                        <li key={i} className="text-gray-700">
-                          {area}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div>
-                    <h4 className="font-medium mb-2">Areas Needing Focus</h4>
-                    <ul className="list-disc pl-5 space-y-1">
-                      {analysis.content?.areasNeedingFocus?.map((area, i) => (
-                        <li key={i} className="text-gray-700">
-                          {area}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4">Barriers and Recommendations</h3>
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="font-medium mb-2">Identified Barriers</h4>
-                    <ul className="list-disc pl-5 space-y-1">
-                      {analysis.content?.identifiedBarriers?.map((barrier, i) => (
-                        <li key={i} className="text-gray-700">
-                          {barrier}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div>
-                    <h4 className="font-medium mb-2">Recommendations</h4>
-                    <ul className="list-disc pl-5 space-y-1">
-                      {analysis.content?.recommendations?.map((recommendation, i) => (
-                        <li key={i} className="text-gray-700">
-                          {recommendation}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4">Next Steps</h3>
-                <ul className="list-disc pl-5 space-y-1">
-                  {analysis.content?.nextSteps?.map((step, i) => (
-                    <li key={i} className="text-gray-700">
-                      {step}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4">Treatment Plan Adjustments</h3>
-                <ul className="list-disc pl-5 space-y-1">
-                  {analysis.content?.treatmentPlanAdjustments?.map((adjustment, i) => (
-                    <li key={i} className="text-gray-700">
-                      {adjustment}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {analysis.content?.recommendReassessment && (
-                <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                  <h3 className="text-lg font-semibold mb-4">Reassessment Recommendation</h3>
-                  <p className="text-gray-700">
-                    {analysis.content?.reassessmentRationale || "N/A"}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
-  const renderDocumentationReport = () => {
-    const { content } = report;
-    const allAnalyses = content?.aiAnalysis || [];
-
-    return (
-      <div className="space-y-6">
-        {/* Reports List */}
-        {allAnalyses.map((analysis, index) => (
-          <div key={index} className="bg-white p-6 rounded-lg shadow">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Documentation Report #{index + 1}</h2>
-              <p className="text-sm text-gray-500">
-                {format(new Date(analysis.date), "MMM d, yyyy")}
-              </p>
-            </div>
-
-            <div className="space-y-6">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h3 className="text-lg font-semibold mb-2">Session Summary</h3>
-                <p className="text-gray-700">{analysis.content?.summary || "N/A"}</p>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4">SOAP Notes</h3>
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="font-medium mb-2">Subjective</h4>
-                    <p className="text-gray-700">{analysis.content?.soap?.subjective || "N/A"}</p>
-                  </div>
-                  <div>
-                    <h4 className="font-medium mb-2">Objective</h4>
-                    <p className="text-gray-700">{analysis.content?.soap?.objective || "N/A"}</p>
-                  </div>
-                  <div>
-                    <h4 className="font-medium mb-2">Assessment</h4>
-                    <p className="text-gray-700">{analysis.content?.soap?.assessment || "N/A"}</p>
-                  </div>
-                  <div>
-                    <h4 className="font-medium mb-2">Plan</h4>
-                    <p className="text-gray-700">{analysis.content?.soap?.plan || "N/A"}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4">Clinical Documentation</h3>
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="font-medium mb-2">Initial Observations</h4>
-                    <p className="text-gray-700">
-                      {analysis.content?.clinicalDocumentation?.initialObservations || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <h4 className="font-medium mb-2">Risk Assessment</h4>
-                    <p className="text-gray-700">
-                      {analysis.content?.clinicalDocumentation?.riskAssessmentSummary || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <h4 className="font-medium mb-2">Diagnostic Considerations</h4>
-                    <p className="text-gray-700">
-                      {analysis.content?.clinicalDocumentation?.diagnosticConsiderations || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <h4 className="font-medium mb-2">Treatment Goals and Interventions</h4>
-                    <ul className="list-disc pl-5 space-y-1">
-                      {analysis.content?.clinicalDocumentation?.treatmentGoalsAndInterventions?.map(
-                        (item, i) => (
-                          <li key={i} className="text-gray-700">
-                            {item}
-                          </li>
-                        )
-                      )}
-                    </ul>
-                  </div>
-                  <div>
-                    <h4 className="font-medium mb-2">Progress Indicators</h4>
-                    <ul className="list-disc pl-5 space-y-1">
-                      {analysis.content?.clinicalDocumentation?.progressIndicators?.map(
-                        (item, i) => (
-                          <li key={i} className="text-gray-700">
-                            {item}
-                          </li>
-                        )
-                      )}
-                    </ul>
-                  </div>
-                  <div>
-                    <h4 className="font-medium mb-2">Treatment Effectiveness</h4>
-                    <p className="text-gray-700">
-                      {analysis.content?.clinicalDocumentation?.treatmentEffectivenessAnalysis ||
-                        "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <h4 className="font-medium mb-2">Follow-up Recommendations</h4>
-                    <ul className="list-disc pl-5 space-y-1">
-                      {analysis.content?.clinicalDocumentation?.followUpRecommendations?.map(
-                        (item, i) => (
-                          <li key={i} className="text-gray-700">
-                            {item}
-                          </li>
-                        )
-                      )}
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4">Progress Summary</h3>
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="font-medium mb-2">Treatment Goals Progress</h4>
-                    <div className="space-y-4">
-                      {analysis.content?.progressSummary?.treatmentGoalsProgress?.map((goal, i) => (
-                        <div key={i} className="border-b pb-4 last:border-b-0">
-                          <h5 className="font-medium">{goal.goal}</h5>
-                          <p className="text-gray-700">Status: {goal.progress}</p>
-                          {goal.metrics && (
-                            <div className="mt-2">
-                              <p className="text-sm text-gray-500">Metrics:</p>
-                              <p className="text-gray-700">
-                                Current: {goal.metrics.currentScore} / Target:{" "}
-                                {goal.metrics.targetScore} ({goal.metrics.progressPercentage})
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <h4 className="font-medium mb-2">Areas of Improvement</h4>
-                    <ul className="list-disc pl-5 space-y-1">
-                      {analysis.content?.progressSummary?.areasOfImprovement?.map((item, i) => (
-                        <li key={i} className="text-gray-700">
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div>
-                    <h4 className="font-medium mb-2">Challenges and Barriers</h4>
-                    <ul className="list-disc pl-5 space-y-1">
-                      {analysis.content?.progressSummary?.challengesAndBarriers?.map((item, i) => (
-                        <li key={i} className="text-gray-700">
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div>
-                    <h4 className="font-medium mb-2">Treatment Plan Adjustments</h4>
-                    <ul className="list-disc pl-5 space-y-1">
-                      {analysis.content?.progressSummary?.treatmentPlanAdjustments?.map(
-                        (item, i) => (
-                          <li key={i} className="text-gray-700">
-                            {item}
-                          </li>
-                        )
-                      )}
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4">Additional Components</h3>
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="font-medium mb-2">Specific Interventions</h4>
-                    <ul className="list-disc pl-5 space-y-1">
-                      {analysis.content?.additionalComponents?.specificInterventions?.map(
-                        (item, i) => (
-                          <li key={i} className="text-gray-700">
-                            {item}
-                          </li>
-                        )
-                      )}
-                    </ul>
-                  </div>
-                  <div>
-                    <h4 className="font-medium mb-2">Next Session Focus</h4>
-                    <p className="text-gray-700">
-                      {analysis.content?.additionalComponents?.nextSessionFocus || "N/A"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
-  const renderReportContent = () => {
-    switch (report.type) {
-      case "assessment":
-        return renderAssessmentReport();
-      case "diagnostic":
-        return renderDiagnosticReport();
-      case "treatment":
-        return renderTreatmentReport();
-      case "progress":
-        return renderProgressReport();
-      case "documentation":
-        return renderDocumentationReport();
-      default:
-        return <div className="text-gray-500">Report type not supported</div>;
-    }
-  };
-
-  const DebugView = () => {
-    if (!report) return null;
-
-    return (
-      <div className="mt-8 p-4 bg-gray-100 rounded-lg">
-        <h2 className="text-xl font-semibold mb-4">Debug Information</h2>
-        <div className="space-y-4">
-          <div>
-            <h3 className="font-medium mb-2">Report Type</h3>
-            <pre className="bg-white p-4 rounded overflow-auto">
-              {JSON.stringify(report.type, null, 2)}
-            </pre>
-          </div>
-          <div>
-            <h3 className="font-medium mb-2">Report Content</h3>
-            <pre className="bg-white p-4 rounded overflow-auto">
-              {JSON.stringify(report.content, null, 2)}
-            </pre>
-          </div>
-          <div>
-            <h3 className="font-medium mb-2">Client Information</h3>
-            <pre className="bg-white p-4 rounded overflow-auto">
-              {JSON.stringify(client, null, 2)}
-            </pre>
-          </div>
-        </div>
-      </div>
-    );
-  };
+  // Report.content is Array<AIReport>; bound for safety.
+  const envelopes = Array.isArray(report.content) ? report.content : [];
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -859,10 +464,10 @@ export default function ReportViewPage() {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              {report.type.charAt(0).toUpperCase() + report.type.slice(1)} Report
+              {titleCase(report.type)} Report
             </h1>
             <p className="text-gray-600 mt-1">
-              Generated by {report?.content?.metadata?.generatedBy || "Unknown Counselor"}
+              Generated by {report.createdBy?.name ?? "Unknown Counselor"}
             </p>
           </div>
           <div className="flex gap-2">
@@ -900,26 +505,19 @@ export default function ReportViewPage() {
           <div className="space-y-1">
             <p className="text-sm font-medium text-gray-500">Report Date</p>
             <p className="text-lg font-semibold text-gray-900">
-              {format(new Date(report.metadata?.generatedAt || report.createdAt), "PPP")}
+              {format(new Date(report.createdAt), "PPP")}
             </p>
-            <p className="text-sm text-gray-600">
-              {format(new Date(report.metadata?.generatedAt || report.createdAt), "p")}
-            </p>
+            <p className="text-sm text-gray-600">{format(new Date(report.createdAt), "p")}</p>
           </div>
           <div className="space-y-1">
             <p className="text-sm font-medium text-gray-500">Time Period</p>
             <p className="text-lg font-semibold text-gray-900">
-              {format(
-                new Date(report.metadata?.timeRange?.start || report.startDate),
-                "MMM d, yyyy"
-              )}{" "}
-              - {format(new Date(report.metadata?.timeRange?.end || report.endDate), "MMM d, yyyy")}
+              {format(new Date(report.startDate), "MMM d, yyyy")} -{" "}
+              {format(new Date(report.endDate), "MMM d, yyyy")}
             </p>
             <p className="text-sm text-gray-600">
               {Math.round(
-                (new Date(report.metadata?.timeRange?.end || report.endDate) -
-                  new Date(report.metadata?.timeRange?.start || report.startDate)) /
-                  (1000 * 60 * 60 * 24)
+                (new Date(report.endDate) - new Date(report.startDate)) / (1000 * 60 * 60 * 24)
               )}{" "}
               days
             </p>
@@ -927,15 +525,26 @@ export default function ReportViewPage() {
           <div className="space-y-1">
             <p className="text-sm font-medium text-gray-500">Status</p>
             <p className="text-lg font-semibold text-gray-900 capitalize">{report.status}</p>
-            <p className="text-sm text-gray-600">
-              Total Reports: {report.content.metadata?.totalReports || 1}
-            </p>
+            <p className="text-sm text-gray-600">Total entries: {envelopes.length}</p>
           </div>
         </div>
 
-        <div className="prose max-w-none">{renderReportContent()}</div>
-
-        {showDebug && <DebugView />}
+        {envelopes.length === 0 ? (
+          <p className="text-gray-500">
+            No agent outputs were found for the selected date range.
+          </p>
+        ) : (
+          <div className="space-y-6">
+            {envelopes.map((env, i) => (
+              <EnvelopeCard
+                key={env._id ?? i}
+                envelope={env}
+                agentType={env.agentType ?? report.type}
+                index={i}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
