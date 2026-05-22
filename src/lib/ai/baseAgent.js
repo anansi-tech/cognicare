@@ -26,11 +26,4 @@ export async function runAgent({ agentType, clientBlock, requestBlock, model = M
   return object;
 }
 
-/** @deprecated shim so old call sites don't break mid-round. Remove after routes are migrated. */
-export async function createStructuredResponse(messages, _functions, agentType = "assessment") {
-  const system = messages.find((m) => m.role === "system")?.content ?? "";
-  const user = messages.filter((m) => m.role === "user").map((m) => m.content).join("\n\n");
-  return runAgent({ agentType, clientBlock: system, requestBlock: user });
-}
-
 // NOTE: createAgentStream intentionally NOT defined here yet — Round 2 (LIAM) adds streaming.
