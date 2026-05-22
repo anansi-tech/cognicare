@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLiam } from "@/components/liam/LiamProvider";
 
 export default function ClientInsights({ clientId }) {
   const [assessmentReport, setAssessmentReport] = useState(null);
@@ -8,6 +9,7 @@ export default function ClientInsights({ clientId }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("overview");
+  const { setOpen: setLiamOpen } = useLiam();
 
   useEffect(() => {
     const fetchInsights = async () => {
@@ -96,13 +98,10 @@ export default function ClientInsights({ clientId }) {
         </div>
         <div className="mt-3 flex justify-end">
           <button
-            onClick={() => {
-              const currentUrl = window.location.pathname;
-              window.location.href = `${currentUrl}?tab=ai-assistant`;
-            }}
+            onClick={() => setLiamOpen(true)}
             className="text-xs bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
           >
-            Go to AI Assistant
+            Ask LIAM
           </button>
         </div>
       </div>
@@ -639,13 +638,10 @@ export default function ClientInsights({ clientId }) {
           </div>
           <div className="mt-3 flex justify-end">
             <button
-              onClick={() => {
-                const currentUrl = window.location.pathname;
-                window.location.href = `${currentUrl}?tab=ai-assistant`;
-              }}
+              onClick={() => setLiamOpen(true)}
               className="text-xs bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
             >
-              Go to AI Assistant
+              Ask LIAM
             </button>
           </div>
         </div>
@@ -827,13 +823,10 @@ export default function ClientInsights({ clientId }) {
           </div>
           <div className="mt-3 flex justify-end">
             <button
-              onClick={() => {
-                const currentUrl = window.location.pathname;
-                window.location.href = `${currentUrl}?tab=ai-assistant`;
-              }}
+              onClick={() => setLiamOpen(true)}
               className="text-xs bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
             >
-              Go to AI Assistant
+              Ask LIAM
             </button>
             </div>
           </div>

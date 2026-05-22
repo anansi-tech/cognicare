@@ -6,9 +6,6 @@ import toast from "react-hot-toast";
 import ClientForm from "./ClientForm";
 import ClientInsights from "./ClientInsights";
 import ClientAnalytics from "./ClientAnalytics";
-import AIWorkflow from "./AIWorkflow";
-import SessionPrepView from "./SessionPrepView";
-import { useAIWorkflow } from "@/app/context/AIWorkflowContext";
 import { useLiam } from "@/components/liam/LiamProvider";
 import {
   getConsentFormTemplate,
@@ -96,7 +93,6 @@ export default function ClientDetail({ clientId }) {
           "treatment",
           "insights",
           "analytics",
-          "ai-assistant",
         ].includes(tabParam)
       ) {
         setActiveTab(tabParam);
@@ -599,16 +595,6 @@ export default function ClientDetail({ clientId }) {
             Analytics
           </button>
           <button
-            onClick={() => setActiveTab("ai-assistant")}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "ai-assistant"
-                ? "border-blue-500 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
-          >
-            AI Assistant
-          </button>
-          <button
             onClick={() => setActiveTab("consent-billing")}
             className={`py-2 px-1 border-b-2 font-medium text-sm ${
               activeTab === "consent-billing"
@@ -1061,28 +1047,6 @@ export default function ClientDetail({ clientId }) {
           <div className="space-y-6">
             <h2 className="text-xl font-semibold text-gray-900">Client Analytics</h2>
             <ClientAnalytics clientId={client._id} />
-          </div>
-        )}
-
-        {activeTab === "ai-assistant" && (
-          <div className="space-y-6">
-            <p className="text-gray-600 mb-4">
-              Use AI tools to help with assessment, treatment planning, and progress tracking.
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <AIWorkflow
-                  client={client}
-                  updateFunction={() => {
-                    fetchClient();
-                  }}
-                />
-              </div>
-              <div>
-                <SessionPrepView clientId={client._id} />
-              </div>
-            </div>
           </div>
         )}
 

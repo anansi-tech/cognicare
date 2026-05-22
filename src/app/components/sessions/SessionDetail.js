@@ -6,7 +6,6 @@ import Link from "next/link";
 import SessionForm from "./SessionForm";
 import SessionAIInsights from "./SessionAIInsights";
 import AIWorkflow from "../clients/AIWorkflow";
-import SessionAssistant from "./SessionAssistant";
 import { useLiam } from "@/components/liam/LiamProvider";
 
 export default function SessionDetail({ sessionId }) {
@@ -353,7 +352,6 @@ export default function SessionDetail({ sessionId }) {
           </div>
         </div>
       </div>
-      <SessionAssistant sessionId={sessionId} clientId={session.clientId} />
     </div>
   );
 }
