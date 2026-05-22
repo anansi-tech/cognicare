@@ -18,7 +18,7 @@ export async function persistReport({ agentType, summary, payload, clientId, ses
     summary,
     payload,
     source: "agent-v2",
-    metadata: { modelVersion: MODELS.clinical, timestamp: new Date() },
+    modelVersion: MODELS.clinical,
   });
   await doc.save();
   return doc;
