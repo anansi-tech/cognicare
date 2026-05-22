@@ -51,7 +51,7 @@ export async function getClientSessions(clientId, startDate, endDate) {
     clientId,
     ...(startDate && { date: { $gte: startDate } }),
     ...(endDate && { date: { $lte: endDate } }),
-    documented: true,
+    status: "completed",
   };
 
   return await Session.find(query).sort({ date: -1 }).lean();

@@ -323,7 +323,7 @@ export default function SessionDetail({ sessionId }) {
         <div id="ai-insights-section" className="bg-white shadow rounded-lg p-6">
           <div className="flex items-center mb-4">
             <h2 className="text-xl font-semibold">AI Insights</h2>
-            {session.documented && (
+            {session.status === "completed" && (
               <span className="ml-2 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
                 Analysis Available
               </span>
@@ -340,7 +340,6 @@ export default function SessionDetail({ sessionId }) {
               clientId={typeof session.clientId === "object" ? session.clientId?._id : session.clientId}
               sessionId={session._id}
               sessionStatus={session.status}
-              documented={session.documented}
               onDone={() => setAiRefreshKey((k) => k + 1)}
             />
           </div>

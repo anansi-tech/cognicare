@@ -3,11 +3,11 @@ import { useEffect, useState } from "react";
 import { useEnsureWorkflow } from "@/hooks/useEnsureWorkflow";
 import { GeneratingState } from "./GeneratingState";
 
-// Post-session trigger: when a completed + documented session has no documentation
-// report yet, run the post-session workflow. Produces the progress report and the
-// SOAP draft note.
-export function AutoPostSession({ clientId, sessionId, sessionStatus, documented, onDone }) {
-  const eligible = sessionStatus === "completed" && !!documented && !!clientId && !!sessionId;
+// Post-session trigger: when a completed session has no documentation report yet,
+// run the post-session workflow. Produces the progress report and the SOAP draft
+// note. (Notes are guaranteed by SessionForm validation on "completed".)
+export function AutoPostSession({ clientId, sessionId, sessionStatus, onDone }) {
+  const eligible = sessionStatus === "completed" && !!clientId && !!sessionId;
   const [loaded, setLoaded] = useState(false);
   const [hasDocumentation, setHasDocumentation] = useState(false);
 

@@ -20,7 +20,7 @@ export async function GET(req, { params }) {
 
     const mostRecentSession = await Session.findOne({
       clientId,
-      documented: true,
+      status: "completed",
     })
       .sort({ completedAt: -1 })
       .lean();
