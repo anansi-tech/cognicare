@@ -9,6 +9,7 @@ import AIWorkflow from "../clients/AIWorkflow";
 import { useLiam } from "@/components/liam/LiamProvider";
 import { AutoSessionPrep } from "@/components/ai/AutoSessionPrep";
 import { AutoPostSession } from "@/components/ai/AutoPostSession";
+import { SessionNote } from "@/components/sessions/SessionNote";
 
 export default function SessionDetail({ sessionId }) {
   const router = useRouter();
@@ -349,6 +350,7 @@ export default function SessionDetail({ sessionId }) {
               onDone={() => setAiRefreshKey((k) => k + 1)}
             />
           </div>
+          {!isEditing && <SessionNote sessionId={session._id} refreshKey={aiRefreshKey} />}
           {!isEditing && <SessionAIInsights session={session} refreshKey={aiRefreshKey} />}
 
           <div className="mt-8 border-t pt-6">

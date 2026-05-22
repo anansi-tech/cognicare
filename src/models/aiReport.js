@@ -12,6 +12,7 @@ const aiReportSchema = new mongoose.Schema(
     payload:     { type: mongoose.Schema.Types.Mixed, required: true },
     source:      { type: String, required: true }, // e.g. "agent-v2"
     modelVersion:{ type: String },                 // e.g. "gpt-5.5"
+    status:      { type: String, enum: ["draft", "approved"] }, // documentation notes only; others leave unset
   },
   { timestamps: true }
 );
