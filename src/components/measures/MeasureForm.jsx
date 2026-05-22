@@ -46,7 +46,7 @@ export function MeasureForm({ clientId, instrumentId, sessionId, onSaved }) {
           <Label className="text-sm">{i + 1}. {it.text}</Label>
           <RadioGroup
             className="flex flex-wrap gap-3"
-            value={responses[it.id]?.toString()}
+            value={responses[it.id]?.toString() ?? ""}
             onValueChange={(v) => setResponses((r) => ({ ...r, [it.id]: Number(v) }))}
           >
             {inst.responseOptions.map((opt) => (
