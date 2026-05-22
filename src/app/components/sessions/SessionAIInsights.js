@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAIWorkflow } from "@/app/context/AIWorkflowContext";
 
-export default function SessionAIInsights({ session }) {
+export default function SessionAIInsights({ session, refreshKey = 0 }) {
   const { status, results, activeStage } = useAIWorkflow();
   const [assessmentReport, setAssessmentReport] = useState(null);
   const [diagnosticReport, setDiagnosticReport] = useState(null);
@@ -69,7 +69,7 @@ export default function SessionAIInsights({ session }) {
     };
 
     fetchReports();
-  }, [session]);
+  }, [session, refreshKey]);
 
   // Update active tab based on AIWorkflow stage
   useEffect(() => {

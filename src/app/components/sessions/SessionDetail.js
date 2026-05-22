@@ -7,6 +7,8 @@ import SessionForm from "./SessionForm";
 import SessionAIInsights from "./SessionAIInsights";
 import AIWorkflow from "../clients/AIWorkflow";
 import { useLiam } from "@/components/liam/LiamProvider";
+import { AutoSessionPrep } from "@/components/ai/AutoSessionPrep";
+import { AutoPostSession } from "@/components/ai/AutoPostSession";
 
 export default function SessionDetail({ sessionId }) {
   const router = useRouter();
@@ -14,6 +16,7 @@ export default function SessionDetail({ sessionId }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [aiRefreshKey, setAiRefreshKey] = useState(0);
   const { bindClient } = useLiam();
 
   useEffect(() => {
@@ -331,7 +334,22 @@ export default function SessionDetail({ sessionId }) {
               </span>
             )}
           </div>
-          {!isEditing && <SessionAIInsights session={session} />}
+          <div className="mb-4 space-y-2">
+            <AutoSessionPrep
+              clientId={typeof session.clientId === "object" ? session.clientId?._id : session.clientId}
+              sessionId={session._id}
+              sessionStatus={session.status}
+              onDone={() => setAiRefreshKey((k) => k + 1)}
+            />
+            <AutoPostSession
+              clientId={typeof session.clientId === "object" ? session.clientId?._id : session.clientId}
+              sessionId={session._id}
+              sessionStatus={session.status}
+              documented={session.documented}
+              onDone={() => setAiRefreshKey((k) => k + 1)}
+            />
+          </div>
+          {!isEditing && <SessionAIInsights session={session} refreshKey={aiRefreshKey} />}
 
           <div className="mt-8 border-t pt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

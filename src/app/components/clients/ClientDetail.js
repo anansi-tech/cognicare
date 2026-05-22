@@ -8,6 +8,7 @@ import ClientInsights from "./ClientInsights";
 import ClientAnalytics from "./ClientAnalytics";
 import { MeasuresPanel } from "@/components/measures/MeasuresPanel";
 import { useLiam } from "@/components/liam/LiamProvider";
+import { AutoIntake } from "@/components/ai/AutoIntake";
 import {
   getConsentFormTemplate,
   getAvailableTemplates,
@@ -45,6 +46,7 @@ export default function ClientDetail({ clientId }) {
   const [consentFormFile, setConsentFormFile] = useState(null);
   const [availableTemplates, setAvailableTemplates] = useState([]);
   const [showNewClientReminder, setShowNewClientReminder] = useState(false);
+  const [aiRefreshKey, setAiRefreshKey] = useState(0);
   const router = useRouter();
   const { bindClient } = useLiam();
 
@@ -619,6 +621,11 @@ export default function ClientDetail({ clientId }) {
         </nav>
       </div>
 
+      {/* Auto-run intake on first view of a client without an assessment. */}
+      <div className="mb-4">
+        <AutoIntake clientId={clientId} onDone={() => setAiRefreshKey((k) => k + 1)} />
+      </div>
+
       {/* Tab Content */}
       <div className="bg-white shadow rounded-lg p-6">
         {activeTab === "overview" && (
@@ -1051,7 +1058,7 @@ export default function ClientDetail({ clientId }) {
         {activeTab === "insights" && (
           <div className="space-y-6">
             <h2 className="text-xl font-semibold text-gray-900">Clinical Insights</h2>
-            <ClientInsights clientId={client._id} />
+            <ClientInsights clientId={client._id} refreshKey={aiRefreshKey} />
           </div>
         )}
 

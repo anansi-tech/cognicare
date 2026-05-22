@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLiam } from "@/components/liam/LiamProvider";
 
-export default function ClientInsights({ clientId }) {
+export default function ClientInsights({ clientId, refreshKey = 0 }) {
   const [assessmentReport, setAssessmentReport] = useState(null);
   const [diagnosticReport, setDiagnosticReport] = useState(null);
   const [treatmentReport, setTreatmentReport] = useState(null);
@@ -69,7 +69,7 @@ export default function ClientInsights({ clientId }) {
     if (clientId) {
       fetchInsights();
     }
-  }, [clientId]);
+  }, [clientId, refreshKey]);
 
   if (loading) {
     return (
