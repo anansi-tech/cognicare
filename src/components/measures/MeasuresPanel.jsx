@@ -34,12 +34,17 @@ export function MeasuresPanel({ clientId, sessionId }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-end gap-2">
-        <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+        <div className="flex flex-col gap-1 sm:flex-1">
           <span className="text-sm font-medium text-gray-700">Administer measure</span>
           <Select value={chosenId} onValueChange={setChosenId}>
-            <SelectTrigger className="w-64">
-              <SelectValue placeholder="Choose a measure" />
+            <SelectTrigger className="w-full sm:max-w-md">
+              <SelectValue placeholder="Choose a measure">
+                {(value) => {
+                  const inst = instruments.find((i) => i.id === value);
+                  return inst ? `${inst.name} (${inst.construct})` : "Choose a measure";
+                }}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {instruments.map((i) => (
@@ -62,7 +67,7 @@ export function MeasuresPanel({ clientId, sessionId }) {
               {instruments.find((i) => i.id === chosenId)?.name ?? "Measure"}
             </SheetTitle>
           </SheetHeader>
-          <div className="overflow-y-auto pr-1">
+          <div className="overflow-y-auto px-4 pb-4">
             {chosenId && formOpen && (
               <MeasureForm
                 clientId={clientId}
