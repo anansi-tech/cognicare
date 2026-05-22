@@ -1,228 +1,121 @@
 import { z } from "zod";
 
-// Assessment schema
-export const assessmentSchema = z
-  .object({
-    summary: z
-      .string()
-      .describe(
-        "Brief summary (2-3 sentences) highlighting: 1) Overall risk level and key concerns, 2) Most significant clinical observations, 3) Immediate priorities for intervention"
-      ),
-    riskLevel: z.string(),
-    primaryConcerns: z.array(z.string()),
-    riskFactors: z.array(z.string()),
-    recommendedAssessmentTools: z.array(z.string()),
-    initialClinicalObservations: z.string(),
-    suggestedNextSteps: z.array(z.string()),
-    areasRequiringImmediateAttention: z.array(z.string()).optional(),
-  })
-  .passthrough();
+// ---- Shared vocab ----------------------------------------------------------
+// Collapsed from the old 9-value soup to a clean ordinal clinical scale.
+// "imminent" means an active safety concern requiring immediate action.
+export const RiskLevel = z.enum(["none", "low", "moderate", "high", "imminent"]);
 
-// Diagnostic schema
-export const diagnosticSchema = z
-  .object({
-    summary: z
-      .string()
-      .describe(
-        "Brief summary (2-3 sentences) highlighting: 1) Primary diagnosis and severity, 2) Key differential diagnoses, 3) Most significant clinical implications"
-      ),
-    primaryDiagnosis: z.object({
-      code: z.string(),
-      name: z.string(),
-      description: z.string().optional(),
-      confidence: z.string(),
-      criteria: z.array(z.string()),
-      rationale: z.string(),
-    }),
-    differentialDiagnoses: z.array(
-      z.object({
-        code: z.string(),
-        name: z.string(),
-        description: z.string().optional(),
-        confidence: z.string(),
-        criteria: z.array(z.string()),
-        rationale: z.string(),
-      })
-    ),
-    ruleOutConditions: z.array(z.string()),
-    severityIndicators: z.array(z.string()),
-    riskFactors: z.array(z.string()),
-    culturalConsiderations: z.array(z.string()),
-    recommendedAssessments: z.array(z.string()),
-    clinicalJustification: z.string(),
-    treatmentImplications: z.array(z.string()),
-    comorbidityAssessment: z.object({
-      present: z.boolean(),
-      conditions: z
-        .array(
-          z.object({
-            code: z.string(),
-            name: z.string(),
-            confidence: z.string(),
-            criteria: z.array(z.string()),
-            rationale: z.string(),
-          })
-        )
-        .optional(),
-      overallImpact: z.string().optional(),
-      managementStrategy: z.string().optional(),
-    }),
-  })
-  .passthrough();
+const Confidence = z.enum(["low", "moderate", "high"]);
 
-// Treatment schema
-export const treatmentSchema = z
-  .object({
-    summary: z
-      .string()
-      .describe(
-        "Brief summary (2-3 sentences) highlighting: 1) Primary treatment approach, 2) Key short-term goals, 3) Most critical interventions"
-      ),
-    goals: z.object({
-      shortTerm: z.array(z.string()),
-      longTerm: z.array(z.string()),
-    }),
-    interventions: z.array(z.string()),
-    timeline: z.array(
-      z.object({
-        milestone: z.string(),
-        timeframe: z.string(),
-      })
-    ),
-    measurableOutcomes: z.array(z.string()),
-    progressIndicators: z.array(z.string()),
-    recommendedApproaches: z.array(z.string()),
-    potentialBarriers: z.array(z.string()),
-    successMetrics: z.array(z.string()),
-  })
-  .passthrough();
+const DiagnosisCandidate = z.object({
+  code: z.string().describe("ICD-10 or DSM-5-TR code, e.g. F32.1"),
+  name: z.string(),
+  confidence: Confidence,
+  criteriaMet: z.array(z.string()),
+  rationale: z.string(),
+});
 
-// Progress schema
-export const progressSchema = z
-  .object({
-    summary: z
-      .string()
-      .describe(
-        "Brief summary (2-3 sentences) highlighting: 1) Overall progress status with metrics, 2) Key changes since last session, 3) Most significant achievement or concern"
-      ),
-    goalAchievementStatus: z.array(
-      z.object({
-        goal: z.string(),
-        status: z.string(),
-        notes: z.string().optional(),
-      })
-    ),
-    keyObservations: z.array(z.string()),
-    treatmentEffectiveness: z.string(),
-    identifiedBarriers: z.array(z.string()),
-    areasOfImprovement: z.array(z.string()),
-    areasNeedingFocus: z.array(z.string()),
-    recommendations: z.array(z.string()),
-    nextSteps: z.array(z.string()),
-    treatmentPlanAdjustments: z.array(z.string()),
-    metrics: z.object({
-      overallProgress: z.number(),
-      symptomSeverity: z.number(),
-      treatmentAdherence: z.number(),
-      riskLevel: z.number(),
-    }),
-  })
-  .passthrough();
+// ---- Per-agent payloads ----------------------------------------------------
+export const assessmentPayload = z.object({
+  riskLevel: RiskLevel,
+  primaryConcerns: z.array(z.string()),
+  riskFactors: z.array(z.string()),
+  protectiveFactors: z.array(z.string()),
+  recommendedInstruments: z.array(z.string())
+    .describe("Standardized measures to administer, e.g. PHQ-9, GAD-7, PCL-5"),
+  clinicalObservations: z.string(),
+  immediateAttention: z.array(z.string())
+    .describe("Items needing same-day clinical action; empty array if none"),
+  suggestedNextSteps: z.array(z.string()),
+});
 
-// Documentation schema
-export const documentationSchema = z
-  .object({
-    summary: z
-      .string()
-      .describe(
-        "Brief summary (2-3 sentences) highlighting: 1) Key session events, 2) Most significant clinical observations, 3) Critical follow-up actions, 4) Highlight key metrics and progress indicators"
-      ),
-    soap: z.object({
-      subjective: z.string(),
-      objective: z.string(),
-      assessment: z.string(),
-      plan: z.string(),
-    }),
-    clinicalDocumentation: z
-      .object({
-        initialObservations: z.string(),
-        riskAssessmentSummary: z.string(),
-        diagnosticConsiderations: z.string(),
-        treatmentGoalsAndInterventions: z.array(z.string()),
-        progressIndicators: z.array(z.string()),
-        treatmentEffectivenessAnalysis: z.string(),
-        followUpRecommendations: z.array(z.string()),
-      })
-      .passthrough(),
-    additionalComponents: z
-      .object({
-        areasRequiringImmediateAttention: z.array(z.string()).optional(),
-        recommendedAssessmentTools: z.array(z.string()),
-        specificInterventions: z.array(z.string()),
-        progressMetrics: z.array(z.string()),
-        nextSessionFocus: z.string(),
-      })
-      .optional(),
-    progressSummary: z.object({
-      treatmentGoalsProgress: z.array(
-        z.object({
-          goal: z.string(),
-          progress: z.string(),
-          metrics: z
-            .object({
-              currentScore: z.union([z.string(), z.number()]),
-              targetScore: z.union([z.string(), z.number()]),
-              progressPercentage: z.string(),
-            })
-            .optional(),
-        })
-      ),
-      outcomesMeasurement: z.array(z.string()),
-      areasOfImprovement: z.array(z.string()),
-      challengesAndBarriers: z.array(z.string()),
-      treatmentPlanAdjustments: z.array(z.string()),
-      longTermProgressIndicators: z.array(z.string()),
-    }),
-  })
-  .passthrough();
+export const diagnosticPayload = z.object({
+  primaryDiagnosis: DiagnosisCandidate,
+  differentials: z.array(DiagnosisCandidate),
+  ruleOut: z.array(z.string()),
+  comorbidities: z.array(DiagnosisCandidate),
+  culturalConsiderations: z.array(z.string()),
+  clinicalJustification: z.string(),
+});
 
-// Conversational response schema
-export const conversationalSchema = z
-  .object({
-    response: z.string(),
-    relevantData: z.object({
-      sessions: z.array(z.string()).optional(),
-      reports: z.array(z.string()).optional(),
-    }),
-  })
-  .passthrough();
+export const treatmentPayload = z.object({
+  approach: z.string().describe("Primary evidence-based modality, e.g. CBT, DBT, ACT"),
+  goals: z.array(z.object({
+    goal: z.string(),
+    measurable: z.string().describe("How progress is measured, ideally tied to an instrument"),
+    targetTimeframe: z.string(),
+  })),
+  interventions: z.array(z.string()),
+  homework: z.array(z.string()),
+  referrals: z.array(z.string()),
+  reviewCadence: z.string().describe("When to re-administer measures / reassess"),
+});
 
-// Combined schema that can handle any agent type
-export const combinedSchema = z.union([
-  assessmentSchema,
-  diagnosticSchema,
-  treatmentSchema,
-  progressSchema,
-  documentationSchema,
-  conversationalSchema,
+export const progressPayload = z.object({
+  goalProgress: z.array(z.object({
+    goal: z.string(),
+    status: z.enum(["not-started", "emerging", "progressing", "met", "regressed"]),
+    notes: z.string(),
+  })),
+  // MBC: the agent INTERPRETS the trend it is given in context. It does not invent scores.
+  measureInterpretation: z.array(z.object({
+    instrumentId: z.string(),
+    latestScore: z.number(),
+    previousScore: z.number().nullable(),
+    direction: z.enum(["improved", "worsened", "unchanged", "insufficient-data"]),
+    reliableChange: z.boolean()
+      .describe("True if change exceeds the instrument's reliable-change threshold"),
+    interpretation: z.string(),
+  })),
+  treatmentEffectiveness: z.string(),
+  barriers: z.array(z.string()),
+  reassessmentRecommended: z.boolean(),
+  recommendations: z.array(z.string()),
+  nextSessionFocus: z.string(),
+});
+
+export const documentationPayload = z.object({
+  soap: z.object({
+    subjective: z.string(),
+    objective: z.string(),
+    assessment: z.string(),
+    plan: z.string(),
+  }),
+  measuresAdministered: z.array(z.object({
+    instrumentId: z.string(),
+    score: z.number(),
+    severityBand: z.string(),
+  })).describe("Echo of instruments scored this session; empty if none"),
+  riskStatement: z.string().describe("Explicit risk documentation for the record"),
+  followUp: z.array(z.string()),
+  cptHint: z.string().optional().describe("Suggested CPT/service code, advisory only"),
+});
+
+// ---- Envelope --------------------------------------------------------------
+function envelope(agentType, payload) {
+  return z.object({
+    agentType: z.literal(agentType),
+    summary: z.string()
+      .describe("2-3 sentence clinical summary: headline status, key change, top priority."),
+    payload,
+  });
+}
+
+export const ENVELOPES = {
+  assessment: envelope("assessment", assessmentPayload),
+  diagnostic: envelope("diagnostic", diagnosticPayload),
+  treatment: envelope("treatment", treatmentPayload),
+  progress: envelope("progress", progressPayload),
+  documentation: envelope("documentation", documentationPayload),
+};
+
+// Discriminated union for persistence-layer validation.
+export const ReportEnvelope = z.discriminatedUnion("agentType", [
+  ENVELOPES.assessment,
+  ENVELOPES.diagnostic,
+  ENVELOPES.treatment,
+  ENVELOPES.progress,
+  ENVELOPES.documentation,
 ]);
 
-// Helper function to get schema by agent type
-export function getSchemaByType(agentType) {
-  switch (agentType) {
-    case "assessment":
-      return assessmentSchema;
-    case "diagnostic":
-      return diagnosticSchema;
-    case "treatment":
-      return treatmentSchema;
-    case "progress":
-      return progressSchema;
-    case "documentation":
-      return documentationSchema;
-    case "conversational":
-      return conversationalSchema;
-    default:
-      return combinedSchema;
-  }
-}
+export const AGENT_TYPES = Object.keys(ENVELOPES);
