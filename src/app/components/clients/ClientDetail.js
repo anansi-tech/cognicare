@@ -9,6 +9,7 @@ import ClientAnalytics from "./ClientAnalytics";
 import AIWorkflow from "./AIWorkflow";
 import SessionPrepView from "./SessionPrepView";
 import { useAIWorkflow } from "@/app/context/AIWorkflowContext";
+import { useLiam } from "@/components/liam/LiamProvider";
 import {
   getConsentFormTemplate,
   getAvailableTemplates,
@@ -47,6 +48,13 @@ export default function ClientDetail({ clientId }) {
   const [availableTemplates, setAvailableTemplates] = useState([]);
   const [showNewClientReminder, setShowNewClientReminder] = useState(false);
   const router = useRouter();
+  const { bindClient } = useLiam();
+
+  // Bind LIAM to this client so Ask LIAM / Cmd-K consults this record.
+  useEffect(() => {
+    if (!clientId) return;
+    bindClient(clientId, client?.name ?? "");
+  }, [clientId, client?.name, bindClient]);
 
   useEffect(() => {
     // Check sessionStorage for the flag on initial load

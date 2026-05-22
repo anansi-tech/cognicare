@@ -7,6 +7,7 @@ import SessionForm from "./SessionForm";
 import SessionAIInsights from "./SessionAIInsights";
 import AIWorkflow from "../clients/AIWorkflow";
 import SessionAssistant from "./SessionAssistant";
+import { useLiam } from "@/components/liam/LiamProvider";
 
 export default function SessionDetail({ sessionId }) {
   const router = useRouter();
@@ -14,11 +15,21 @@ export default function SessionDetail({ sessionId }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const { bindClient } = useLiam();
 
   useEffect(() => {
     if (!sessionId) return;
     fetchSession();
   }, [sessionId]);
+
+  // Bind LIAM to this session's client.
+  useEffect(() => {
+    const c = session?.clientId;
+    if (!c) return;
+    const id = typeof c === "object" ? (c._id ?? c.id) : c;
+    const name = typeof c === "object" ? (c.name ?? "") : "";
+    if (id) bindClient(id, name);
+  }, [session?.clientId, bindClient]);
 
   const fetchSession = async () => {
     try {
