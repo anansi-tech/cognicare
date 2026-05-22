@@ -40,12 +40,6 @@ const sessionSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
-    // Basic session metrics
-    moodRating: {
-      type: Number,
-      min: 1,
-      max: 10,
-    },
     // Session documentation status
     documented: {
       type: Boolean,

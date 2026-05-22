@@ -24,7 +24,6 @@ export default function SessionForm({
     concerns: "",
     progress: "",
     nextSteps: "",
-    moodRating: 5,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -62,7 +61,6 @@ export default function SessionForm({
         concerns: session.concerns || "",
         progress: session.progress || "",
         nextSteps: session.nextSteps || "",
-        moodRating: session.moodRating || 5,
       });
     }
   }, [session]);
@@ -281,22 +279,6 @@ export default function SessionForm({
             <option value="completed">Completed</option>
             <option value="cancelled">Cancelled</option>
           </select>
-        </div>
-
-        {/* Mood Rating */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Client Mood Rating (1-10)
-          </label>
-          <input
-            type="number"
-            name="moodRating"
-            value={formData.moodRating}
-            onChange={handleChange}
-            min="1"
-            max="10"
-            className="w-full p-2 border border-gray-300 rounded"
-          />
         </div>
 
         {/* Session Notes */}

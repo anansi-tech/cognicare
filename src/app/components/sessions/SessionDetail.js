@@ -292,12 +292,6 @@ export default function SessionDetail({ sessionId }) {
             <div>
               <h2 className="text-lg font-medium text-gray-900 mb-2">Session Details</h2>
               <dl className="divide-y divide-gray-200">
-                {session.moodRating && (
-                  <div className="py-2 grid grid-cols-3">
-                    <dt className="text-sm font-medium text-gray-500">Client Mood Rating</dt>
-                    <dd className="text-sm text-gray-900 col-span-2">{session.moodRating}/10</dd>
-                  </div>
-                )}
                 <div className="py-2 grid grid-cols-3">
                   <dt className="text-sm font-medium text-gray-500">Created</dt>
                   <dd className="text-sm text-gray-900 col-span-2">

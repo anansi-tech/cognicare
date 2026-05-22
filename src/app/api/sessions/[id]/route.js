@@ -38,7 +38,7 @@ export const PATCH = requireAuth(async (req) => {
     const id = url.pathname.split("/").pop();
 
     const body = await req.json();
-    const { notes, status, moodRating, date, duration, type, format } = body;
+    const { notes, status, date, duration, type, format } = body;
 
     // Find the session and ensure it belongs to the counselor
     const existingSession = await Session.findOne({
@@ -53,7 +53,6 @@ export const PATCH = requireAuth(async (req) => {
     // Update all editable fields if they are provided
     if (notes !== undefined) existingSession.notes = notes;
     if (status !== undefined) existingSession.status = status;
-    if (moodRating !== undefined) existingSession.moodRating = moodRating;
     if (date !== undefined) existingSession.date = new Date(date);
     if (duration !== undefined) existingSession.duration = duration;
     if (type !== undefined) existingSession.type = type;
