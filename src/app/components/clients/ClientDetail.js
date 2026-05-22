@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import ClientForm from "./ClientForm";
 import ClientInsights from "./ClientInsights";
 import ClientAnalytics from "./ClientAnalytics";
+import { MeasuresPanel } from "@/components/measures/MeasuresPanel";
 import { useLiam } from "@/components/liam/LiamProvider";
 import {
   getConsentFormTemplate,
@@ -93,6 +94,7 @@ export default function ClientDetail({ clientId }) {
           "treatment",
           "insights",
           "analytics",
+          "measures",
         ].includes(tabParam)
       ) {
         setActiveTab(tabParam);
@@ -595,6 +597,16 @@ export default function ClientDetail({ clientId }) {
             Analytics
           </button>
           <button
+            onClick={() => setActiveTab("measures")}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === "measures"
+                ? "border-blue-500 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+            }`}
+          >
+            Measures
+          </button>
+          <button
             onClick={() => setActiveTab("consent-billing")}
             className={`py-2 px-1 border-b-2 font-medium text-sm ${
               activeTab === "consent-billing"
@@ -1047,6 +1059,13 @@ export default function ClientDetail({ clientId }) {
           <div className="space-y-6">
             <h2 className="text-xl font-semibold text-gray-900">Client Analytics</h2>
             <ClientAnalytics clientId={client._id} />
+          </div>
+        )}
+
+        {activeTab === "measures" && (
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold text-gray-900">Measures</h2>
+            <MeasuresPanel clientId={client._id} />
           </div>
         )}
 
