@@ -1,6 +1,28 @@
 import AIReport from "@/models/aiReport";
 import Session from "@/models/session";
 import Client from "@/models/client";
+import { connectDB } from "@/lib/mongodb";
+import { MODELS } from "@/lib/ai/client";
+
+/**
+ * Persist a validated envelope ({ agentType, summary, payload }) as an AIReport doc.
+ * Caller supplies clientId, sessionId (optional), userId.
+ */
+export async function persistReport({ agentType, summary, payload, clientId, sessionId, userId }) {
+  await connectDB();
+  const doc = new AIReport({
+    clientId,
+    counselorId: userId,
+    sessionId,
+    agentType,
+    summary,
+    payload,
+    source: "agent-v2",
+    metadata: { modelVersion: MODELS.clinical, timestamp: new Date() },
+  });
+  await doc.save();
+  return doc;
+}
 
 /**
  * Get all relevant AI reports for a client within a date range
