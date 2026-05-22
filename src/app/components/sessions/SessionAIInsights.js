@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AgentReportBody } from "@/components/ai/AgentReportBody";
 
 // Renders the five specialist agent envelopes for a session/client in tabs.
 // Reads the new schemas/agent envelope shape — { agentType, summary, payload }.
@@ -17,60 +18,6 @@ function pickLatest(reports, agentType) {
     .filter((r) => r.agentType === agentType)
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
 }
-
-const titleCase = (s) =>
-  typeof s === "string" && s.length > 0 ? s.charAt(0).toUpperCase() + s.slice(1) : s;
-
-function Section({ title, children }) {
-  return (
-    <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-      <h4 className="text-md font-semibold text-gray-700 mb-3">{title}</h4>
-      {children}
-    </div>
-  );
-}
-
-function BulletList({ items, color = "blue" }) {
-  if (!items?.length) return null;
-  return (
-    <ul className="space-y-2">
-      {items.map((item, i) => (
-        <li key={i} className="flex items-start gap-2">
-          <span className={`text-${color}-500 mt-1`}>•</span>
-          <span className="text-gray-700">{item}</span>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function Summary({ envelope }) {
-  if (!envelope?.summary) return null;
-  return (
-    <div className="bg-blue-50 p-4 rounded-lg">
-      <h4 className="text-md font-semibold text-gray-700 mb-2">Summary</h4>
-      <p className="text-gray-700 leading-relaxed">{envelope.summary}</p>
-    </div>
-  );
-}
-
-const riskBadgeClass = (level) =>
-  ({
-    none: "bg-green-100 text-green-800",
-    low: "bg-blue-100 text-blue-800",
-    moderate: "bg-yellow-100 text-yellow-800",
-    high: "bg-orange-100 text-orange-800",
-    imminent: "bg-red-100 text-red-800",
-  })[level] || "bg-gray-100 text-gray-800";
-
-const goalStatusClass = (status) =>
-  ({
-    "not-started": "bg-gray-100 text-gray-800",
-    emerging: "bg-blue-100 text-blue-800",
-    progressing: "bg-yellow-100 text-yellow-800",
-    met: "bg-green-100 text-green-800",
-    regressed: "bg-red-100 text-red-800",
-  })[status] || "bg-gray-100 text-gray-800";
 
 export default function SessionAIInsights({ session, refreshKey = 0 }) {
   const [assessment, setAssessment] = useState(null);
@@ -165,60 +112,15 @@ export default function SessionAIInsights({ session, refreshKey = 0 }) {
       <div className="mt-4 space-y-6">
         {/* Assessment */}
         {activeTab === "assessment" &&
-          (ap ? (
+          (assessment ? (
             <>
-              <Summary envelope={assessment} />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Section title="Risk Level">
-                  <span
-                    className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${riskBadgeClass(
-                      ap.riskLevel
-                    )}`}
-                  >
-                    {titleCase(ap.riskLevel)}
-                  </span>
-                </Section>
-                <Section title="Primary Concerns">
-                  <BulletList items={ap.primaryConcerns} color="blue" />
-                </Section>
-              </div>
-
-              {ap.immediateAttention?.length > 0 && (
-                <Section title="Areas Requiring Immediate Attention">
-                  <BulletList items={ap.immediateAttention} color="red" />
-                </Section>
+              {assessment.summary && (
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <h4 className="text-md font-semibold text-gray-700 mb-2">Summary</h4>
+                  <p className="text-gray-700 leading-relaxed">{assessment.summary}</p>
+                </div>
               )}
-
-              {ap.riskFactors?.length > 0 && (
-                <Section title="Risk Factors">
-                  <BulletList items={ap.riskFactors} color="red" />
-                </Section>
-              )}
-
-              {ap.protectiveFactors?.length > 0 && (
-                <Section title="Protective Factors">
-                  <BulletList items={ap.protectiveFactors} color="green" />
-                </Section>
-              )}
-
-              {ap.recommendedInstruments?.length > 0 && (
-                <Section title="Recommended Measures">
-                  <BulletList items={ap.recommendedInstruments} color="purple" />
-                </Section>
-              )}
-
-              {ap.clinicalObservations && (
-                <Section title="Clinical Observations">
-                  <p className="text-gray-700 leading-relaxed">{ap.clinicalObservations}</p>
-                </Section>
-              )}
-
-              {ap.suggestedNextSteps?.length > 0 && (
-                <Section title="Suggested Next Steps">
-                  <BulletList items={ap.suggestedNextSteps} color="green" />
-                </Section>
-              )}
+              <AgentReportBody agentType="assessment" payload={ap} />
             </>
           ) : (
             <p className="text-sm text-gray-500">No assessment yet.</p>
@@ -226,91 +128,15 @@ export default function SessionAIInsights({ session, refreshKey = 0 }) {
 
         {/* Diagnostic */}
         {activeTab === "diagnostic" &&
-          (dp ? (
+          (diagnostic ? (
             <>
-              <Summary envelope={diagnostic} />
-
-              {dp.primaryDiagnosis && (
-                <Section title="Primary Diagnosis">
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <p className="font-medium text-gray-800">{dp.primaryDiagnosis.name}</p>
-                        <p className="text-sm text-gray-500">Code: {dp.primaryDiagnosis.code}</p>
-                      </div>
-                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
-                        {titleCase(dp.primaryDiagnosis.confidence)} confidence
-                      </span>
-                    </div>
-                    {dp.primaryDiagnosis.rationale && (
-                      <p className="text-gray-700 mt-2">{dp.primaryDiagnosis.rationale}</p>
-                    )}
-                    {dp.primaryDiagnosis.criteriaMet?.length > 0 && (
-                      <div className="mt-3">
-                        <h5 className="text-sm font-medium text-gray-700 mb-2">Criteria Met</h5>
-                        <BulletList items={dp.primaryDiagnosis.criteriaMet} color="blue" />
-                      </div>
-                    )}
-                  </div>
-                </Section>
+              {diagnostic.summary && (
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <h4 className="text-md font-semibold text-gray-700 mb-2">Summary</h4>
+                  <p className="text-gray-700 leading-relaxed">{diagnostic.summary}</p>
+                </div>
               )}
-
-              {dp.differentials?.length > 0 && (
-                <Section title="Differential Diagnoses">
-                  <ul className="space-y-2">
-                    {dp.differentials.map((d, i) => (
-                      <li key={i} className="bg-gray-50 p-3 rounded-lg">
-                        <div className="flex justify-between">
-                          <span className="font-medium text-gray-800">
-                            {d.name} <span className="text-xs text-gray-500">({d.code})</span>
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {titleCase(d.confidence)} confidence
-                          </span>
-                        </div>
-                        {d.rationale && (
-                          <p className="text-sm text-gray-700 mt-1">{d.rationale}</p>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </Section>
-              )}
-
-              {dp.ruleOut?.length > 0 && (
-                <Section title="Rule Out">
-                  <BulletList items={dp.ruleOut} color="red" />
-                </Section>
-              )}
-
-              {dp.comorbidities?.length > 0 && (
-                <Section title="Comorbidities">
-                  <ul className="space-y-2">
-                    {dp.comorbidities.map((c, i) => (
-                      <li key={i} className="bg-gray-50 p-3 rounded-lg">
-                        <span className="font-medium text-gray-800">
-                          {c.name} <span className="text-xs text-gray-500">({c.code})</span>
-                        </span>
-                        {c.rationale && (
-                          <p className="text-sm text-gray-700 mt-1">{c.rationale}</p>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </Section>
-              )}
-
-              {dp.culturalConsiderations?.length > 0 && (
-                <Section title="Cultural Considerations">
-                  <BulletList items={dp.culturalConsiderations} color="purple" />
-                </Section>
-              )}
-
-              {dp.clinicalJustification && (
-                <Section title="Clinical Justification">
-                  <p className="text-gray-700 leading-relaxed">{dp.clinicalJustification}</p>
-                </Section>
-              )}
+              <AgentReportBody agentType="diagnostic" payload={dp} />
             </>
           ) : (
             <p className="text-sm text-gray-500">No diagnostic yet.</p>
@@ -318,61 +144,15 @@ export default function SessionAIInsights({ session, refreshKey = 0 }) {
 
         {/* Treatment */}
         {activeTab === "treatment" &&
-          (tp ? (
+          (treatment ? (
             <>
-              <Summary envelope={treatment} />
-
-              {tp.approach && (
-                <Section title="Approach">
-                  <p className="text-gray-700">{tp.approach}</p>
-                </Section>
+              {treatment.summary && (
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <h4 className="text-md font-semibold text-gray-700 mb-2">Summary</h4>
+                  <p className="text-gray-700 leading-relaxed">{treatment.summary}</p>
+                </div>
               )}
-
-              {tp.goals?.length > 0 && (
-                <Section title="Goals">
-                  <ul className="space-y-3">
-                    {tp.goals.map((g, i) => (
-                      <li key={i} className="bg-gray-50 p-3 rounded-lg">
-                        <p className="font-medium text-gray-800">{g.goal}</p>
-                        {g.measurable && (
-                          <p className="text-sm text-gray-700 mt-1">
-                            <span className="text-gray-500">Measurable:</span> {g.measurable}
-                          </p>
-                        )}
-                        {g.targetTimeframe && (
-                          <p className="text-sm text-gray-700">
-                            <span className="text-gray-500">Timeframe:</span> {g.targetTimeframe}
-                          </p>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </Section>
-              )}
-
-              {tp.interventions?.length > 0 && (
-                <Section title="Interventions">
-                  <BulletList items={tp.interventions} color="blue" />
-                </Section>
-              )}
-
-              {tp.homework?.length > 0 && (
-                <Section title="Between-session Homework">
-                  <BulletList items={tp.homework} color="green" />
-                </Section>
-              )}
-
-              {tp.referrals?.length > 0 && (
-                <Section title="Referrals">
-                  <BulletList items={tp.referrals} color="purple" />
-                </Section>
-              )}
-
-              {tp.reviewCadence && (
-                <Section title="Review Cadence">
-                  <p className="text-gray-700">{tp.reviewCadence}</p>
-                </Section>
-              )}
+              <AgentReportBody agentType="treatment" payload={tp} />
             </>
           ) : (
             <p className="text-sm text-gray-500">No treatment plan yet.</p>
@@ -380,98 +160,15 @@ export default function SessionAIInsights({ session, refreshKey = 0 }) {
 
         {/* Progress */}
         {activeTab === "progress" &&
-          (pp ? (
+          (progress ? (
             <>
-              <Summary envelope={progress} />
-
-              {pp.goalProgress?.length > 0 && (
-                <Section title="Goal Progress">
-                  <ul className="space-y-2">
-                    {pp.goalProgress.map((g, i) => (
-                      <li key={i} className="bg-gray-50 p-3 rounded-lg">
-                        <div className="flex justify-between items-start gap-3">
-                          <span className="text-gray-800">{g.goal}</span>
-                          <span
-                            className={`shrink-0 px-2 py-1 rounded-full text-xs font-medium ${goalStatusClass(
-                              g.status
-                            )}`}
-                          >
-                            {titleCase(g.status)}
-                          </span>
-                        </div>
-                        {g.notes && <p className="text-sm text-gray-600 mt-1">{g.notes}</p>}
-                      </li>
-                    ))}
-                  </ul>
-                </Section>
-              )}
-
-              {pp.measureInterpretation?.length > 0 && (
-                <Section title="Measure Interpretation">
-                  <ul className="space-y-2">
-                    {pp.measureInterpretation.map((m, i) => (
-                      <li key={i} className="bg-gray-50 p-3 rounded-lg">
-                        <div className="flex justify-between">
-                          <span className="font-medium text-gray-800">{m.instrumentId}</span>
-                          <span className="text-xs text-gray-500">
-                            {titleCase(m.direction)}
-                            {m.reliableChange ? " · reliable" : ""}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-700 mt-1">
-                          {m.latestScore}
-                          {m.previousScore != null && (
-                            <span className="text-gray-500"> (was {m.previousScore})</span>
-                          )}
-                        </p>
-                        {m.interpretation && (
-                          <p className="text-sm text-gray-700 mt-1">{m.interpretation}</p>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </Section>
-              )}
-
-              {pp.treatmentEffectiveness && (
-                <Section title="Treatment Effectiveness">
-                  <p className="text-gray-700 leading-relaxed">{pp.treatmentEffectiveness}</p>
-                </Section>
-              )}
-
-              {pp.barriers?.length > 0 && (
-                <Section title="Barriers">
-                  <BulletList items={pp.barriers} color="red" />
-                </Section>
-              )}
-
-              {pp.recommendations?.length > 0 && (
-                <Section title="Recommendations">
-                  <BulletList items={pp.recommendations} color="green" />
-                </Section>
-              )}
-
-              {pp.nextSessionFocus && (
-                <Section title="Next Session Focus">
-                  <p className="text-gray-700">{pp.nextSessionFocus}</p>
-                </Section>
-              )}
-
-              {pp.reassessmentRecommended !== undefined && (
-                <div
-                  className={`p-4 rounded-lg border ${
-                    pp.reassessmentRecommended
-                      ? "bg-yellow-50 border-yellow-200"
-                      : "bg-green-50 border-green-200"
-                  }`}
-                >
-                  <p className="font-medium text-gray-800">
-                    {pp.reassessmentRecommended
-                      ? "Reassessment Recommended"
-                      : "No Reassessment Needed"}
-                  </p>
+              {progress.summary && (
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <h4 className="text-md font-semibold text-gray-700 mb-2">Summary</h4>
+                  <p className="text-gray-700 leading-relaxed">{progress.summary}</p>
                 </div>
               )}
+              <AgentReportBody agentType="progress" payload={pp} />
             </>
           ) : (
             <p className="text-sm text-gray-500">No progress evaluation yet.</p>
