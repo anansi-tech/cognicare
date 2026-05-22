@@ -1,52 +1,36 @@
-import { openai } from "@ai-sdk/openai";
-import { streamText, generateObject } from "ai";
-import { getSchemaByType } from "./schemas";
+import { generateObject } from "ai";
+import { openai, MODELS } from "./client";
+import { ENVELOPES } from "./schemas";
+import { loadPrompt } from "./prompts";
 
-export async function createAgentStream(messages, context) {
-  try {
-    const result = await streamText({
-      model: openai("gpt-3.5-turbo"),
-      messages: [
-        {
-          role: "system",
-          content: "You are a professional mental health AI assistant.",
-        },
-        ...messages,
-      ],
-      temperature: 0.7,
-    });
+/**
+ * Run one specialist agent. Returns a validated { agentType, summary, payload } envelope.
+ * Prompt ordering is static-first for OpenAI prefix caching:
+ *   system prompt (static) -> client context block (semi-static) -> request tail (dynamic).
+ */
+export async function runAgent({ agentType, clientBlock, requestBlock, model = MODELS.clinical }) {
+  const system = await loadPrompt(agentType);
+  const schema = ENVELOPES[agentType];
 
-    return result.toAIStreamResponse();
-  } catch (error) {
-    console.error("Stream generation error:", error);
-    throw new Error("Failed to generate stream response");
-  }
+  const { object } = await generateObject({
+    model: openai(model),
+    schema,
+    schemaName: `${agentType}_report`,
+    messages: [
+      { role: "system", content: system },
+      { role: "system", content: clientBlock },   // cacheable per-client prefix
+      { role: "user", content: requestBlock },     // per-request tail
+    ],
+  });
+
+  return object;
 }
 
-export async function createStructuredResponse(
-  messages,
-  functions = null,
-  agentType = "assessment"
-) {
-  try {
-    // Get the appropriate schema for the agent type
-    const schema = getSchemaByType(agentType);
-
-    // Generate structured response using the schema
-    const result = await generateObject({
-      model: openai("gpt-3.5-turbo"),
-      schema,
-      messages: messages.map((msg) => ({
-        role: msg.role,
-        content: msg.content,
-      })),
-      temperature: 0.7,
-    });
-
-    // Return the generated object
-    return result.object;
-  } catch (error) {
-    console.error("Error in createStructuredResponse:", error);
-    throw error;
-  }
+/** @deprecated shim so old call sites don't break mid-round. Remove after routes are migrated. */
+export async function createStructuredResponse(messages, _functions, agentType = "assessment") {
+  const system = messages.find((m) => m.role === "system")?.content ?? "";
+  const user = messages.filter((m) => m.role === "user").map((m) => m.content).join("\n\n");
+  return runAgent({ agentType, clientBlock: system, requestBlock: user });
 }
+
+// NOTE: createAgentStream intentionally NOT defined here yet — Round 2 (LIAM) adds streaming.
