@@ -1,11 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { getSession } from "@/lib/auth";
-import { generateAssessmentReport } from "@/lib/reports/assessment";
-import { generateDiagnosticReport } from "@/lib/reports/diagnostic";
-import { generateProgressReport } from "@/lib/reports/progress";
-import { generateDocumentationReport } from "@/lib/reports/documentation";
-import { generateTreatmentReport } from "@/lib/reports/treatment";
+import { gatherAgentReports } from "@/lib/reports/generate";
 import Report from "@/models/report";
 
 export async function GET(request, { params }) {
@@ -25,38 +21,18 @@ export async function GET(request, { params }) {
 
     await connectDB();
 
-    // Build query
-    const query = {
-      clientId,
-    };
-
-    // Add type if specified
-    if (type) {
-      query.type = type;
-    }
-
-    // Add date range if provided
+    const query = { clientId };
+    if (type) query.type = type;
     if (startDate && endDate) {
-      query["metadata.timestamp"] = {
-        $gte: new Date(startDate),
-        $lte: new Date(endDate),
-      };
+      query.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
     }
+    if (sessionId) query.sessionId = sessionId;
 
-    // Add session ID if provided
-    if (sessionId) {
-      query.sessionId = sessionId;
-    }
-
-    // Get reports
     let reports = await Report.find(query)
-      .sort({ "metadata.timestamp": -1 })
+      .sort({ createdAt: -1 })
       .populate("createdBy", "name");
 
-    // Apply limit if specified
-    if (limit) {
-      reports = reports.slice(0, parseInt(limit));
-    }
+    if (limit) reports = reports.slice(0, parseInt(limit));
 
     return NextResponse.json({ reports });
   } catch (error) {
@@ -81,34 +57,8 @@ export async function POST(request, { params }) {
 
     await connectDB();
 
-    // Generate report based on type
-    let reportContent;
-    switch (type) {
-      case "assessment":
-        reportContent = await generateAssessmentReport(clientId, startDate, endDate, session.user);
-        break;
-      case "diagnostic":
-        reportContent = await generateDiagnosticReport(clientId, startDate, endDate, session.user);
-        break;
-      case "progress":
-        reportContent = await generateProgressReport(clientId, startDate, endDate, session.user);
-        break;
-      case "documentation":
-        reportContent = await generateDocumentationReport(
-          clientId,
-          startDate,
-          endDate,
-          session.user
-        );
-        break;
-      case "treatment":
-        reportContent = await generateTreatmentReport(clientId, startDate, endDate, session.user);
-        break;
-      default:
-        return NextResponse.json({ error: "Invalid report type" }, { status: 400 });
-    }
+    const reportContent = await gatherAgentReports(type, clientId, startDate, endDate);
 
-    // Create new report document
     const report = new Report({
       clientId,
       type,

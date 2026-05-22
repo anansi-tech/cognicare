@@ -1,3 +1,4 @@
+// Report: a therapist-compiled, date-ranged report (draft/completed) aggregating AIReports.
 import mongoose from "mongoose";
 
 const reportSchema = new mongoose.Schema(

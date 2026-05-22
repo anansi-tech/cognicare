@@ -1,3 +1,4 @@
+// AIReport: one raw output from a single AI agent run.
 import mongoose from "mongoose";
 
 const aiReportSchema = new mongoose.Schema(

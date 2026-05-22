@@ -20,7 +20,7 @@ export async function GET(req, context) {
       clientId,
       counselorId: user.id,
     })
-      .sort({ "metadata.timestamp": -1 })
+      .sort({ createdAt: -1 })
       .lean();
 
     if (!reports || reports.length === 0) {
