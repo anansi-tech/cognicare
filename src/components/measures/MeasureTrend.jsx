@@ -62,8 +62,8 @@ export function MeasureTrend({ clientId, instrumentId, refreshKey }) {
             <Line
               type="monotone" dataKey="score" strokeWidth={2}
               dot={(props) => {
-                const { cx, cy, payload } = props;
-                return <Dot cx={cx} cy={cy} r={payload.flagged ? 5 : 3}
+                const { cx, cy, payload, index } = props;
+                return <Dot key={index} cx={cx} cy={cy} r={payload.flagged ? 5 : 3}
                   fill={payload.flagged ? "var(--destructive)" : "var(--primary)"} />;
               }}
             />
