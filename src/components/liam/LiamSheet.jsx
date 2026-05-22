@@ -1,7 +1,7 @@
 "use client";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,6 +11,7 @@ import { renderWithCitations } from "./citations";
 export function LiamSheet() {
   const { open, setOpen, clientId, clientName } = useLiam();
   const [input, setInput] = useState("");
+  const scrollRef = useRef(null);
 
   // `id` keyed by clientId resets the view when the bound client changes.
   // Server memory is per-(user,client) anyway, so each client has its own thread.
@@ -21,6 +22,18 @@ export function LiamSheet() {
       body: () => ({ clientId }),
     }),
   });
+
+  // Auto-scroll to the bottom when a new message arrives or while the
+  // assistant is still streaming.
+  const lastMessageText = messages.at(-1)?.parts
+    ?.filter((p) => p.type === "text")
+    .map((p) => p.text)
+    .join("") ?? "";
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  }, [messages.length, lastMessageText, status]);
 
   const send = () => {
     const text = input.trim();
@@ -42,7 +55,7 @@ export function LiamSheet() {
           </p>
         ) : (
           <div className="flex flex-1 min-h-0 flex-col gap-2 px-4 pb-4">
-            <div className="flex-1 min-h-0 overflow-y-auto pr-2">
+            <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto pr-2">
               {messages.length === 0 && (
                 <p className="text-sm text-muted-foreground">
                   Ask about this client — risk flags, recent sessions, intervention ideas.
