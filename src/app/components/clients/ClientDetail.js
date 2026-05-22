@@ -88,19 +88,14 @@ export default function ClientDetail({ clientId }) {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const tabParam = params.get("tab");
+      // Map removed tabs to their new homes.
+      const TAB_ALIAS = { insights: "overview", analytics: "progress", measures: "progress" };
+      const resolved = TAB_ALIAS[tabParam] ?? tabParam;
       if (
-        tabParam &&
-        [
-          "overview",
-          "sessions",
-          "reports",
-          "treatment",
-          "insights",
-          "analytics",
-          "measures",
-        ].includes(tabParam)
+        resolved &&
+        ["overview", "sessions", "reports", "progress", "consent-billing"].includes(resolved)
       ) {
-        setActiveTab(tabParam);
+        setActiveTab(resolved);
       }
     }
   }, []);
@@ -570,6 +565,16 @@ export default function ClientDetail({ clientId }) {
             Sessions
           </button>
           <button
+            onClick={() => setActiveTab("progress")}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === "progress"
+                ? "border-blue-500 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+            }`}
+          >
+            Progress
+          </button>
+          <button
             onClick={() => setActiveTab("reports")}
             className={`py-2 px-1 border-b-2 font-medium text-sm ${
               activeTab === "reports"
@@ -580,36 +585,6 @@ export default function ClientDetail({ clientId }) {
             Reports
           </button>
           <button
-            onClick={() => setActiveTab("insights")}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "insights"
-                ? "border-blue-500 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
-          >
-            Insights
-          </button>
-          <button
-            onClick={() => setActiveTab("analytics")}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "analytics"
-                ? "border-blue-500 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
-          >
-            Analytics
-          </button>
-          <button
-            onClick={() => setActiveTab("measures")}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "measures"
-                ? "border-blue-500 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
-          >
-            Measures
-          </button>
-          <button
             onClick={() => setActiveTab("consent-billing")}
             className={`py-2 px-1 border-b-2 font-medium text-sm ${
               activeTab === "consent-billing"
@@ -617,7 +592,7 @@ export default function ClientDetail({ clientId }) {
                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
             }`}
           >
-            Consent & Billing
+            Billing &amp; Consent
           </button>
         </nav>
       </div>
@@ -632,6 +607,9 @@ export default function ClientDetail({ clientId }) {
       <div className="bg-white shadow rounded-lg p-6">
         {activeTab === "overview" && (
           <div className="space-y-6">
+            {/* The AI clinical picture leads the overview — risk, assessment, diagnosis, treatment. */}
+            <ClientInsights clientId={client._id} refreshKey={aiRefreshKey} />
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Basic Info */}
               <div>
@@ -1057,24 +1035,16 @@ export default function ClientDetail({ clientId }) {
           </div>
         )}
 
-        {activeTab === "insights" && (
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-gray-900">Clinical Insights</h2>
-            <ClientInsights clientId={client._id} refreshKey={aiRefreshKey} />
-          </div>
-        )}
-
-        {activeTab === "analytics" && (
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-gray-900">Client Analytics</h2>
-            <ClientAnalytics clientId={client._id} />
-          </div>
-        )}
-
-        {activeTab === "measures" && (
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-gray-900">Measures</h2>
-            <MeasuresPanel clientId={client._id} />
+        {activeTab === "progress" && (
+          <div className="space-y-8">
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold text-gray-900">Measures</h2>
+              <MeasuresPanel clientId={client._id} />
+            </div>
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold text-gray-900">Risk Timeline</h2>
+              <ClientAnalytics clientId={client._id} />
+            </div>
           </div>
         )}
 
