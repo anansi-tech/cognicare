@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import SessionForm from "./SessionForm";
 import SessionAIInsights from "./SessionAIInsights";
-import AIWorkflow from "../clients/AIWorkflow";
 import { useLiam } from "@/components/liam/LiamProvider";
 import { AutoSessionPrep } from "@/components/ai/AutoSessionPrep";
 import { AutoPostSession } from "@/components/ai/AutoPostSession";
@@ -352,24 +351,6 @@ export default function SessionDetail({ sessionId }) {
           </div>
           {!isEditing && <SessionNote sessionId={session._id} refreshKey={aiRefreshKey} />}
           {!isEditing && <SessionAIInsights session={session} refreshKey={aiRefreshKey} />}
-
-          <div className="mt-8 border-t pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <AIWorkflow
-                  client={session.clientId}
-                  session={session}
-                  updateFunction={fetchSession}
-                />
-              </div>
-              {/* <div>
-                <SessionPrepView
-                  clientId={session.clientId?._id || session.clientId}
-                  sessionId={session._id}
-                />
-              </div> */}
-            </div>
-          </div>
         </div>
       </div>
     </div>

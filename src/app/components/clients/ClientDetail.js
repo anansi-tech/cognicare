@@ -9,6 +9,7 @@ import ClientAnalytics from "./ClientAnalytics";
 import { MeasuresPanel } from "@/components/measures/MeasuresPanel";
 import { useLiam } from "@/components/liam/LiamProvider";
 import { AutoIntake } from "@/components/ai/AutoIntake";
+import { ReassessmentBanner } from "@/components/ai/ReassessmentBanner";
 import {
   getConsentFormTemplate,
   getAvailableTemplates,
@@ -625,6 +626,7 @@ export default function ClientDetail({ clientId }) {
       <div className="mb-4">
         <AutoIntake clientId={clientId} onDone={() => setAiRefreshKey((k) => k + 1)} />
       </div>
+      <ReassessmentBanner clientId={clientId} />
 
       {/* Tab Content */}
       <div className="bg-white shadow rounded-lg p-6">

@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
-import { useAIWorkflow } from "@/app/context/AIWorkflowContext";
 
 export default function SessionAIInsights({ session, refreshKey = 0 }) {
-  const { status, results, activeStage } = useAIWorkflow();
   const [assessmentReport, setAssessmentReport] = useState(null);
   const [diagnosticReport, setDiagnosticReport] = useState(null);
   const [documentationReport, setDocumentationReport] = useState(null);
@@ -70,31 +68,6 @@ export default function SessionAIInsights({ session, refreshKey = 0 }) {
 
     fetchReports();
   }, [session, refreshKey]);
-
-  // Update active tab based on AIWorkflow stage
-  useEffect(() => {
-    if (activeStage) {
-      switch (activeStage) {
-        case "assessment":
-          setActiveTab("assessment");
-          break;
-        case "diagnostic":
-          setActiveTab("diagnostic");
-          break;
-        case "treatment":
-          setActiveTab("treatment");
-          break;
-        case "progress":
-          setActiveTab("progress");
-          break;
-        case "documentation":
-          setActiveTab("documentation");
-          break;
-        default:
-          setActiveTab("progress");
-      }
-    }
-  }, [activeStage]);
 
   if (loading) return <div className="p-4">Loading insights...</div>;
 
