@@ -501,7 +501,7 @@ export default function ClientInsights({ clientId, refreshKey = 0 }) {
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <span className="text-xl">📋</span> Diagnostic Summary
               </h3>
-              <p className="text-gray-700 leading-relaxed">{diagnosticContent.diagnosticSummary}</p>
+              <p className="text-gray-700 leading-relaxed">{diagnosticReport?.summary}</p>
             </div>
 
             {/* Primary Diagnosis Section */}
@@ -537,7 +537,7 @@ export default function ClientInsights({ clientId, refreshKey = 0 }) {
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <h4 className="text-sm font-medium text-gray-700 mb-2">Diagnostic Criteria</h4>
                     <ul className="space-y-2 text-gray-700">
-                      {diagnosticContent.primaryDiagnosis.criteria.map((criterion, index) => (
+                      {(diagnosticContent.primaryDiagnosis.criteriaMet ?? []).map((criterion, index) => (
                         <li key={index} className="flex items-start gap-3">
                           <span className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-blue-500"></span>
                           <span>{criterion}</span>
@@ -570,46 +570,36 @@ export default function ClientInsights({ clientId, refreshKey = 0 }) {
             )}
 
             {/* Rule Out Conditions Section */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <span className="text-xl">❌</span> Rule Out Conditions
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {diagnosticContent.ruleOutConditions.map((condition, index) => (
-                  <div key={index} className="bg-gray-50 p-4 rounded-lg">
-                    <p className="text-gray-700">{condition}</p>
-                  </div>
-                ))}
+            {diagnosticContent.ruleOut?.length > 0 && (
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <span className="text-xl">❌</span> Rule Out Conditions
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {diagnosticContent.ruleOut.map((condition, index) => (
+                    <div key={index} className="bg-gray-50 p-4 rounded-lg">
+                      <p className="text-gray-700">{condition}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Severity Indicators Section */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <span className="text-xl">📊</span> Severity Indicators
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {diagnosticContent.severityIndicators.map((indicator, index) => (
-                  <div key={index} className="bg-yellow-50 p-4 rounded-lg">
-                    <p className="text-gray-700">{indicator}</p>
-                  </div>
-                ))}
+            {/* Cultural Considerations Section */}
+            {diagnosticContent.culturalConsiderations?.length > 0 && (
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <span className="text-xl">🌍</span> Cultural Considerations
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {diagnosticContent.culturalConsiderations.map((c, index) => (
+                    <div key={index} className="bg-gray-50 p-4 rounded-lg">
+                      <p className="text-gray-700">{c}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-
-            {/* Treatment Implications Section */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <span className="text-xl">💡</span> Treatment Implications
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {diagnosticContent.treatmentImplications.map((implication, index) => (
-                  <div key={index} className="bg-green-50 p-4 rounded-lg">
-                    <p className="text-gray-700">{implication}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+            )}
 
             {/* Clinical Justification Section */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
