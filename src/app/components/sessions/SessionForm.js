@@ -106,6 +106,16 @@ export default function SessionForm({
     setLoading(true);
     setError(null);
 
+    // Writing a note is the act of completing a session — if the user typed
+    // notes without explicitly marking it completed, treat it as such so the
+    // post-session AI trigger fires. Cancelled / no-show are left alone.
+    const promoteToCompleted =
+      formData.notes?.trim() &&
+      (formData.status === "scheduled" || formData.status === "in-progress");
+    const payload = promoteToCompleted
+      ? { ...formData, status: "completed" }
+      : formData;
+
     try {
       const url = session?._id ? `/api/sessions/${session._id}` : "/api/sessions";
       const method = session?._id ? "PATCH" : "POST";
@@ -115,7 +125,7 @@ export default function SessionForm({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
