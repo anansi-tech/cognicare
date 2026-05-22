@@ -12,7 +12,7 @@ export async function GET(request, { params }) {
 
     const { id: clientId } = await params;
     const { searchParams } = new URL(request.url);
-    const type = searchParams.get("type");
+    const agentType = searchParams.get("agentType") ?? searchParams.get("type");
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
     const sessionId = searchParams.get("sessionId");
@@ -20,35 +20,27 @@ export async function GET(request, { params }) {
 
     await connectDB();
 
-    // Build query
-    const query = {
-      clientId,
-    };
+    const query = { clientId };
 
-    // Add type if specified
-    if (type) {
-      query.type = type;
+    if (agentType) {
+      query.agentType = agentType;
     }
 
-    // Add date range if provided
     if (startDate && endDate) {
-      query["metadata.timestamp"] = {
+      query.createdAt = {
         $gte: new Date(startDate),
         $lte: new Date(endDate),
       };
     }
 
-    // Add session ID if provided
     if (sessionId) {
       query.sessionId = sessionId;
     }
 
-    // Get AI reports
     let reports = await AIReport.find(query)
-      .sort({ "metadata.timestamp": -1 })
+      .sort({ createdAt: -1 })
       .populate("counselorId", "name");
 
-    // Apply limit if specified
     if (limit) {
       reports = reports.slice(0, parseInt(limit));
     }

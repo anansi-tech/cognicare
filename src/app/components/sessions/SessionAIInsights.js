@@ -44,18 +44,18 @@ export default function SessionAIInsights({ session }) {
         const clientReports = clientData.reports || [];
 
         // Set session-specific reports (get most recent)
-        const documentation = sessionReports.find((r) => r.type === "documentation");
-        const progress = sessionReports.find((r) => r.type === "progress");
-        setDocumentationReport(documentation?.content);
-        setProgressReport(progress?.content);
+        const documentation = sessionReports.find((r) => r.agentType === "documentation");
+        const progress = sessionReports.find((r) => r.agentType === "progress");
+        setDocumentationReport(documentation?.payload);
+        setProgressReport(progress?.payload);
 
         // Set client-level reports (get most recent)
-        const assessment = clientReports.find((r) => r.type === "assessment");
-        const diagnostic = clientReports.find((r) => r.type === "diagnostic");
-        const treatment = clientReports.find((r) => r.type === "treatment");
-        setAssessmentReport(assessment?.content);
-        setDiagnosticReport(diagnostic?.content);
-        setTreatmentReport(treatment?.content);
+        const assessment = clientReports.find((r) => r.agentType === "assessment");
+        const diagnostic = clientReports.find((r) => r.agentType === "diagnostic");
+        const treatment = clientReports.find((r) => r.agentType === "treatment");
+        setAssessmentReport(assessment?.payload);
+        setDiagnosticReport(diagnostic?.payload);
+        setTreatmentReport(treatment?.payload);
 
         if (!documentation && !progress && !assessment && !diagnostic && !treatment) {
           setError("no_reports");

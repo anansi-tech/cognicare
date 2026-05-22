@@ -27,15 +27,17 @@ export async function persistReport({ agentType, summary, payload, clientId, ses
 /**
  * Get all relevant AI reports for a client within a date range
  */
-export async function getClientReports(clientId, startDate, endDate, types = []) {
+export async function getClientReports(clientId, startDate, endDate, agentTypes = []) {
+  const dateRange = {};
+  if (startDate) dateRange.$gte = startDate;
+  if (endDate) dateRange.$lte = endDate;
   const query = {
     clientId,
-    ...(startDate && { "metadata.timestamp": { $gte: startDate } }),
-    ...(endDate && { "metadata.timestamp": { $lte: endDate } }),
-    ...(types.length > 0 && { type: { $in: types } }),
+    ...(Object.keys(dateRange).length > 0 && { createdAt: dateRange }),
+    ...(agentTypes.length > 0 && { agentType: { $in: agentTypes } }),
   };
 
-  return await AIReport.find(query).sort({ "metadata.timestamp": -1 }).lean();
+  return await AIReport.find(query).sort({ createdAt: -1 }).lean();
 }
 
 /**

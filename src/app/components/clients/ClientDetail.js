@@ -169,7 +169,8 @@ export default function ClientDetail({ clientId }) {
   };
 
   const getReportTitle = (report) => {
-    const type = report.type.charAt(0).toUpperCase() + report.type.slice(1);
+    const label = report.agentType ?? "report";
+    const type = label.charAt(0).toUpperCase() + label.slice(1);
     const date = formatDate(report.createdAt);
     return `${type} Report - ${date}`;
   };
@@ -892,7 +893,8 @@ export default function ClientDetail({ clientId }) {
                           {formatDate(report.createdAt)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {report.type.charAt(0).toUpperCase() + report.type.slice(1)}
+                          {(report.agentType ?? "report").charAt(0).toUpperCase() +
+                            (report.agentType ?? "report").slice(1)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <button
@@ -1030,7 +1032,7 @@ export default function ClientDetail({ clientId }) {
                     <div className="mb-4">
                       <strong>Content:</strong>
                       <pre className="mt-2 p-4 bg-gray-50 rounded overflow-x-auto print:bg-white print:border print:border-gray-200">
-                        {JSON.stringify(selectedReport.content, null, 2)}
+                        {JSON.stringify(selectedReport.payload, null, 2)}
                       </pre>
                     </div>
                   </div>

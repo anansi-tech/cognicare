@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
-import Client from "@/models/client";
 import Session from "@/models/session";
 import AIReport from "@/models/aiReport";
 import { getSession } from "@/lib/auth";
@@ -19,7 +18,6 @@ export async function GET(req, { params }) {
 
     await connectDB();
 
-    // Get most recent documented session
     const mostRecentSession = await Session.findOne({
       clientId,
       documented: true,
@@ -34,26 +32,24 @@ export async function GET(req, { params }) {
       });
     }
 
-    // Find the progress report associated with this session
     const progressReport = await AIReport.findOne({
       clientId,
       sessionId: mostRecentSession._id,
-      type: "progress",
+      agentType: "progress",
     })
-      .sort({ "metadata.timestamp": -1 })
+      .sort({ createdAt: -1 })
       .lean();
 
-    if (!progressReport || !progressReport.content) {
+    if (!progressReport || !progressReport.payload) {
       return NextResponse.json({
         reassessmentRecommended: false,
         rationale: "No progress reports found for the most recent session",
       });
     }
 
-    // Extract reassessment recommendation from progress report
-    const recommendReassessment = !!progressReport.content.recommendReassessment;
+    const recommendReassessment = !!progressReport.payload.reassessmentRecommended;
     const rationale =
-      progressReport.content.reassessmentRationale ||
+      progressReport.payload.recommendations?.[0] ||
       (recommendReassessment
         ? "Reassessment recommended by AI based on clinical factors"
         : "No reassessment recommended at this time");

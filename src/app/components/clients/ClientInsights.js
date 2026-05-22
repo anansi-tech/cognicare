@@ -37,17 +37,17 @@ export default function ClientInsights({ clientId }) {
 
         // Find the most recent report of each type
         const assessment = reports
-          .filter((r) => r.type === "assessment")
-          .sort((a, b) => new Date(b.metadata.timestamp) - new Date(a.metadata.timestamp))[0];
+          .filter((r) => r.agentType === "assessment")
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
         const diagnostic = reports
-          .filter((r) => r.type === "diagnostic")
-          .sort((a, b) => new Date(b.metadata.timestamp) - new Date(a.metadata.timestamp))[0];
+          .filter((r) => r.agentType === "diagnostic")
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
         const treatment = reports
-          .filter((r) => r.type === "treatment")
-          .sort((a, b) => new Date(b.metadata.timestamp) - new Date(a.metadata.timestamp))[0];
+          .filter((r) => r.agentType === "treatment")
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
         const progress = reports
-          .filter((r) => r.type === "progress")
-          .sort((a, b) => new Date(b.metadata.timestamp) - new Date(a.metadata.timestamp))[0];
+          .filter((r) => r.agentType === "progress")
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
 
         setAssessmentReport(assessment);
         setDiagnosticReport(diagnostic);
@@ -117,10 +117,10 @@ export default function ClientInsights({ clientId }) {
     );
   }
 
-  const assessmentContent = assessmentReport?.content;
-  const diagnosticContent = diagnosticReport?.content;
-  const treatmentContent = treatmentReport?.content;
-  const progressContent = progressReport?.content;
+  const assessmentContent = assessmentReport?.payload;
+  const diagnosticContent = diagnosticReport?.payload;
+  const treatmentContent = treatmentReport?.payload;
+  const progressContent = progressReport?.payload;
 
   return (
     <div className="space-y-6">
@@ -356,7 +356,7 @@ export default function ClientInsights({ clientId }) {
             <div>
               <h3 className="text-2xl font-bold text-gray-900">Assessment Report</h3>
               <p className="text-sm text-gray-500 mt-2">
-                Last updated: {formatDate(assessmentReport?.metadata?.timestamp)}
+                Last updated: {formatDate(assessmentReport?.createdAt)}
               </p>
             </div>
           </div>
@@ -491,7 +491,7 @@ export default function ClientInsights({ clientId }) {
             <div>
               <h3 className="text-2xl font-bold text-gray-900">Diagnostic Report</h3>
               <p className="text-sm text-gray-500 mt-2">
-                Last updated: {formatDate(diagnosticReport?.metadata?.timestamp)}
+                Last updated: {formatDate(diagnosticReport?.createdAt)}
               </p>
             </div>
           </div>
@@ -657,7 +657,7 @@ export default function ClientInsights({ clientId }) {
             <div>
               <h3 className="text-2xl font-bold text-gray-900">Treatment Plan</h3>
               <p className="text-sm text-gray-500 mt-2">
-                Last updated: {formatDate(treatmentReport?.metadata?.timestamp)}
+                Last updated: {formatDate(treatmentReport?.createdAt)}
               </p>
             </div>
           </div>
@@ -845,7 +845,7 @@ export default function ClientInsights({ clientId }) {
             <div>
               <h3 className="text-2xl font-bold text-gray-900">Progress Report</h3>
               <p className="text-sm text-gray-500 mt-2">
-                Last updated: {formatDate(progressReport?.metadata?.timestamp)}
+                Last updated: {formatDate(progressReport?.createdAt)}
               </p>
             </div>
           </div>
