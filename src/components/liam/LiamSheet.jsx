@@ -3,7 +3,6 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useLiam } from "./LiamProvider";
@@ -43,7 +42,7 @@ export function LiamSheet() {
           </p>
         ) : (
           <div className="flex flex-1 min-h-0 flex-col gap-2 px-4 pb-4">
-            <ScrollArea className="flex-1 pr-3">
+            <div className="flex-1 min-h-0 overflow-y-auto pr-2">
               {messages.length === 0 && (
                 <p className="text-sm text-muted-foreground">
                   Ask about this client — risk flags, recent sessions, intervention ideas.
@@ -61,7 +60,7 @@ export function LiamSheet() {
                 );
               })}
               {status === "streaming" && <p className="text-xs text-muted-foreground">LIAM is thinking…</p>}
-            </ScrollArea>
+            </div>
 
             <div className="flex gap-2">
               <Textarea
