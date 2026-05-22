@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { runWorkflow } from "@/lib/ai/orchestrator";
 
+export const runtime = "nodejs";
+// Two sequential gpt-5.5 reasoning calls; needs > Vercel Hobby's 60s cap (Fluid/Pro allow up to 300s).
+export const maxDuration = 300;
+
 export async function POST(req) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
