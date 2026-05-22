@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CalendarDays, FileText } from "lucide-react";
 
 // Single tokenizer that catches citation tokens + minimal markdown
 // (`**bold**`, `*italic*`, `` `code` ``). Newlines inside the bubble are kept
@@ -16,13 +17,18 @@ export function renderWithCitations(text, clientId) {
     if (m.index > last) out.push(text.slice(last, m.index));
     const [, kind, id, bold, italic, code] = m;
     if (kind && id) {
-      const href = kind === "session" ? `/sessions/${id}` : `/clients/${clientId}/reports/${id}`;
+      const href =
+        kind === "session"
+          ? `/sessions/${id}`
+          : `/clients/${clientId}/ai-reports/${id}`;
+      const Icon = kind === "session" ? CalendarDays : FileText;
       out.push(
         <Link
           key={`c${i++}`}
           href={href}
-          className="inline-flex items-center rounded-md bg-muted px-1.5 py-0.5 text-xs font-medium text-foreground hover:underline"
+          className="mx-0.5 inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-1.5 py-0.5 align-baseline text-xs font-medium text-blue-700 no-underline transition-colors hover:bg-blue-100 hover:border-blue-300"
         >
+          <Icon className="h-3 w-3" strokeWidth={2.25} />
           {kind === "session" ? "Session" : "Report"}
         </Link>
       );
