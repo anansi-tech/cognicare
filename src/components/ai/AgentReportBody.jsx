@@ -192,7 +192,7 @@ export function ProgressBody({ payload: p }) {
       <Field label="Next session focus">
         <p className="text-sm">{p.nextSessionFocus}</p>
       </Field>
-      {p.reassessmentRecommended && <Badge>Reassessment recommended</Badge>}
+      {/* Reassessment recommendation surfaces once, at the client-page banner. */}
     </div>
   );
 }
