@@ -5,10 +5,7 @@ import { generateFileKey } from "@/lib/storage";
 import { getConsentFormTemplate } from "@/lib/templates/consentFormTemplate";
 import Client from "@/models/client";
 import crypto from "crypto";
-import { Resend } from "resend";
-
-// Instantiate Resend (ensure RESEND_API_KEY is in your .env)
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { sendEmail } from "@/lib/email";
 
 const generateToken = () => {
   return crypto.randomBytes(32).toString("hex");
@@ -85,9 +82,8 @@ export async function POST(request) {
 
     if (clientEmail) {
       try {
-        const emailData = await resend.emails.send({
-          from: `CogniCare <onboarding@resend.dev>`,
-          to: [clientEmail],
+        await sendEmail({
+          to: clientEmail,
           subject: `Action Required: Please Sign Consent Form - ${template.title}`,
           html: `
             <p>Dear ${updatedClient.name},</p>
@@ -99,7 +95,6 @@ export async function POST(request) {
             <p>CogniCare Platform</p>
           `,
         });
-        console.log("Email sent successfully:", emailData.id);
       } catch (emailError) {
         console.error("Error sending consent email:", emailError);
       }

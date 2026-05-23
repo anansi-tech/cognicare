@@ -3,9 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { clientScope } from "@/lib/practice";
 import Client from "@/models/client";
 import { connectDB } from "@/lib/mongodb";
-import { Resend } from "resend";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { sendEmail } from "@/lib/email";
 
 export async function POST(req, context) {
   try {
@@ -68,15 +66,13 @@ export async function POST(req, context) {
       </div>
     `;
 
-    const { data, error } = await resend.emails.send({
-      from: "Cognicare <onboarding@resend.dev>",
-      to: client.contactInfo.email,
-      subject: `Payment Reminder: Invoice #${invoice.invoiceNumber || invoiceId}`,
-      html: emailContent,
-    });
-
-    if (error) {
-      console.error("Error sending reminder email:", error);
+    try {
+      await sendEmail({
+        to: client.contactInfo.email,
+        subject: `Payment Reminder: Invoice #${invoice.invoiceNumber || invoiceId}`,
+        html: emailContent,
+      });
+    } catch (e) {
       return NextResponse.json({ message: "Failed to send reminder email" }, { status: 500 });
     }
 
