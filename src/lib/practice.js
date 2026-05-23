@@ -1,5 +1,7 @@
 import Practice from "@/models/practice";
 import Client from "@/models/client";
+import User from "@/models/user";
+import Invitation from "@/models/invitation";
 import { connectDB } from "@/lib/mongodb";
 
 // Practice ownership / visibility helpers (Round 10).
@@ -34,4 +36,21 @@ export async function visibleClientIds(user) {
   const scope = await clientScope(user);
   const docs = await Client.find(scope).select("_id").lean();
   return docs.map((d) => d._id);
+}
+
+// Counts active clinicians + pending invites against the practice's paid seats.
+// Used at invite-create and invite-accept time to enforce the seat cap.
+export async function getSeatUsage(practiceId) {
+  if (!practiceId) return { used: 0, seats: 0, hasCapacity: false };
+  await connectDB();
+  const practice = await Practice.findById(practiceId).select("seats").lean();
+  const seats = practice?.seats ?? 0;
+  const activeClinicians = await User.countDocuments({ practiceId });
+  const pendingInvites = await Invitation.countDocuments({
+    practiceId,
+    status: "pending",
+    expiresAt: { $gt: new Date() },
+  });
+  const used = activeClinicians + pendingInvites;
+  return { used, seats, hasCapacity: used < seats };
 }

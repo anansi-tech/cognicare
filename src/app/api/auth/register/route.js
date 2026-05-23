@@ -2,11 +2,21 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/user";
 import Practice from "@/models/practice";
+import Invitation from "@/models/invitation";
 import { hash } from "bcryptjs";
+import { getSeatUsage } from "@/lib/practice";
 
 export async function POST(request) {
   try {
-    const { email, password, name, licenseNumber, specialization } = await request.json();
+    const {
+      email: rawEmail,
+      password,
+      name,
+      licenseNumber,
+      specialization,
+      inviteToken,
+    } = await request.json();
+    const email = String(rawEmail || "").trim().toLowerCase();
 
     // Validate input
     if (!email || !password || !name) {
@@ -25,6 +35,38 @@ export async function POST(request) {
       return NextResponse.json({ message: "User already exists" }, { status: 400 });
     }
 
+    // Branch on invitation: joining an existing practice vs. creating one.
+    let invitation = null;
+    if (inviteToken) {
+      invitation = await Invitation.findOne({ token: inviteToken, status: "pending" });
+      if (!invitation) {
+        return NextResponse.json(
+          { message: "Invitation not found or already used" },
+          { status: 400 }
+        );
+      }
+      if (invitation.expiresAt && invitation.expiresAt < new Date()) {
+        return NextResponse.json({ message: "Invitation expired" }, { status: 410 });
+      }
+      if (invitation.email !== email) {
+        return NextResponse.json(
+          { message: "Email does not match the invitation" },
+          { status: 400 }
+        );
+      }
+      // Re-check seats at accept time — capacity could have filled since the
+      // invite was sent.
+      const usage = await getSeatUsage(invitation.practiceId);
+      // The pending invite itself counts in `used`; only block when other
+      // invites/clinicians have already saturated the cap above this one.
+      if (usage.used > usage.seats) {
+        return NextResponse.json(
+          { message: "All seats are in use. Ask the practice owner to add seats first." },
+          { status: 409 }
+        );
+      }
+    }
+
     // Hash password
     const hashedPassword = await hash(password, 12);
 
@@ -38,17 +80,26 @@ export async function POST(request) {
       role: "counselor",
     });
 
-    // Auto-create the user's practice (a practice of one). Subscription state
-    // lives on this Practice; the user will be gated to /billing until the
-    // practice has an active Stripe subscription (Checkout starts the trial
-    // via trial_period_days in subscription_data).
-    const practice = await Practice.create({
-      name: `${name}'s Practice`,
-      ownerId: user._id,
-      seats: 1,
-    });
-    user.practiceId = practice._id;
-    await user.save();
+    if (invitation) {
+      // Join the existing practice.
+      user.practiceId = invitation.practiceId;
+      await user.save();
+      invitation.status = "accepted";
+      invitation.acceptedAt = new Date();
+      await invitation.save();
+    } else {
+      // Auto-create the user's practice (a practice of one). Subscription state
+      // lives on this Practice; the user will be gated to /billing until the
+      // practice has an active Stripe subscription (Checkout starts the trial
+      // via trial_period_days in subscription_data).
+      const practice = await Practice.create({
+        name: `${name}'s Practice`,
+        ownerId: user._id,
+        seats: 1,
+      });
+      user.practiceId = practice._id;
+      await user.save();
+    }
 
     // Remove password from response
     const { password: _, ...userWithoutPassword } = user.toObject();
