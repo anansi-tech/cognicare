@@ -36,10 +36,13 @@ export default function Navbar() {
   const handleSignOut = async () => {
     setIsSigningOut(true);
     try {
-      await signOut({ callbackUrl: "/" });
+      // Hard nav so we don't briefly render the previous page with stale
+      // session state (next-auth/react's signOut in v5 returns before the
+      // SessionProvider broadcasts the new status).
+      await signOut({ redirect: false });
+      window.location.href = "/";
     } catch (error) {
       console.error("Error signing out:", error);
-    } finally {
       setIsSigningOut(false);
     }
   };

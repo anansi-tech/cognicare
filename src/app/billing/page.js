@@ -64,11 +64,16 @@ export default function BillingPage() {
 
   // Unauthed users get bounced to the marketing landing (pricing already
   // lives there). Done in an effect — never call router.replace during render.
+  // Also catches the post-signOut window where status hasn't transitioned yet
+  // but session.user is already cleared (v5 SessionProvider timing).
+  const isAuthed = status === "authenticated" && !!session?.user?.id;
   useEffect(() => {
-    if (status === "unauthenticated") router.replace("/");
-  }, [status, router]);
+    if (status === "unauthenticated" || (status === "authenticated" && !session?.user?.id)) {
+      router.replace("/");
+    }
+  }, [status, session?.user?.id, router]);
 
-  if (status !== "authenticated") {
+  if (!isAuthed) {
     return <div className="p-6 text-sm text-muted-foreground">Loading…</div>;
   }
 
