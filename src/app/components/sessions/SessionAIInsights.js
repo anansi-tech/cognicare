@@ -2,16 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { AgentReportBody } from "@/components/ai/AgentReportBody";
+import { Section, Empty } from "@/components/ai/Section";
 
-// Renders the five specialist agent envelopes for a session/client in tabs.
-// Reads the new schemas/agent envelope shape — { agentType, summary, payload }.
-
-const TABS = [
-  ["assessment", "📊", "Assessment"],
-  ["diagnostic", "🔍", "Diagnostic"],
-  ["treatment", "💡", "Treatment"],
-  ["progress", "📈", "Progress"],
-];
+// Renders the four specialist agent envelopes (assessment/diagnostic/treatment/progress)
+// for the current session/client as stacked sections in clinical order. No inner tab chrome.
 
 function pickLatest(reports, agentType) {
   return reports
@@ -26,7 +20,6 @@ export default function SessionAIInsights({ session, refreshKey = 0 }) {
   const [progress, setProgress] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState("assessment");
 
   const clientId =
     typeof session?.clientId === "object" ? session?.clientId?._id : session?.clientId;
@@ -70,6 +63,7 @@ export default function SessionAIInsights({ session, refreshKey = 0 }) {
   }, [clientId, sessionId, refreshKey]);
 
   if (loading) return <div className="p-4">Loading insights...</div>;
+  if (error) return <div className="p-4 text-red-500">Error fetching insights: {error}</div>;
 
   if (!assessment && !diagnostic && !treatment && !progress) {
     return (
@@ -81,99 +75,36 @@ export default function SessionAIInsights({ session, refreshKey = 0 }) {
     );
   }
 
-  if (error) return <div className="p-4 text-red-500">Error fetching insights: {error}</div>;
-
-  const ap = assessment?.payload;
-  const dp = diagnostic?.payload;
-  const tp = treatment?.payload;
-  const pp = progress?.payload;
-
   return (
-    <div className="w-full">
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-4" aria-label="Tabs">
-          {TABS.map(([key, icon, label]) => (
-            <button
-              key={key}
-              onClick={() => setActiveTab(key)}
-              className={`flex flex-col items-center p-4 border-b-2 font-medium text-sm ${
-                activeTab === key
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              <span className="text-xl mb-1">{icon}</span>
-              <span>{label}</span>
-            </button>
-          ))}
-        </nav>
-      </div>
-
-      <div className="mt-4 space-y-6">
-        {/* Assessment */}
-        {activeTab === "assessment" &&
-          (assessment ? (
-            <>
-              {assessment.summary && (
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h4 className="text-md font-semibold text-gray-700 mb-2">Summary</h4>
-                  <p className="text-gray-700 leading-relaxed">{assessment.summary}</p>
-                </div>
-              )}
-              <AgentReportBody agentType="assessment" payload={ap} />
-            </>
-          ) : (
-            <p className="text-sm text-gray-500">No assessment yet.</p>
-          ))}
-
-        {/* Diagnostic */}
-        {activeTab === "diagnostic" &&
-          (diagnostic ? (
-            <>
-              {diagnostic.summary && (
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h4 className="text-md font-semibold text-gray-700 mb-2">Summary</h4>
-                  <p className="text-gray-700 leading-relaxed">{diagnostic.summary}</p>
-                </div>
-              )}
-              <AgentReportBody agentType="diagnostic" payload={dp} />
-            </>
-          ) : (
-            <p className="text-sm text-gray-500">No diagnostic yet.</p>
-          ))}
-
-        {/* Treatment */}
-        {activeTab === "treatment" &&
-          (treatment ? (
-            <>
-              {treatment.summary && (
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h4 className="text-md font-semibold text-gray-700 mb-2">Summary</h4>
-                  <p className="text-gray-700 leading-relaxed">{treatment.summary}</p>
-                </div>
-              )}
-              <AgentReportBody agentType="treatment" payload={tp} />
-            </>
-          ) : (
-            <p className="text-sm text-gray-500">No treatment plan yet.</p>
-          ))}
-
-        {/* Progress */}
-        {activeTab === "progress" &&
-          (progress ? (
-            <>
-              {progress.summary && (
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h4 className="text-md font-semibold text-gray-700 mb-2">Summary</h4>
-                  <p className="text-gray-700 leading-relaxed">{progress.summary}</p>
-                </div>
-              )}
-              <AgentReportBody agentType="progress" payload={pp} />
-            </>
-          ) : (
-            <p className="text-sm text-gray-500">No progress evaluation yet.</p>
-          ))}
-      </div>
+    <div className="space-y-6">
+      <Section title="Assessment" summary={assessment?.summary}>
+        {assessment ? (
+          <AgentReportBody agentType="assessment" payload={assessment.payload} />
+        ) : (
+          <Empty>Assessment generates automatically when a client is created.</Empty>
+        )}
+      </Section>
+      <Section title="Diagnostic Impression" summary={diagnostic?.summary}>
+        {diagnostic ? (
+          <AgentReportBody agentType="diagnostic" payload={diagnostic.payload} />
+        ) : (
+          <Empty>Generated automatically after the assessment.</Empty>
+        )}
+      </Section>
+      <Section title="Treatment Plan" summary={treatment?.summary}>
+        {treatment ? (
+          <AgentReportBody agentType="treatment" payload={treatment.payload} />
+        ) : (
+          <Empty>Generated automatically when you open a scheduled session.</Empty>
+        )}
+      </Section>
+      <Section title="Progress Report" summary={progress?.summary}>
+        {progress ? (
+          <AgentReportBody agentType="progress" payload={progress.payload} />
+        ) : (
+          <Empty>Generated automatically after you complete a session.</Empty>
+        )}
+      </Section>
     </div>
   );
 }
