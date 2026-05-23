@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -10,9 +10,20 @@ export default function LandingPage() {
   const [email, setEmail] = useState("");
   const { data: session, status } = useSession();
   const router = useRouter();
-  // No auto-redirect from /. Authed users can navigate to /dashboard via the
-  // Navbar. Auto-pushing here chained into /billing for no-sub users via
-  // SubscriptionGate, which was the wrong UX.
+
+  // Authed users on `/` should land in the app, not see marketing layered
+  // under the Navbar. Done in an effect so we never call router.replace
+  // during render. The previous version disabled this to avoid a redirect
+  // chain into /billing; the chain went away once SubscriptionGate stopped
+  // bouncing dev-mode and unauthed users (Round 9 / Round 10).
+  const isAuthed = status === "authenticated" && !!session?.user?.id;
+  useEffect(() => {
+    if (isAuthed) router.replace("/dashboard");
+  }, [isAuthed, router]);
+
+  if (isAuthed) {
+    return <div className="p-6 text-sm text-gray-500">Loading…</div>;
+  }
 
   const handleGetStarted = () => {
     if (status === "authenticated") {
