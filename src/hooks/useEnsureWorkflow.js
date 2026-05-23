@@ -1,27 +1,37 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-// Fires a workflow exactly once when `shouldRun` is true and its output is missing.
-// `shouldRun` is computed by the caller (e.g. "client has no assessment report yet").
+// Fires a workflow once when `shouldRun` is true and its output is missing.
+// Returns `retry` to re-run after a failure (bypasses the once-guard).
 export function useEnsureWorkflow({ shouldRun, type, clientId, sessionId, onDone }) {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
   const fired = useRef(false);
 
-  useEffect(() => {
-    if (!shouldRun || fired.current) return;
+  const run = useCallback(() => {
     fired.current = true;
     setGenerating(true);
+    setError("");
     fetch("/api/ai/agent-workflow", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ type, clientId, sessionId }),
     })
-      .then((r) => { if (!r.ok) throw new Error("Workflow failed"); return r.json(); })
+      .then((r) => {
+        if (!r.ok) throw new Error("Workflow failed");
+        return r.json();
+      })
       .then(() => onDone?.())
-      .catch((e) => setError(e.message))
+      .catch((e) => setError(e.message || "Workflow failed"))
       .finally(() => setGenerating(false));
-  }, [shouldRun, type, clientId, sessionId, onDone]);
+  }, [type, clientId, sessionId, onDone]);
 
-  return { generating, error };
+  useEffect(() => {
+    if (!shouldRun || fired.current) return;
+    run();
+  }, [shouldRun, run]);
+
+  const retry = useCallback(() => run(), [run]); // explicit re-run, ignores the once-guard
+
+  return { generating, error, retry };
 }

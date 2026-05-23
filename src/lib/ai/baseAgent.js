@@ -16,11 +16,8 @@ export async function runAgent({ agentType, clientBlock, requestBlock, model = M
     model: openai(model),
     schema,
     schemaName: `${agentType}_report`,
-    messages: [
-      { role: "system", content: system },
-      { role: "system", content: clientBlock },   // cacheable per-client prefix
-      { role: "user", content: requestBlock },     // per-request tail
-    ],
+    system: `${system}\n\n${clientBlock}`,
+    messages: [{ role: "user", content: requestBlock }],
   });
 
   return object;

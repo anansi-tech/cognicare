@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useEnsureWorkflow } from "@/hooks/useEnsureWorkflow";
 import { GeneratingState } from "./GeneratingState";
+import { Button } from "@/components/ui/button";
 
 // Fires intake (assessment -> diagnostic) the first time a client is viewed
 // without an assessment report. Calls onDone after the workflow completes so
@@ -21,10 +22,12 @@ export function AutoIntake({ clientId, onDone }) {
         setLoaded(true);
       })
       .catch(() => !cancelled && setLoaded(true));
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [clientId]);
 
-  const { generating, error } = useEnsureWorkflow({
+  const { generating, error, retry } = useEnsureWorkflow({
     shouldRun: loaded && !hasAssessment,
     type: "intake",
     clientId,
@@ -32,6 +35,14 @@ export function AutoIntake({ clientId, onDone }) {
   });
 
   if (!generating && !error) return null;
-  if (error) return <p className="text-sm text-destructive">Intake failed: {error}</p>;
+  if (error)
+    return (
+      <div className="space-y-2">
+        <p className="text-sm text-destructive">Couldn't generate the assessment: {error}</p>
+        <Button variant="outline" size="sm" onClick={retry}>
+          Try again
+        </Button>
+      </div>
+    );
   return <GeneratingState label="Analyzing intake — building assessment and diagnosis…" />;
 }

@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Client from "@/models/client";
 import { requireAuth, getCurrentUser } from "@/lib/auth";
-import { subscriptionService } from "@/lib/subscription-service";
 
 // Get all clients for the authenticated counselor
 export const GET = requireAuth(async (req) => {
@@ -43,23 +42,11 @@ export const POST = requireAuth(async (req) => {
     if (!user || user.role !== "counselor") {
       return NextResponse.json(
         { message: "Unauthorized - Only counselors can create clients" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
     await connectDB();
-
-    // Check client limit
-    const { canAdd, reason } = await subscriptionService.checkClientLimit(user.id);
-    if (!canAdd) {
-      return NextResponse.json(
-        {
-          message: "Client limit reached",
-          reason,
-        },
-        { status: 403 }
-      );
-    }
 
     // Get body data from request
     const body = await req.json();
