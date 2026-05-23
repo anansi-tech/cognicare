@@ -345,6 +345,11 @@ export default function SessionDetail({ sessionId }) {
           </div>
           {!isEditing && <SessionNote sessionId={session._id} refreshKey={aiRefreshKey} />}
           {!isEditing && (
+            <div className="mt-6">
+              <SessionAIInsights session={session} refreshKey={aiRefreshKey} />
+            </div>
+          )}
+          {!isEditing && (
             <div className="mt-6 space-y-2">
               <h3 className="text-lg font-semibold text-gray-900">Measures</h3>
               <MeasuresPanel
@@ -353,7 +358,6 @@ export default function SessionDetail({ sessionId }) {
               />
             </div>
           )}
-          {!isEditing && <SessionAIInsights session={session} refreshKey={aiRefreshKey} />}
         </div>
       </div>
     </div>
