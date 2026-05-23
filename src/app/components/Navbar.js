@@ -108,6 +108,18 @@ export default function Navbar() {
               >
                 Reports
               </Link>
+              {session.user.isPracticeOwner && (
+                <Link
+                  href="/team"
+                  className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                    isActive("/team")
+                      ? "border-white text-white"
+                      : "border-transparent text-indigo-100 hover:border-indigo-200 hover:text-white"
+                  }`}
+                >
+                  Team
+                </Link>
+              )}
               {isAdmin(session.user) && (
                 <>
                   <Link

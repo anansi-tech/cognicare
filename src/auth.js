@@ -53,11 +53,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.practiceId = fresh?.practiceId ? fresh.practiceId.toString() : null;
         if (token.practiceId) {
           const practice = await Practice.findById(token.practiceId)
-            .select("stripeSubscriptionStatus")
+            .select("stripeSubscriptionStatus ownerId")
             .lean();
           token.stripeSubscriptionStatus = practice?.stripeSubscriptionStatus ?? null;
+          token.isPracticeOwner = practice?.ownerId?.toString() === String(token.id);
         } else {
           token.stripeSubscriptionStatus = null;
+          token.isPracticeOwner = false;
         }
       }
       return token;
@@ -68,6 +70,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.role = token.role;
         session.user.practiceId = token.practiceId ?? null;
         session.user.stripeSubscriptionStatus = token.stripeSubscriptionStatus ?? null;
+        session.user.isPracticeOwner = !!token.isPracticeOwner;
       }
       return session;
     },
