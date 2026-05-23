@@ -21,6 +21,7 @@ export default function SignupPage() {
     const name = formData.get("name");
     const licenseNumber = formData.get("licenseNumber");
     const specialization = formData.get("specialization");
+    const practiceName = formData.get("practiceName");
 
     if (password !== confirmPassword) {
       setError("Passwords do not match");
@@ -40,6 +41,7 @@ export default function SignupPage() {
           name,
           licenseNumber,
           specialization,
+          practiceName,
         }),
       });
 
@@ -169,6 +171,21 @@ export default function SignupPage() {
                   className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                   placeholder="Email address"
                 />
+              </div>
+              <div>
+                <label htmlFor="practiceName" className="block text-sm font-medium text-gray-700">
+                  Practice name <span className="text-gray-500">(optional)</span>
+                </label>
+                <input
+                  id="practiceName"
+                  name="practiceName"
+                  type="text"
+                  className="mt-1 appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                  placeholder="e.g. Cedar Counseling Group"
+                />
+                <p className="mt-1 text-sm text-gray-500">
+                  Leave blank if you&apos;re a solo practitioner — you can change this later.
+                </p>
               </div>
               <div>
                 <label htmlFor="licenseNumber" className="block text-sm font-medium text-gray-700">

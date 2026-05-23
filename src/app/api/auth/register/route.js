@@ -15,6 +15,7 @@ export async function POST(request) {
       licenseNumber,
       specialization,
       inviteToken,
+      practiceName,
     } = await request.json();
     const email = String(rawEmail || "").trim().toLowerCase();
 
@@ -92,8 +93,9 @@ export async function POST(request) {
       // lives on this Practice; the user will be gated to /billing until the
       // practice has an active Stripe subscription (Checkout starts the trial
       // via trial_period_days in subscription_data).
+      const trimmedName = typeof practiceName === "string" ? practiceName.trim() : "";
       const practice = await Practice.create({
-        name: `${name}'s Practice`,
+        name: trimmedName || `${name}'s Practice`,
         ownerId: user._id,
         seats: 1,
       });
