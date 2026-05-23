@@ -159,6 +159,7 @@ export default function TeamPage() {
   }
 
   const hasCapacity = seats?.hasCapacity ?? false;
+  const overCap = seats && seats.used > seats.seats;
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -171,7 +172,7 @@ export default function TeamPage() {
         </div>
         {seats && (
           <div className="text-sm text-gray-700">
-            <span className="font-medium">
+            <span className={`font-medium ${overCap ? "text-red-700" : ""}`}>
               {seats.used} of {seats.seats}
             </span>{" "}
             seats used —{" "}
@@ -181,6 +182,15 @@ export default function TeamPage() {
           </div>
         )}
       </div>
+
+      {overCap && (
+        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          <strong>Over capacity:</strong> the practice currently has {seats.used} active
+          clinicians / pending invites against {seats.seats} paid seats. Existing access is
+          preserved, but new invitations are blocked until you{" "}
+          <Link href="/billing" className="underline">add seats</Link> or remove members.
+        </div>
+      )}
 
       {/* Invite form */}
       <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
