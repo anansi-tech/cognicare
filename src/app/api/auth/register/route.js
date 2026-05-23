@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/user";
+import Practice from "@/models/practice";
 import { hash } from "bcryptjs";
 
 export async function POST(request) {
@@ -37,10 +38,17 @@ export async function POST(request) {
       role: "counselor",
     });
 
-    // Subscription state is owned by Stripe. The user is created with no
-    // stripeSubscriptionStatus and will be gated to /billing until they
-    // subscribe (Stripe Checkout starts the trial via trial_period_days on
-    // the Price).
+    // Auto-create the user's practice (a practice of one). Subscription state
+    // lives on this Practice; the user will be gated to /billing until the
+    // practice has an active Stripe subscription (Checkout starts the trial
+    // via trial_period_days in subscription_data).
+    const practice = await Practice.create({
+      name: `${name}'s Practice`,
+      ownerId: user._id,
+      seats: 1,
+    });
+    user.practiceId = practice._id;
+    await user.save();
 
     // Remove password from response
     const { password: _, ...userWithoutPassword } = user.toObject();

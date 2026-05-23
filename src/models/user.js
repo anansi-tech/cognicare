@@ -31,10 +31,13 @@ const userSchema = new mongoose.Schema({
     enum: ["counselor", "admin"],
     default: "counselor",
   },
-  // Stripe cache. Stripe is the source of truth; these two fields are the local
-  // shadow the webhook keeps in sync.
+  // The practice this user belongs to. Every user is in a practice (solo or
+  // multi-clinician). Auto-created during registration as a practice of one.
+  practiceId: { type: mongoose.Schema.Types.ObjectId, ref: "Practice" },
+  // deprecated: subscription now lives on Practice (Round 8). Kept here only
+  // until the next cleanup pass — nothing reads these anymore.
   stripeCustomerId: { type: String },
-  stripeSubscriptionStatus: { type: String }, // trialing|active|past_due|canceled|unpaid|incomplete
+  stripeSubscriptionStatus: { type: String },
   createdAt: {
     type: Date,
     default: Date.now,

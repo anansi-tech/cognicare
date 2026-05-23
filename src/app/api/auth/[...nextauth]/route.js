@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/user";
+import Practice from "@/models/practice";
 import { compare } from "bcryptjs";
 
 export const authOptions = {
@@ -31,6 +32,7 @@ export const authOptions = {
             email: user.email,
             name: user.name,
             role: user.role,
+            practiceId: user.practiceId ? user.practiceId.toString() : null,
           };
         } catch (error) {
           throw new Error(error.message);
@@ -43,13 +45,23 @@ export const authOptions = {
       if (user) {
         token.role = user.role;
         token.id = user.id;
+        token.practiceId = user.practiceId ?? null;
       }
-      // Refresh the Stripe-status cache on every JWT issuance so the gate
-      // reflects webhook updates without requiring the user to log out.
+      // Refresh practiceId + the Practice's Stripe status on every JWT
+      // issuance so the gate reflects webhook updates without requiring the
+      // user to log out. Subscription is a Practice-level concept (Round 8).
       if (token.id) {
         await connectDB();
-        const fresh = await User.findById(token.id).select("stripeSubscriptionStatus").lean();
-        token.stripeSubscriptionStatus = fresh?.stripeSubscriptionStatus ?? null;
+        const freshUser = await User.findById(token.id).select("practiceId").lean();
+        token.practiceId = freshUser?.practiceId ? freshUser.practiceId.toString() : null;
+        if (token.practiceId) {
+          const practice = await Practice.findById(token.practiceId)
+            .select("stripeSubscriptionStatus")
+            .lean();
+          token.stripeSubscriptionStatus = practice?.stripeSubscriptionStatus ?? null;
+        } else {
+          token.stripeSubscriptionStatus = null;
+        }
       }
       return token;
     },
@@ -57,6 +69,7 @@ export const authOptions = {
       if (token) {
         session.user.role = token.role;
         session.user.id = token.id;
+        session.user.practiceId = token.practiceId ?? null;
         session.user.stripeSubscriptionStatus = token.stripeSubscriptionStatus ?? null;
       }
       return session;
