@@ -7,8 +7,12 @@ import { stripe } from "@/lib/billing";
 export async function POST(req) {
   const current = await getCurrentUser();
   if (!current) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const { priceId } = await req.json();
+  const { priceId, quantity } = await req.json();
   if (!priceId) return NextResponse.json({ error: "priceId required" }, { status: 400 });
+
+  // Practice plan bills per seat; Solo passes no quantity and defaults to 1.
+  // Clamp 1–100 server-side regardless of what the client sends.
+  const seats = Math.max(1, Math.min(Number(quantity) || 1, 100));
 
   await connectDB();
   const user = await User.findById(current.id);
@@ -28,7 +32,7 @@ export async function POST(req) {
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
     customer: customerId,
-    line_items: [{ price: priceId, quantity: 1 }],
+    line_items: [{ price: priceId, quantity: seats }],
     subscription_data: { trial_period_days: 14 },
     success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?checkout=success`,
     cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/billing?checkout=cancel`,

@@ -60,6 +60,7 @@ export default function BillingPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [busy, setBusy] = useState(null); // priceId currently checking out / "portal"
+  const [seats, setSeats] = useState(2); // Practice plan implies 2+; default 2
 
   if (status === "loading") {
     return <div className="p-6">Loading…</div>;
@@ -72,7 +73,7 @@ export default function BillingPage() {
   const subStatus = session?.user?.stripeSubscriptionStatus;
   const isActive = ACTIVE.has(subStatus);
 
-  const subscribe = async (priceId) => {
+  const subscribe = async (priceId, quantity = 1) => {
     if (!priceId) {
       alert(
         "This plan's price isn't configured. Set NEXT_PUBLIC_STRIPE_PRICE_SOLO / _PRACTICE."
@@ -84,7 +85,7 @@ export default function BillingPage() {
       const res = await fetch("/api/billing/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ priceId }),
+        body: JSON.stringify({ priceId, quantity }),
       });
       const data = await res.json();
       if (!res.ok || !data.url) throw new Error(data.error || "Checkout failed");
@@ -195,9 +196,37 @@ export default function BillingPage() {
                     </li>
                   ))}
                 </ul>
+                {plan.id === "practice" && (
+                  <div className="mt-4 flex items-center gap-2">
+                    <label htmlFor="seats" className="text-sm text-gray-600">
+                      Clinicians
+                    </label>
+                    <input
+                      id="seats"
+                      type="number"
+                      min={2}
+                      max={100}
+                      value={seats}
+                      onChange={(e) =>
+                        setSeats(Math.max(2, Math.min(100, Number(e.target.value) || 2)))
+                      }
+                      className="w-20 rounded-md border border-gray-300 px-2 py-1 text-sm"
+                    />
+                  </div>
+                )}
+                {plan.id === "practice" && (
+                  <p className="mt-2 text-sm text-gray-500">
+                    {seats} clinicians × $59 ={" "}
+                    <span className="font-medium text-gray-900">${seats * 59}/mo</span>
+                  </p>
+                )}
                 <div className="mt-6">
                   <button
-                    onClick={() => subscribe(plan.priceEnv)}
+                    onClick={() =>
+                      plan.id === "practice"
+                        ? subscribe(plan.priceEnv, seats)
+                        : subscribe(plan.priceEnv)
+                    }
                     disabled={busy === plan.priceEnv}
                     className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-60"
                   >
