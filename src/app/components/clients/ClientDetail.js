@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import ClientForm from "./ClientForm";
 import ClientInsights from "./ClientInsights";
 import ClientAnalytics from "./ClientAnalytics";
+import ReassignControl from "./ReassignControl";
 import { MeasuresPanel } from "@/components/measures/MeasuresPanel";
 import { useLiam } from "@/components/liam/LiamProvider";
 import { AutoIntake } from "@/components/ai/AutoIntake";
@@ -526,6 +527,12 @@ export default function ClientDetail({ clientId }) {
           >
             Back
           </button>
+          <ReassignControl
+            client={client}
+            onReassigned={({ counselorId }) =>
+              setClient((c) => (c ? { ...c, counselorId } : c))
+            }
+          />
           <button
             onClick={() => setIsEditing(true)}
             className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
