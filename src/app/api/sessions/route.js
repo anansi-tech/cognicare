@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Session from "@/models/session";
 import { requireAuth, getCurrentUser } from "@/lib/auth";
+import {
+  logAuditEvent,
+  auditMetaFromRequest,
+  AuditActions,
+  EntityTypes,
+} from "@/lib/audit";
 
 // Get all sessions for the authenticated counselor
 export const GET = requireAuth(async (req) => {
@@ -60,6 +66,16 @@ export const POST = requireAuth(async (req) => {
     const populatedSession = await Session.findById(createdSession._id)
       .populate("clientId", "name")
       .lean();
+
+    await logAuditEvent({
+      userId: user.id,
+      practiceId: user.practiceId,
+      action: AuditActions.CREATE,
+      entityType: EntityTypes.SESSION,
+      entityId: createdSession._id,
+      details: { clientId: newSession.clientId },
+      ...auditMetaFromRequest(req),
+    });
 
     return NextResponse.json(populatedSession, { status: 201 });
   } catch (error) {

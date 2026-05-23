@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Session from "@/models/session";
 import { requireAuth, getCurrentUser } from "@/lib/auth";
+import {
+  logAuditEvent,
+  auditMetaFromRequest,
+  AuditActions,
+  EntityTypes,
+} from "@/lib/audit";
 
 // Get a specific session
 export const GET = requireAuth(async (req) => {
@@ -61,6 +67,15 @@ export const PATCH = requireAuth(async (req) => {
     // Save the updated session
     await existingSession.save();
 
+    await logAuditEvent({
+      userId: user.id,
+      practiceId: user.practiceId,
+      action: AuditActions.UPDATE,
+      entityType: EntityTypes.SESSION,
+      entityId: id,
+      ...auditMetaFromRequest(req),
+    });
+
     // Return the updated session with populated fields
     const updatedSession = await Session.findById(id).populate("clientId", "name").lean();
 
@@ -87,6 +102,15 @@ export const DELETE = requireAuth(async (req) => {
     if (!deletedSession) {
       return NextResponse.json({ message: "Session not found" }, { status: 404 });
     }
+
+    await logAuditEvent({
+      userId: user.id,
+      practiceId: user.practiceId,
+      action: AuditActions.DELETE,
+      entityType: EntityTypes.SESSION,
+      entityId: id,
+      ...auditMetaFromRequest(req),
+    });
 
     return NextResponse.json({ message: "Session deleted successfully" }, { status: 200 });
   } catch (error) {

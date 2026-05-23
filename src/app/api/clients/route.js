@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Client from "@/models/client";
 import { requireAuth, getCurrentUser } from "@/lib/auth";
+import {
+  logAuditEvent,
+  auditMetaFromRequest,
+  AuditActions,
+  EntityTypes,
+} from "@/lib/audit";
 
 // Get all clients for the authenticated counselor
 export const GET = requireAuth(async (req) => {
@@ -108,6 +114,15 @@ export const POST = requireAuth(async (req) => {
 
     // Create and save the client
     const client = await Client.create(body);
+
+    await logAuditEvent({
+      userId: user.id,
+      practiceId: user.practiceId,
+      action: AuditActions.CREATE,
+      entityType: EntityTypes.CLIENT,
+      entityId: client._id,
+      ...auditMetaFromRequest(req),
+    });
 
     // Return the complete client object including initialAssessment
     return NextResponse.json(client.toObject(), { status: 201 });

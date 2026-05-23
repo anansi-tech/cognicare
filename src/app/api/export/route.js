@@ -49,6 +49,7 @@ export async function GET(request) {
     // Log the export event
     await logAuditEvent({
       userId: user.id,
+      practiceId: user.practiceId,
       action: AuditActions.EXPORT,
       entityType: "user",
       entityId: user.id,
@@ -58,8 +59,8 @@ export async function GET(request) {
         sessionCount: sessions.length,
         reportCount: reports.length,
       },
-      ipAddress: request.headers.get("x-forwarded-for") || request.ip,
-      userAgent: request.headers.get("user-agent"),
+      ipAddress: request.headers.get("x-forwarded-for") || "unknown",
+      userAgent: request.headers.get("user-agent") || "unknown",
     });
 
     // Return the data as JSON

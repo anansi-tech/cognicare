@@ -4,6 +4,12 @@ import Client from "@/models/client";
 import Session from "@/models/session";
 import Report from "@/models/report";
 import { getCurrentUser } from "@/lib/auth";
+import {
+  logAuditEvent,
+  auditMetaFromRequest,
+  AuditActions,
+  EntityTypes,
+} from "@/lib/audit";
 import mongoose from "mongoose";
 
 // Get a specific client with their sessions and reports
@@ -48,6 +54,16 @@ export async function GET(req, context) {
       .limit(5)
       .populate("createdBy", "name")
       .lean();
+
+    // Audit: viewing a client record is a PHI-touching event.
+    await logAuditEvent({
+      userId: user.id,
+      practiceId: user.practiceId,
+      action: AuditActions.READ,
+      entityType: EntityTypes.CLIENT,
+      entityId: id,
+      ...auditMetaFromRequest(req),
+    });
 
     return NextResponse.json({
       client,
@@ -228,6 +244,15 @@ export async function PATCH(req, context) {
     // Save the updated client
     await existingClient.save();
 
+    await logAuditEvent({
+      userId: user.id,
+      practiceId: user.practiceId,
+      action: AuditActions.UPDATE,
+      entityType: EntityTypes.CLIENT,
+      entityId: id,
+      ...auditMetaFromRequest(req),
+    });
+
     // Return without initialAssessment field
     const { initialAssessment, ...clientWithoutAssessment } = existingClient.toObject();
     return NextResponse.json(clientWithoutAssessment);
@@ -267,6 +292,15 @@ export async function DELETE(req, context) {
 
     // Delete associated reports sequentially
     await Report.deleteMany({ clientId: id });
+
+    await logAuditEvent({
+      userId: user.id,
+      practiceId: user.practiceId,
+      action: AuditActions.DELETE,
+      entityType: EntityTypes.CLIENT,
+      entityId: id,
+      ...auditMetaFromRequest(req),
+    });
 
     return NextResponse.json(
       { message: "Client and associated data deleted successfully" },

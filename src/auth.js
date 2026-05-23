@@ -4,6 +4,7 @@ import { compare } from "bcryptjs";
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/user";
 import Practice from "@/models/practice";
+import { logAuditEvent, AuditActions, EntityTypes } from "@/lib/audit";
 
 // Auth.js v5 — pure swap of NextAuth v4. Session shape, callbacks behavior,
 // and timing are preserved from the v4 config that lived in
@@ -69,6 +70,32 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.stripeSubscriptionStatus = token.stripeSubscriptionStatus ?? null;
       }
       return session;
+    },
+  },
+  events: {
+    async signIn({ user }) {
+      if (!user?.id) return;
+      await logAuditEvent({
+        userId: user.id,
+        practiceId: user.practiceId ?? undefined,
+        action: AuditActions.LOGIN,
+        entityType: EntityTypes.USER,
+        entityId: user.id,
+        details: { email: user.email },
+      });
+    },
+    async signOut(message) {
+      // JWT strategy: message has { token }. Older signatures pass { session }.
+      const token = message?.token;
+      const userId = token?.id;
+      if (!userId) return;
+      await logAuditEvent({
+        userId,
+        practiceId: token?.practiceId ?? undefined,
+        action: AuditActions.LOGOUT,
+        entityType: EntityTypes.USER,
+        entityId: userId,
+      });
     },
   },
 });

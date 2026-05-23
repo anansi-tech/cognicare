@@ -3,6 +3,7 @@ import AuditLog from "@/models/auditLog";
 
 export async function logAuditEvent({
   userId,
+  practiceId,
   action,
   entityType,
   entityId,
@@ -16,6 +17,7 @@ export async function logAuditEvent({
     const auditLog = new AuditLog({
       timestamp: new Date(),
       userId,
+      practiceId,
       action,
       entityType,
       entityId,
@@ -27,9 +29,25 @@ export async function logAuditEvent({
     await auditLog.save();
     return auditLog;
   } catch (error) {
+    // Audit failures must never break the user-facing request. Log and move on.
     console.error("Error logging audit event:", error);
-    throw error;
+    return null;
   }
+}
+
+// Convenience: derive ip + UA from a Next.js Request for inline route calls.
+export function auditMetaFromRequest(request) {
+  const headers = request?.headers;
+  if (!headers || typeof headers.get !== "function") {
+    return { ipAddress: "unknown", userAgent: "unknown" };
+  }
+  return {
+    ipAddress:
+      headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      headers.get("x-real-ip") ||
+      "unknown",
+    userAgent: headers.get("user-agent") || "unknown",
+  };
 }
 
 export async function getAuditLogs({

@@ -12,6 +12,11 @@ const auditLogSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    practiceId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Practice",
+      index: true,
+    },
     action: {
       type: String,
       required: true,
@@ -38,15 +43,15 @@ const auditLogSchema = new mongoose.Schema(
     },
     details: {
       type: mongoose.Schema.Types.Mixed,
-      required: true,
+      default: {},
     },
     ipAddress: {
       type: String,
-      required: true,
+      default: "unknown",
     },
     userAgent: {
       type: String,
-      required: true,
+      default: "unknown",
     },
   },
   {
