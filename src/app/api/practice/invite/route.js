@@ -5,6 +5,8 @@ import { isPracticeOwner, getSeatUsage } from "@/lib/practice";
 import { connectDB } from "@/lib/mongodb";
 import Invitation from "@/models/invitation";
 import User from "@/models/user";
+import Practice from "@/models/practice";
+import { sendEmail } from "@/lib/email";
 import {
   logAuditEvent,
   auditMetaFromRequest,
@@ -49,6 +51,9 @@ export async function POST(req) {
     );
   }
 
+  const practice = await Practice.findById(user.practiceId).select("name").lean();
+  const practiceName = practice?.name || "the practice";
+
   // Don't double-invite (re-use the existing pending one instead).
   const existingPending = await Invitation.findOne({
     practiceId: user.practiceId,
@@ -58,6 +63,11 @@ export async function POST(req) {
   });
   if (existingPending) {
     const link = inviteLink(existingPending.token);
+    // Re-send the email so the invitee has a fresh copy (no-op locally
+    // if Resend isn't configured).
+    sendInviteEmail({ to: email, practiceName, inviterName: user.name, link }).catch(
+      (e) => console.error("Invite re-send failed; link still available:", e)
+    );
     return NextResponse.json({ invitation: existingPending, link });
   }
 
@@ -80,6 +90,15 @@ export async function POST(req) {
     expiresAt,
   });
 
+  const link = inviteLink(token);
+  // Fire the email but don't fail the invite if Resend hiccups — the link
+  // is still returned for manual share.
+  try {
+    await sendInviteEmail({ to: email, practiceName, inviterName: user.name, link });
+  } catch (e) {
+    console.error("Invite email failed; link still available:", e);
+  }
+
   await logAuditEvent({
     userId: user.id,
     practiceId: user.practiceId,
@@ -90,7 +109,7 @@ export async function POST(req) {
     ...auditMetaFromRequest(req),
   });
 
-  return NextResponse.json({ invitation, link: inviteLink(token) }, { status: 201 });
+  return NextResponse.json({ invitation, link }, { status: 201 });
 }
 
 // Owner-only: list outstanding invitations for the practice.
@@ -115,4 +134,40 @@ export async function GET() {
 function inviteLink(token) {
   const base = process.env.NEXT_PUBLIC_APP_URL || "";
   return `${base}/invite/${token}`;
+}
+
+function inviteEmailHtml({ practiceName, inviterName, link }) {
+  const inviter = inviterName || "A colleague";
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; color: #1a202c;">
+      <h2 style="color: #312e81; margin-bottom: 16px;">You're invited to CogniCare</h2>
+      <p>${escapeHtml(inviter)} invited you to join <strong>${escapeHtml(practiceName)}</strong> on CogniCare —
+      an AI-native platform for therapists and their clinical teams.</p>
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="${link}"
+           style="display: inline-block; padding: 12px 22px; background-color: #4f46e5; color: white; text-decoration: none; border-radius: 6px; font-weight: 600;">
+          Accept invitation
+        </a>
+      </div>
+      <p style="font-size: 13px; color: #4a5568;">Or paste this link into your browser:<br/>
+        <a href="${link}" style="color: #4f46e5;">${link}</a>
+      </p>
+      <p style="font-size: 13px; color: #718096;">This invitation expires in 7 days.</p>
+    </div>
+  `;
+}
+
+function sendInviteEmail({ to, practiceName, inviterName, link }) {
+  return sendEmail({
+    to,
+    subject: `You're invited to join ${practiceName} on CogniCare`,
+    html: inviteEmailHtml({ practiceName, inviterName, link }),
+  });
+}
+
+function escapeHtml(s) {
+  return String(s).replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]
+  );
 }
