@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { connectDB } from "@/lib/mongodb";
-import User from "@/models/user";
+import Practice from "@/models/practice";
 import { stripe } from "@/lib/billing";
 
-// Only job: keep User.stripeSubscriptionStatus in sync with Stripe.
-// No state machine, no billingHistory — the Stripe dashboard/portal is the
-// billing record. Client invoicing uses the redirect-based payment-link flow,
-// not this webhook.
+// Only job: keep the Practice's stripeSubscriptionStatus (and seats) in sync
+// with Stripe. No state machine, no billingHistory — the Stripe dashboard /
+// portal is the billing record. Client invoicing uses the redirect-based
+// payment-link flow, not this webhook.
 export async function POST(request) {
   const body = await request.text();
   const signature = (await headers()).get("stripe-signature");
@@ -20,13 +20,17 @@ export async function POST(request) {
 
   if (event.type.startsWith("customer.subscription.")) {
     const sub = event.data.object; // created | updated | deleted
+    const nextStatus =
+      event.type === "customer.subscription.deleted" ? "canceled" : sub.status;
+    const seats = sub.items?.data?.[0]?.quantity;
+
     await connectDB();
-    await User.updateOne(
+    await Practice.updateOne(
       { stripeCustomerId: sub.customer },
       {
         $set: {
-          stripeSubscriptionStatus:
-            event.type === "customer.subscription.deleted" ? "canceled" : sub.status,
+          stripeSubscriptionStatus: nextStatus,
+          ...(typeof seats === "number" ? { seats } : {}),
         },
       }
     );
