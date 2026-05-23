@@ -1,14 +1,20 @@
-// Auth.js v5 — auth-only middleware. UX redirects for unauthed nav; the real
-// security gate is auth() in each route + server component. Audit logging
-// moved out of middleware (was an HTTP fetch per request, including reads
-// and static polls — noise + wasteful). Meaningful events (login/logout,
-// client view/edit/delete, export) are written directly via logAuditEvent()
-// from the route handlers that own those actions.
-import { auth } from "@/auth";
+// Auth.js v5 middleware. Runs on the Edge runtime — must NOT import anything
+// that pulls in Mongoose or other Node-only deps. So instead of importing the
+// full src/auth.js (which loads Practice/User models), we build a tiny
+// NextAuth() instance here from the shared edge-safe slice in auth.config.js.
+// It can decode the same JWT cookie because it uses the same secret.
+//
+// The real security gate is auth() in each route + server component; this
+// middleware is UX only. Audit logging happens in the route handlers that
+// own PHI-touching actions, not here.
+import NextAuth from "next-auth";
+import authConfig from "@/auth.config";
+
+const { auth } = NextAuth(authConfig);
 
 export default auth(() => {
-  // No-op for now. Auth.js's signIn page redirect handles unauthed page
-  // navigations; API routes return 401 via requireAuth/auth() in-handler.
+  // Unauthed page navigations are redirected by Auth.js's signIn page; API
+  // routes return 401 in-handler via requireAuth/auth(). No work to do here.
 });
 
 export const config = {

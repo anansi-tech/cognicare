@@ -5,14 +5,14 @@ import { connectDB } from "@/lib/mongodb";
 import User from "@/models/user";
 import Practice from "@/models/practice";
 import { logAuditEvent, AuditActions, EntityTypes } from "@/lib/audit";
+import authConfig from "@/auth.config";
 
-// Auth.js v5 — pure swap of NextAuth v4. Session shape, callbacks behavior,
-// and timing are preserved from the v4 config that lived in
-// src/app/api/auth/[...nextauth]/route.js.
+// Auth.js v5 — Node-side config. Composes the edge-safe baseline from
+// auth.config.js and adds the DB-backed providers, callbacks, and events.
+// Middleware does NOT import this file (it imports auth.config directly) so
+// Mongoose never reaches the Edge bundler.
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  session: { strategy: "jwt", maxAge: 30 * 60 }, // 30-min active session
-  jwt: { maxAge: 30 * 24 * 60 * 60 }, // 30-day refresh
-  pages: { signIn: "/login", error: "/login" },
+  ...authConfig,
   providers: [
     Credentials({
       credentials: { email: {}, password: {} },
