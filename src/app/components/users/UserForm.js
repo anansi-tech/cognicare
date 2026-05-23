@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from "react";
 
+// Self-edit profile form. The generic admin user CRUD was removed in
+// Round 10 — this form is now used only by /profile.
 export default function UserForm({ user, onSuccess, onCancel }) {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
-    role: "counselor",
     licenseNumber: "",
     specialization: "",
   });
@@ -19,8 +20,7 @@ export default function UserForm({ user, onSuccess, onCancel }) {
       setFormData({
         name: user.name || "",
         email: user.email || "",
-        password: "", // Don't populate password
-        role: user.role || "counselor",
+        password: "",
         licenseNumber: user.licenseNumber || "",
         specialization: user.specialization || "",
       });
@@ -29,42 +29,33 @@ export default function UserForm({ user, onSuccess, onCancel }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!user) return;
     setLoading(true);
     setError(null);
 
     try {
-      const url = user ? `/api/users/${user._id}` : "/api/users";
-      const method = user ? "PATCH" : "POST";
-
-      // Only include password in the request if it's provided
       const requestData = { ...formData };
       if (!requestData.password) delete requestData.password;
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
+      const response = await fetch(`/api/users/${user._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestData),
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.message || "Failed to save user");
+        throw new Error(data.message || "Failed to save profile");
       }
 
       onSuccess();
     } catch (err) {
       setError(err.message);
-      console.error("Error:", err);
     } finally {
       setLoading(false);
     }
@@ -100,29 +91,15 @@ export default function UserForm({ user, onSuccess, onCancel }) {
 
       <div>
         <label className="block text-sm font-medium text-gray-700">
-          Password {user && "(leave blank to keep current)"}
+          Password (leave blank to keep current)
         </label>
         <input
           type="password"
           name="password"
           value={formData.password}
           onChange={handleChange}
-          required={!user}
           className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
         />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Role</label>
-        <select
-          name="role"
-          value={formData.role}
-          onChange={handleChange}
-          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-        >
-          <option value="counselor">Counselor</option>
-          <option value="admin">Admin</option>
-        </select>
       </div>
 
       <div>
@@ -160,7 +137,7 @@ export default function UserForm({ user, onSuccess, onCancel }) {
           disabled={loading}
           className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50"
         >
-          {loading ? "Saving..." : user ? "Update User" : "Create User"}
+          {loading ? "Saving..." : "Update Profile"}
         </button>
       </div>
     </form>

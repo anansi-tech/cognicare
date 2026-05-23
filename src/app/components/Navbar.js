@@ -3,7 +3,6 @@
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { isAdmin } from "@/lib/client-auth";
 import { useState, useRef, useEffect } from "react";
 import { signOut } from "next-auth/react";
 import { useLiam } from "@/components/liam/LiamProvider";
@@ -119,30 +118,6 @@ export default function Navbar() {
                 >
                   Team
                 </Link>
-              )}
-              {isAdmin(session.user) && (
-                <>
-                  <Link
-                    href="/users"
-                    className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                      isActive("/users")
-                        ? "border-white text-white"
-                        : "border-transparent text-indigo-100 hover:border-indigo-200 hover:text-white"
-                    }`}
-                  >
-                    Users
-                  </Link>
-                  <Link
-                    href="/admin"
-                    className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                      isActive("/admin")
-                        ? "border-white text-white"
-                        : "border-transparent text-indigo-100 hover:border-indigo-200 hover:text-white"
-                    }`}
-                  >
-                    Admin
-                  </Link>
-                </>
               )}
             </div>
           </div>
