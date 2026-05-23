@@ -11,6 +11,11 @@ const ALLOW = ["/", "/login", "/signup", "/billing", "/client-portal", "/forgot-
 
 const ACTIVE = new Set(["trialing", "active", "past_due"]);
 
+// Dev escape hatch: local builds don't have Stripe webhook forwarding wired up,
+// so practice.stripeSubscriptionStatus stays null and the gate would bounce
+// every protected route to /billing. Production keeps the real gate.
+const IS_DEV = process.env.NODE_ENV !== "production";
+
 function isAllowed(pathname) {
   if (!pathname) return true;
   return ALLOW.some((p) => pathname === p || pathname.startsWith(`${p}/`));
@@ -24,6 +29,7 @@ export function SubscriptionGate({ children }) {
   useEffect(() => {
     if (status !== "authenticated") return;
     if (isAllowed(pathname)) return;
+    if (IS_DEV) return;
     const subStatus = session?.user?.stripeSubscriptionStatus;
     if (!ACTIVE.has(subStatus)) {
       router.replace("/billing");
