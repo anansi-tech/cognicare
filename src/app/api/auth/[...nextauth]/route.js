@@ -44,12 +44,20 @@ export const authOptions = {
         token.role = user.role;
         token.id = user.id;
       }
+      // Refresh the Stripe-status cache on every JWT issuance so the gate
+      // reflects webhook updates without requiring the user to log out.
+      if (token.id) {
+        await connectDB();
+        const fresh = await User.findById(token.id).select("stripeSubscriptionStatus").lean();
+        token.stripeSubscriptionStatus = fresh?.stripeSubscriptionStatus ?? null;
+      }
       return token;
     },
     async session({ session, token }) {
       if (token) {
         session.user.role = token.role;
         session.user.id = token.id;
+        session.user.stripeSubscriptionStatus = token.stripeSubscriptionStatus ?? null;
       }
       return session;
     },
