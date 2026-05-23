@@ -16,7 +16,14 @@ export async function POST(req) {
   }
 
   try {
-    const result = await runWorkflow({ type, clientId, sessionId, userId: user.id, sessionData });
+    const result = await runWorkflow({
+      type,
+      clientId,
+      sessionId,
+      userId: user.id,
+      practiceId: user.practiceId,
+      sessionData,
+    });
     return NextResponse.json(result);
   } catch (e) {
     console.error("agent workflow error", e);

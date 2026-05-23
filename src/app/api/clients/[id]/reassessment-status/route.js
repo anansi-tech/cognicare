@@ -20,6 +20,7 @@ export async function GET(req, { params }) {
 
     const mostRecentSession = await Session.findOne({
       clientId,
+      practiceId: session.user.practiceId,
       status: "completed",
     })
       .sort({ completedAt: -1 })
@@ -34,6 +35,7 @@ export async function GET(req, { params }) {
 
     const progressReport = await AIReport.findOne({
       clientId,
+      practiceId: session.user.practiceId,
       sessionId: mostRecentSession._id,
       agentType: "progress",
     })

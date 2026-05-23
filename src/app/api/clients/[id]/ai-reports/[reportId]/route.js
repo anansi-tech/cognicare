@@ -11,7 +11,11 @@ export async function GET(_req, { params }) {
   const { id: clientId, reportId } = await params;
 
   await connectDB();
-  const report = await AIReport.findOne({ _id: reportId, clientId })
+  const report = await AIReport.findOne({
+    _id: reportId,
+    clientId,
+    practiceId: user.practiceId,
+  })
     .populate("counselorId", "name")
     .lean();
   if (!report) return NextResponse.json({ error: "Report not found" }, { status: 404 });

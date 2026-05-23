@@ -6,12 +6,27 @@ import { MODELS } from "@/lib/ai/client";
 
 /**
  * Persist a validated envelope ({ agentType, summary, payload }) as an AIReport doc.
- * Caller supplies clientId, sessionId (optional), userId.
+ * Caller supplies clientId, sessionId (optional), userId, practiceId.
  */
-export async function persistReport({ agentType, summary, payload, clientId, sessionId, userId }) {
+export async function persistReport({
+  agentType,
+  summary,
+  payload,
+  clientId,
+  sessionId,
+  userId,
+  practiceId,
+}) {
   await connectDB();
+  // Derive practiceId from the Client if the caller didn't pass one (defensive).
+  let derivedPracticeId = practiceId;
+  if (!derivedPracticeId) {
+    const client = await Client.findById(clientId).select("practiceId").lean();
+    derivedPracticeId = client?.practiceId;
+  }
   const doc = new AIReport({
     clientId,
+    practiceId: derivedPracticeId,
     counselorId: userId,
     sessionId,
     agentType,

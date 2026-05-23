@@ -7,6 +7,12 @@ const sessionSchema = new mongoose.Schema(
       ref: "Client",
       required: true,
     },
+    // Ownership root — which practice owns this session.
+    practiceId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Practice",
+      index: true,
+    },
     counselorId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

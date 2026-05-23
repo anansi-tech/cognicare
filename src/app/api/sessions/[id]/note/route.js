@@ -9,7 +9,7 @@ export async function GET(_req, { params }) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id: sessionId } = await params;
   await connectDB();
-  const note = await AIReport.findOne({ sessionId, agentType: "documentation" })
+  const note = await AIReport.findOne({ sessionId, agentType: "documentation", practiceId: user.practiceId })
     .sort({ createdAt: -1 }).lean();
   return NextResponse.json(note ?? null);
 }
@@ -20,7 +20,7 @@ export async function PATCH(req, { params }) {
   const { id: sessionId } = await params;
   const { soap, status } = await req.json();
   await connectDB();
-  const note = await AIReport.findOne({ sessionId, agentType: "documentation" }).sort({ createdAt: -1 });
+  const note = await AIReport.findOne({ sessionId, agentType: "documentation", practiceId: user.practiceId }).sort({ createdAt: -1 });
   if (!note) return NextResponse.json({ error: "No note for this session" }, { status: 404 });
   if (soap) note.payload = { ...note.payload, soap };
   if (status === "approved") note.status = "approved";

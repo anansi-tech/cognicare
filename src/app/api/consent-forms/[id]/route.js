@@ -32,7 +32,7 @@ export async function GET(request, { params }) {
 
       client = await Client.findOne({
         "consentForms._id": id,
-        counselorId: user._id,
+        practiceId: user.practiceId,
       });
 
       if (!client) {

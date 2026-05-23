@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 const measureAdministrationSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    practiceId: { type: mongoose.Schema.Types.ObjectId, ref: "Practice", index: true },
     clientId: { type: mongoose.Schema.Types.ObjectId, ref: "Client", required: true },
     sessionId: { type: mongoose.Schema.Types.ObjectId, ref: "Session" },
     instrumentId: { type: String, required: true }, // e.g. "phq9"

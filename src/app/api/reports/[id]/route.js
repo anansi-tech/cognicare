@@ -15,10 +15,11 @@ export async function GET(req, context) {
     await connectDB();
     const { id: clientId } = await context.params;
 
-    // Fetch all reports for the client, sorted by creation date
+    // Practice-scoped: any clinician in the practice sees the AI reports
+    // tied to that client.
     const reports = await AIReport.find({
       clientId,
-      counselorId: user.id,
+      practiceId: user.practiceId,
     })
       .sort({ createdAt: -1 })
       .lean();
@@ -55,7 +56,7 @@ export async function PATCH(req, context) {
     // Decide if PATCH should apply to AIReport or standard Report.
     const existingReport = await Report.findOne({
       _id: id,
-      counselorId: user.id,
+      practiceId: user.practiceId,
     });
 
     if (!existingReport) {

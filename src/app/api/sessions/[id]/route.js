@@ -13,7 +13,7 @@ export const GET = requireAuth(async (req) => {
 
     const sessionData = await Session.findOne({
       _id: id,
-      counselorId: user.id,
+      practiceId: user.practiceId,
     })
       .populate("clientId", "name")
       .lean();
@@ -43,7 +43,7 @@ export const PATCH = requireAuth(async (req) => {
     // Find the session and ensure it belongs to the counselor
     const existingSession = await Session.findOne({
       _id: id,
-      counselorId: user.id,
+      practiceId: user.practiceId,
     });
 
     if (!existingSession) {
@@ -81,7 +81,7 @@ export const DELETE = requireAuth(async (req) => {
 
     const deletedSession = await Session.findOneAndDelete({
       _id: id,
-      counselorId: user.id,
+      practiceId: user.practiceId,
     });
 
     if (!deletedSession) {

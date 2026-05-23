@@ -21,36 +21,33 @@ export async function GET(req, context) {
 
     await connectDB();
 
-    // Get client data
+    // Practice-scoped visibility — any clinician in the practice can see
+    // the practice's clients.
     const client = await Client.findOne({
       _id: id,
-      counselorId: user.id,
+      practiceId: user.practiceId,
     }).lean();
 
     if (!client) {
       return NextResponse.json({ message: "Client not found" }, { status: 404 });
     }
 
-    // Get recent sessions
     const recentSessions = await Session.find({
       clientId: id,
-      counselorId: user.id,
+      practiceId: user.practiceId,
     })
       .sort({ date: -1 })
       .limit(5)
       .lean();
 
-    // Get recent reports
     const recentReports = await Report.find({
       clientId: id,
-      createdBy: user.id,
+      practiceId: user.practiceId,
     })
       .sort({ createdAt: -1 })
       .limit(5)
       .populate("createdBy", "name")
       .lean();
-
-    console.log("Found reports:", recentReports);
 
     return NextResponse.json({
       client,
@@ -80,10 +77,10 @@ export async function PATCH(req, context) {
 
     const body = await req.json();
 
-    // Find the client and ensure it belongs to the counselor
+    // Practice-scoped visibility.
     const existingClient = await Client.findOne({
       _id: id,
-      counselorId: user.id,
+      practiceId: user.practiceId,
     });
 
     if (!existingClient) {
@@ -214,7 +211,7 @@ export async function PATCH(req, context) {
 
       // Update just the insurance fields using findOneAndUpdate
       const updatedClient = await Client.findOneAndUpdate(
-        { _id: id, counselorId: user.id },
+        { _id: id, practiceId: user.practiceId },
         { $set: insuranceUpdate },
         { new: true }
       );
@@ -255,10 +252,10 @@ export async function DELETE(req, context) {
 
     await connectDB();
 
-    // Delete client
+    // Delete client (practice-scoped).
     const deletedClient = await Client.findOneAndDelete({
       _id: id,
-      counselorId: user.id,
+      practiceId: user.practiceId,
     });
 
     if (!deletedClient) {

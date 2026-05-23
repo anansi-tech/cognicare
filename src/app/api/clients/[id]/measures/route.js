@@ -19,7 +19,15 @@ export async function POST(req, { params }) {
 
   await connectDB();
   const doc = await MeasureAdministration.create({
-    userId: user.id, clientId, sessionId, instrumentId, responses, total, severityBand, flags,
+    userId: user.id,
+    practiceId: user.practiceId,
+    clientId,
+    sessionId,
+    instrumentId,
+    responses,
+    total,
+    severityBand,
+    flags,
   });
   return NextResponse.json({ id: doc._id, total, severityBand, flags });
 }

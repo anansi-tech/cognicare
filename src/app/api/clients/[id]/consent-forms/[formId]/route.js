@@ -14,7 +14,7 @@ export async function DELETE(request, { params }) {
 
     // Find the client and remove the consent form using findOneAndUpdate
     const client = await Client.findOneAndUpdate(
-      { _id: id, counselorId: user.id },
+      { _id: id, practiceId: user.practiceId },
       { $pull: { consentForms: { _id: formId } } },
       { new: true }
     );

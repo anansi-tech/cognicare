@@ -17,7 +17,7 @@ export async function POST(req, context) {
     await connectDB();
 
     // Get client data
-    const client = await Client.findOne({ _id: id, counselorId: user.id });
+    const client = await Client.findOne({ _id: id, practiceId: user.practiceId });
     if (!client) {
       return NextResponse.json({ message: "Client not found" }, { status: 404 });
     }
@@ -445,7 +445,7 @@ export async function POST(req, context) {
 
     // Update client with new invoice
     const updatedClient = await Client.findOneAndUpdate(
-      { _id: id, counselorId: user.id },
+      { _id: id, practiceId: user.practiceId },
       { $push: { "billing.invoices": invoiceData } },
       { new: true }
     );

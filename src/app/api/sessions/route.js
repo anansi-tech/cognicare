@@ -14,8 +14,8 @@ export const GET = requireAuth(async (req) => {
     const status = searchParams.get("status");
     const type = searchParams.get("type");
 
-    // Build query based on filters
-    const query = { counselorId: user.id };
+    // Visibility = practice scope.
+    const query = { practiceId: user.practiceId };
     if (clientId) query.clientId = clientId;
     if (status) query.status = status;
     if (type) query.type = type;
@@ -41,6 +41,8 @@ export const POST = requireAuth(async (req) => {
     const body = await req.json();
     const newSession = {
       ...body,
+      // Ownership root + assignment.
+      practiceId: user.practiceId,
       counselorId: user.id,
       // Use the status from form data, default to "scheduled" if not provided
       status: body.status || "scheduled",

@@ -13,8 +13,9 @@ export const GET = requireAuth(async (req) => {
     const status = searchParams.get("status");
     const search = searchParams.get("search");
 
-    // Build query based on filters
-    const query = { counselorId: user.id };
+    // Visibility = practice scope (all clinicians in the practice see the
+    // roster). Assignment (counselorId) is who's working with a given client.
+    const query = { practiceId: user.practiceId };
     if (status) query.status = status;
     if (search) {
       query.$or = [
@@ -51,7 +52,8 @@ export const POST = requireAuth(async (req) => {
     // Get body data from request
     const body = await req.json();
 
-    // Add counselorId and default status if not provided
+    // Stamp both ownership (practiceId) and assignment (counselorId) on create.
+    body.practiceId = user.practiceId;
     body.counselorId = user.id;
     if (!body.status) body.status = "Active";
 

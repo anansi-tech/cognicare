@@ -43,7 +43,7 @@ export async function PATCH(req, context) {
     }
 
     const updatedClient = await Client.findOneAndUpdate(
-      { _id: id, counselorId: user.id },
+      { _id: id, practiceId: user.practiceId },
       { $set: billingUpdate },
       { new: true }
     );
@@ -73,7 +73,7 @@ export async function DELETE(req, context) {
     await connectDB();
 
     // Find the client and verify ownership
-    const client = await Client.findOne({ _id: id, counselorId: user.id });
+    const client = await Client.findOne({ _id: id, practiceId: user.practiceId });
     if (!client) {
       return NextResponse.json({ message: "Client not found" }, { status: 404 });
     }
@@ -89,7 +89,7 @@ export async function DELETE(req, context) {
 
     // Remove the billing information using $unset
     const updatedClient = await Client.findOneAndUpdate(
-      { _id: id, counselorId: user.id },
+      { _id: id, practiceId: user.practiceId },
       { $unset: { billing: 1 } },
       { new: true }
     );

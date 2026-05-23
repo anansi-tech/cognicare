@@ -15,8 +15,9 @@ export const GET = requireAuth(async (req) => {
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
 
-    // Build query based on filters
-    const query = { createdBy: user.id };
+    // Visibility = practice scope (createdBy stays as authorship metadata
+    // populated on each doc).
+    const query = { practiceId: user.practiceId };
     if (clientId) query.clientId = clientId;
     if (type) query.type = type;
     if (startDate || endDate) {
@@ -46,6 +47,7 @@ export const POST = requireAuth(async (req) => {
     const body = await req.json();
     const newReport = {
       ...body,
+      practiceId: user.practiceId,
       createdBy: user.id,
       createdAt: new Date(),
     };

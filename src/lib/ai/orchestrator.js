@@ -6,8 +6,9 @@ import { document as documentSession } from "./agents/documentation";
 import { persistReport } from "@/lib/report-utils";
 
 // Each workflow runs in-process, sequentially, passing prior outputs forward, persisting each.
-export async function runWorkflow({ type, clientId, sessionId, userId, sessionData }) {
-  const save = (env) => persistReport({ ...env, clientId, sessionId, userId });
+export async function runWorkflow({ type, clientId, sessionId, userId, practiceId, sessionData }) {
+  const save = (env) =>
+    persistReport({ ...env, clientId, sessionId, userId, practiceId });
 
   if (type === "intake") {
     const a = await assess({ clientId, sessionData }); await save(a);

@@ -21,7 +21,7 @@ export async function POST(req) {
     await connectDB();
 
     // Verify client ownership
-    const client = await Client.findOne({ _id: clientId, counselorId: user.id });
+    const client = await Client.findOne({ _id: clientId, practiceId: user.practiceId });
     if (!client) {
       console.log("Client not found:", clientId);
       return NextResponse.json({ message: "Client not found" }, { status: 404 });
@@ -55,6 +55,7 @@ export async function POST(req) {
       metadata: {
         clientId,
         invoiceId,
+        practiceId: String(user.practiceId ?? ""),
         counselorId: user.id,
       },
     });

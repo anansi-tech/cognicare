@@ -1,6 +1,15 @@
 import mongoose from "mongoose";
 
 const clientSchema = new mongoose.Schema({
+  // Ownership root — which practice owns this client. Drives visibility / list
+  // scoping. In a solo practice, every doc with practiceId=X is the owner's;
+  // in a multi-clinician practice, all clinicians in the practice can see it.
+  practiceId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Practice",
+    index: true,
+  },
+  // Assigned clinician — who's working with this client. Still required.
   counselorId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",

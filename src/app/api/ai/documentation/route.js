@@ -12,7 +12,7 @@ export async function POST(req) {
 
   try {
     const env = await document({ clientId, progress, sessionData });
-    await persistReport({ ...env, clientId, sessionId, userId: user.id });
+    await persistReport({ ...env, clientId, sessionId, userId: user.id, practiceId: user.practiceId });
     return NextResponse.json(env);
   } catch (e) {
     console.error("documentation agent error", e);

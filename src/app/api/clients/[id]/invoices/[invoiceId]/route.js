@@ -16,7 +16,7 @@ export async function DELETE(req, context) {
     await connectDB();
 
     // Find the client and verify ownership
-    const client = await Client.findOne({ _id: id, counselorId: user.id });
+    const client = await Client.findOne({ _id: id, practiceId: user.practiceId });
     if (!client) {
       return NextResponse.json({ message: "Client not found" }, { status: 404 });
     }
@@ -39,7 +39,7 @@ export async function DELETE(req, context) {
 
     // Remove the invoice from the client's billing.invoices array
     const updatedClient = await Client.findOneAndUpdate(
-      { _id: id, counselorId: user.id },
+      { _id: id, practiceId: user.practiceId },
       { $pull: { "billing.invoices": { _id: invoiceId } } },
       { new: true }
     );

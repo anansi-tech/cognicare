@@ -16,8 +16,8 @@ export async function GET(request) {
 
     await connectDB();
 
-    // Get all data for the therapist
-    const clients = await Client.find({ counselorId: user.id }).lean();
+    // Export is practice-scoped — everything the practice owns.
+    const clients = await Client.find({ practiceId: user.practiceId }).lean();
     const clientIds = clients.map((client) => client._id);
 
     const sessions = await Session.find({ clientId: { $in: clientIds } }).lean();

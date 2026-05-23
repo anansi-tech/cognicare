@@ -8,6 +8,11 @@ const reportSchema = new mongoose.Schema(
       ref: "Client",
       required: true,
     },
+    practiceId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Practice",
+      index: true,
+    },
     type: {
       type: String,
       enum: ["progress", "documentation", "assessment", "diagnostic", "treatment"],

@@ -13,8 +13,13 @@ export async function GET(_req, { params }) {
   const { id: clientId } = await params;
 
   await connectDB();
-  const assessments = await AIReport.find({ clientId, agentType: "assessment" })
-    .sort({ createdAt: 1 }).lean();
+  const assessments = await AIReport.find({
+    clientId,
+    practiceId: user.practiceId,
+    agentType: "assessment",
+  })
+    .sort({ createdAt: 1 })
+    .lean();
 
   const riskTimeline = assessments.map((r) => ({
     date: r.createdAt,

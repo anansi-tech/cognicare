@@ -16,6 +16,7 @@ export async function GET(request, { params }) {
     const report = await Report.findOne({
       _id: reportId,
       clientId: id,
+      practiceId: session.user.practiceId,
     }).populate("createdBy", "name");
 
     if (!report) {
@@ -42,7 +43,7 @@ export async function DELETE(request, { params }) {
     const report = await Report.findOneAndDelete({
       _id: reportId,
       clientId: id,
-      createdBy: session.user.id,
+      practiceId: session.user.practiceId,
     });
 
     if (!report) {

@@ -22,9 +22,9 @@ export async function GET(request, { params }) {
       "consentForms.tokenExpires": { $gt: new Date() },
     };
 
-    // If user is authenticated, add counselorId to query
+    // Practice-scoped when authed.
     if (user) {
-      query.counselorId = user._id;
+      query.practiceId = user.practiceId;
     }
 
     const client = await Client.findOne(query);

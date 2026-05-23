@@ -24,9 +24,10 @@ export async function POST(request, { params }) {
       "consentForms.status": "pending",
     };
 
-    // If user is authenticated, add counselorId to query
+    // If user is authenticated, scope to their practice (any clinician in
+    // the practice can verify a consent token tied to a practice client).
     if (user) {
-      query.counselorId = user._id;
+      query.practiceId = user.practiceId;
     }
 
     const client = await Client.findOne(query);

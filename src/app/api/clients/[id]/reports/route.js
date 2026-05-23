@@ -21,7 +21,7 @@ export async function GET(request, { params }) {
 
     await connectDB();
 
-    const query = { clientId };
+    const query = { clientId, practiceId: session.user.practiceId };
     if (type) query.type = type;
     if (startDate && endDate) {
       query.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
@@ -57,10 +57,17 @@ export async function POST(request, { params }) {
 
     await connectDB();
 
-    const reportContent = await gatherAgentReports(type, clientId, startDate, endDate);
+    const reportContent = await gatherAgentReports(
+      type,
+      clientId,
+      startDate,
+      endDate,
+      session.user.practiceId
+    );
 
     const report = new Report({
       clientId,
+      practiceId: session.user.practiceId,
       type,
       startDate,
       endDate,

@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 const aiReportSchema = new mongoose.Schema(
   {
     clientId:    { type: mongoose.Schema.Types.ObjectId, ref: "Client", required: true },
+    practiceId:  { type: mongoose.Schema.Types.ObjectId, ref: "Practice", index: true },
     counselorId: { type: mongoose.Schema.Types.ObjectId, ref: "User",   required: true },
     sessionId:   { type: mongoose.Schema.Types.ObjectId, ref: "Session" },
     agentType:   { type: String, required: true,

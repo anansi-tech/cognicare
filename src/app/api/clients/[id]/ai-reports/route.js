@@ -20,7 +20,9 @@ export async function GET(request, { params }) {
 
     await connectDB();
 
-    const query = { clientId };
+    // Scope to the practice so a clinician can only read their practice's
+    // clients' reports.
+    const query = { clientId, practiceId: session.user.practiceId };
 
     if (agentType) {
       query.agentType = agentType;

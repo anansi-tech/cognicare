@@ -8,39 +8,37 @@ import Report from "@/models/report";
 export const GET = requireAuth(async (req) => {
   try {
     const user = await getCurrentUser();
-    const counselorId = user.id;
+    const practiceId = user.practiceId;
 
     await connectDB();
 
-    // Get total clients
-    const totalClients = await Client.countDocuments({ counselorId });
+    // Practice-scoped counts — every clinician in the practice sees the
+    // same totals (which IS the dashboard story for a multi-clinician
+    // practice; identical to today for a solo practice).
+    const totalClients = await Client.countDocuments({ practiceId });
 
-    // Get active sessions (scheduled or in-progress)
     const activeSessions = await Session.countDocuments({
-      counselorId,
+      practiceId,
       status: { $in: ["scheduled", "in-progress"] },
     });
 
-    // Get completed sessions
     const completedSessions = await Session.countDocuments({
-      counselorId,
+      practiceId,
       status: "completed",
     });
 
-    // Get total reports
     const reportsGenerated = await Report.countDocuments({
-      createdBy: counselorId,
+      practiceId,
       status: "completed",
     });
 
-    // Get recent activity (last 5 items of each type)
     const [recentSessions, recentReports] = await Promise.all([
-      Session.find({ counselorId })
+      Session.find({ practiceId })
         .sort({ updatedAt: -1 })
         .limit(5)
         .populate("clientId", "name")
         .lean(),
-      Report.find({ counselorId })
+      Report.find({ practiceId })
         .sort({ createdAt: -1 })
         .limit(5)
         .populate("clientId", "name")
