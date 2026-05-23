@@ -58,39 +58,6 @@ const sessionSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
-    aiInteractions: [
-      {
-        timestamp: {
-          type: Date,
-          default: Date.now,
-        },
-        query: String,
-        response: String,
-        context: {
-          sessionId: String,
-          clientId: String,
-          agentType: {
-            type: String,
-            enum: [
-              "assessment",
-              "diagnostic",
-              "treatment",
-              "progress",
-              "documentation",
-              "conversational",
-            ],
-          },
-          stage: {
-            type: String,
-            enum: ["pre-session", "during-session", "post-session"],
-          },
-          agentResponses: {
-            type: mongoose.Schema.Types.Mixed,
-            default: null,
-          },
-        },
-      },
-    ],
   },
   { timestamps: true }
 );

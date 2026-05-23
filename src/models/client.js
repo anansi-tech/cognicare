@@ -45,95 +45,6 @@ const clientSchema = new mongoose.Schema({
       phone: String,
     },
   },
-  demographics: {
-    ethnicity: String,
-    occupation: String,
-    maritalStatus: String,
-    education: String,
-  },
-  clinicalInfo: {
-    presentingProblems: [String],
-    diagnosis: [
-      {
-        code: String, // DSM-5/ICD-10 code
-        name: String,
-        dateAssigned: Date,
-        status: {
-          type: String,
-          enum: ["active", "resolved", "in-remission"],
-          default: "active",
-        },
-      },
-    ],
-    medications: [
-      {
-        name: String,
-        dosage: String,
-        frequency: String,
-        prescriber: String,
-        startDate: Date,
-        endDate: Date,
-        status: {
-          type: String,
-          enum: ["current", "discontinued"],
-          default: "current",
-        },
-      },
-    ],
-    allergies: [String],
-    medicalHistory: [String],
-    familyHistory: String,
-    substanceUse: {
-      current: [String],
-      past: [String],
-      notes: String,
-    },
-  },
-  riskFactors: {
-    suicideRisk: {
-      level: {
-        type: String,
-        enum: ["none", "low", "moderate", "high", "severe"],
-        default: "none",
-      },
-      lastAssessed: Date,
-      notes: String,
-    },
-    selfHarm: {
-      present: Boolean,
-      history: String,
-    },
-    violence: {
-      risk: {
-        type: String,
-        enum: ["none", "low", "moderate", "high"],
-        default: "none",
-      },
-      notes: String,
-    },
-  },
-  treatmentPlan: {
-    goals: [
-      {
-        description: String,
-        type: {
-          type: String,
-          enum: ["short-term", "long-term"],
-        },
-        status: {
-          type: String,
-          enum: ["active", "achieved", "discontinued"],
-          default: "active",
-        },
-        targetDate: Date,
-        progress: Number, // 0-100
-        interventions: [String],
-      },
-    ],
-    approachesUsed: [String],
-    strengthsIdentified: [String],
-    barriersIdentified: [String],
-  },
   status: {
     type: String,
     enum: ["active", "inactive", "completed", "transferred"],
@@ -142,18 +53,6 @@ const clientSchema = new mongoose.Schema({
   initialAssessment: {
     type: String,
     required: true,
-  },
-  // AI Assessment tracking fields
-  lastIntakeAssessment: {
-    type: Date,
-  },
-  lastReassessment: {
-    type: Date,
-  },
-  riskLevel: {
-    type: String,
-    enum: ["none", "low", "moderate", "high", "severe", "unknown"],
-    default: "unknown",
   },
   consentForms: [
     {
