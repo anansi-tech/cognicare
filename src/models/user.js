@@ -31,6 +31,10 @@ const userSchema = new mongoose.Schema({
     enum: ["counselor", "admin"],
     default: "counselor",
   },
+  // Stripe cache. Stripe is the source of truth; these two fields are the local
+  // shadow the webhook keeps in sync.
+  stripeCustomerId: { type: String },
+  stripeSubscriptionStatus: { type: String }, // trialing|active|past_due|canceled|unpaid|incomplete
   createdAt: {
     type: Date,
     default: Date.now,
