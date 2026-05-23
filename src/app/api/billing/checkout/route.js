@@ -29,9 +29,9 @@ export async function POST(req) {
     mode: "subscription",
     customer: customerId,
     line_items: [{ price: priceId, quantity: 1 }],
+    subscription_data: { trial_period_days: 14 },
     success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?checkout=success`,
     cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/billing?checkout=cancel`,
-    // 14-day trial is configured on the Stripe Price (trial_period_days), not here
   });
   return NextResponse.json({ url: session.url });
 }
