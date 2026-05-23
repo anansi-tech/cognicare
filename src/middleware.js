@@ -1,13 +1,22 @@
+// Auth.js v5 middleware. The auth() wrapper exposes req.auth (the session) on
+// the request, replacing the v4 getToken({ req }) pattern. Behavior preserved:
+// the same matcher routes are audit-logged, with token.id -> req.auth.user.id.
+//
+// Reminder (Auth.js guidance): middleware is NOT the security boundary — the
+// real gate is auth() in each route/server component, which we already have.
+// This is UX + audit logging.
 import { NextResponse } from "next/server";
-import { getToken } from "next-auth/jwt";
+import { auth } from "@/auth";
 
-export async function middleware(request) {
-  const token = await getToken({ req: request });
+export default auth(async function middleware(request) {
+  const session = request.auth;
 
-  // Skip audit logging for non-authenticated routes
-  if (!token) {
+  // Not authenticated → let the request through; the route's own auth() call
+  // is the gate. No audit needed for unauth'd requests.
+  if (!session?.user?.id) {
     return NextResponse.next();
   }
+  const userId = session.user.id;
 
   // Refresh session on activity
   const response = NextResponse.next();
@@ -17,9 +26,6 @@ export async function middleware(request) {
   const { method, url, headers } = request;
 
   try {
-    // Get the response
-    const response = await NextResponse.next();
-
     // Determine the action based on HTTP method
     let action;
     switch (method) {
@@ -67,7 +73,7 @@ export async function middleware(request) {
 
     // For auth routes, use the user's ID as the entityId
     if (path.includes("auth") && !entityId) {
-      entityId = token.id;
+      entityId = userId;
     }
 
     // Only log if we have an entityId or it's an auth action
@@ -78,10 +84,10 @@ export async function middleware(request) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          userId: token.id,
+          userId,
           action,
           entityType,
-          entityId: entityId || token.id, // Use token.id as fallback for auth actions
+          entityId: entityId || userId, // Use userId as fallback for auth actions
           details: {
             method,
             url,
@@ -99,7 +105,7 @@ export async function middleware(request) {
     console.error("Error in audit middleware:", error);
     return NextResponse.next();
   }
-}
+});
 
 // Configure which routes the middleware should run on
 export const config = {
