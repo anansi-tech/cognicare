@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -10,32 +10,11 @@ export default function LandingPage() {
   const [email, setEmail] = useState("");
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [subscription, setSubscription] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [upgrading, setUpgrading] = useState(false);
 
-  useEffect(() => {
-    if (status === "authenticated") {
-      fetch("/api/subscriptions/status")
-        .then((res) => res.json())
-        .then((data) => {
-          setSubscription(data);
-          setLoading(false);
-        })
-        .catch((error) => {
-          console.error("Error fetching subscription:", error);
-          setLoading(false);
-        });
-    } else {
-      setLoading(false);
-    }
-  }, [status]);
-
-  useEffect(() => {
-    if (status === "authenticated") {
-      router.push("/dashboard");
-    }
-  }, [status, router]);
+  // Authed visitors go straight to the dashboard — they have no business on /
+  useState(() => {
+    if (status === "authenticated") router.push("/dashboard");
+  });
 
   const handleGetStarted = () => {
     if (status === "authenticated") {
@@ -45,37 +24,11 @@ export default function LandingPage() {
     }
   };
 
-  const handleUpgrade = async () => {
-    try {
-      setUpgrading(true);
-      const response = await fetch("/api/subscriptions/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          plan: "paid",
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
-      if (!data.url) {
-        throw new Error("No checkout URL received");
-      }
-
-      // Redirect to Stripe Checkout
-      window.location.href = data.url;
-    } catch (error) {
-      console.error("Subscription error:", error);
-      alert(error.message);
-    } finally {
-      setUpgrading(false);
-    }
+  const handleUpgrade = () => {
+    // Subscribing happens at /billing now (auth-gated). Send the user there;
+    // anonymous visitors go through signup first.
+    if (status === "authenticated") router.push("/billing");
+    else router.push("/signup");
   };
 
   return (
@@ -913,9 +866,9 @@ export default function LandingPage() {
           </div>
           <div className="mt-12">
             <PricingPlans
-              subscription={subscription}
+              subscription={null}
               onUpgrade={handleUpgrade}
-              upgrading={upgrading}
+              upgrading={false}
               showUpgradeButton={true}
               showGetStartedButton={!session}
               onGetStarted={handleGetStarted}

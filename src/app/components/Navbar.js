@@ -166,10 +166,10 @@ export default function Navbar() {
                         Profile
                       </Link>
                       <Link
-                        href="/subscription"
+                        href="/billing"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       >
-                        Subscription
+                        Billing
                       </Link>
                       <Link
                         href="/settings"

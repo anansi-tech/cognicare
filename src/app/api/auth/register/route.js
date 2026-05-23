@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/user";
 import { hash } from "bcryptjs";
-import { subscriptionService } from "@/lib/subscription-service";
 
 export async function POST(request) {
   try {
@@ -38,8 +37,10 @@ export async function POST(request) {
       role: "counselor",
     });
 
-    // Create trial subscription
-    await subscriptionService.createTrialSubscription(user._id);
+    // Subscription state is owned by Stripe. The user is created with no
+    // stripeSubscriptionStatus and will be gated to /billing until they
+    // subscribe (Stripe Checkout starts the trial via trial_period_days on
+    // the Price).
 
     // Remove password from response
     const { password: _, ...userWithoutPassword } = user.toObject();
