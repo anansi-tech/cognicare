@@ -109,7 +109,6 @@ export default function ClientAnalytics({ clientId }) {
           </ResponsiveContainer>
         )}
       </div>
-      {/* Round 3: MBC trends */}
     </div>
   );
 }

@@ -487,8 +487,8 @@ export default function ClientDetail({ clientId }) {
       {showNewClientReminder && (
         <div className="mb-4 p-3 bg-blue-50 border border-blue-300 text-blue-800 rounded-lg flex justify-between items-center">
           <span>
-            ✨ New client created successfully! Run the AI Initial Assessment from the AI Assistant
-            tab when ready.
+            ✨ Client created. The AI assessment is generating now — it&apos;ll appear on the
+            Overview shortly.
           </span>
           <button
             onClick={dismissNewClientReminder}
@@ -769,12 +769,6 @@ export default function ClientDetail({ clientId }) {
                 ) : (
                   <p className="text-sm text-gray-500">No recent reports found.</p>
                 )}
-                <button
-                  onClick={() => setShowGenerateModal(true)} //TODO: fix or remove
-                  className="mt-4 text-sm text-blue-600 hover:text-blue-800"
-                >
-                  Generate Report
-                </button>
               </div>
             </div>
           </div>
