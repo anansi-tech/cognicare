@@ -149,6 +149,23 @@ export function ProgressBody({ payload: p }) {
   if (!p) return null;
   return (
     <div className="space-y-3">
+      <Field label="Measure interpretation">
+        {p.measureInterpretation?.length ? (
+          <ul className="space-y-1 text-sm">
+            {p.measureInterpretation.map((m, i) => (
+              <li key={i}>
+                {m.instrumentId}: {m.latestScore}
+                {m.previousScore != null ? ` (was ${m.previousScore})` : ""} — {m.direction}
+                {m.reliableChange ? ", reliable change" : ""}. {m.interpretation}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            No standardized measures recorded for this period.
+          </p>
+        )}
+      </Field>
       <Field label="Goal progress">
         {p.goalProgress?.length ? (
           <ul className="space-y-1 text-sm">
@@ -165,33 +182,27 @@ export function ProgressBody({ payload: p }) {
           <p className="text-sm text-muted-foreground">None noted.</p>
         )}
       </Field>
-      <Field label="Measure interpretation">
-        {p.measureInterpretation?.length ? (
-          <ul className="space-y-1 text-sm">
-            {p.measureInterpretation.map((m, i) => (
-              <li key={i}>
-                {m.instrumentId}: {m.latestScore}
-                {m.previousScore != null ? ` (was ${m.previousScore})` : ""} — {m.direction}
-                {m.reliableChange ? ", reliable change" : ""}. {m.interpretation}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm text-muted-foreground">No measure data.</p>
-        )}
-      </Field>
-      <Field label="Treatment effectiveness">
-        <p className="text-sm">{p.treatmentEffectiveness}</p>
+      <Field label="Next session focus">
+        <p className="text-sm">{p.nextSessionFocus}</p>
       </Field>
       <Field label="Barriers">
         <List items={p.barriers} />
       </Field>
-      <Field label="Recommendations">
-        <List items={p.recommendations} />
-      </Field>
-      <Field label="Next session focus">
-        <p className="text-sm">{p.nextSessionFocus}</p>
-      </Field>
+      {/* Recommendations + Treatment effectiveness — secondary, muted. */}
+      {p.recommendations?.length ? (
+        <Field label="Recommendations">
+          <ul className="list-disc pl-5 text-xs text-muted-foreground space-y-0.5">
+            {p.recommendations.map((x, i) => (
+              <li key={i}>{x}</li>
+            ))}
+          </ul>
+        </Field>
+      ) : null}
+      {p.treatmentEffectiveness && (
+        <Field label="Treatment effectiveness">
+          <p className="text-xs text-muted-foreground">{p.treatmentEffectiveness}</p>
+        </Field>
+      )}
       {/* Reassessment recommendation surfaces once, at the client-page banner. */}
     </div>
   );

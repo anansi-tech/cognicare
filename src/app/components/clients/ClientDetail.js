@@ -1038,11 +1038,15 @@ export default function ClientDetail({ clientId }) {
         {activeTab === "progress" && (
           <div className="space-y-8">
             <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-gray-900">Measures</h2>
+              <h2 className="text-xl font-semibold text-gray-900">Measure Trends</h2>
+              <p className="text-sm text-gray-500">
+                Administer PHQ-9 / GAD-7 here; trends update with each new administration. The
+                AI narrative — Progress Report — lives on the Overview.
+              </p>
               <MeasuresPanel clientId={client._id} />
             </div>
             <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-gray-900">Risk Timeline</h2>
+              <h2 className="text-xl font-semibold text-gray-900">Risk Over Time</h2>
               <ClientAnalytics clientId={client._id} />
             </div>
           </div>
