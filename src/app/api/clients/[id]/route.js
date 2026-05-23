@@ -4,6 +4,7 @@ import Client from "@/models/client";
 import Session from "@/models/session";
 import Report from "@/models/report";
 import { getCurrentUser } from "@/lib/auth";
+import { clientScope } from "@/lib/practice";
 import {
   logAuditEvent,
   auditMetaFromRequest,
@@ -27,12 +28,11 @@ export async function GET(req, context) {
 
     await connectDB();
 
-    // Practice-scoped visibility — any clinician in the practice can see
-    // the practice's clients.
-    const client = await Client.findOne({
-      _id: id,
-      practiceId: user.practiceId,
-    }).lean();
+    // Assignment-based visibility — clinicians only see clients they're
+    // assigned to; owner sees the whole practice. 404 (not 403) when the
+    // user can't see it, so existence doesn't leak.
+    const scope = await clientScope(user);
+    const client = await Client.findOne({ _id: id, ...scope }).lean();
 
     if (!client) {
       return NextResponse.json({ message: "Client not found" }, { status: 404 });
@@ -93,11 +93,9 @@ export async function PATCH(req, context) {
 
     const body = await req.json();
 
-    // Practice-scoped visibility.
-    const existingClient = await Client.findOne({
-      _id: id,
-      practiceId: user.practiceId,
-    });
+    // Assignment-based visibility.
+    const scope = await clientScope(user);
+    const existingClient = await Client.findOne({ _id: id, ...scope });
 
     if (!existingClient) {
       return NextResponse.json({ message: "Client not found" }, { status: 404 });
@@ -227,7 +225,7 @@ export async function PATCH(req, context) {
 
       // Update just the insurance fields using findOneAndUpdate
       const updatedClient = await Client.findOneAndUpdate(
-        { _id: id, practiceId: user.practiceId },
+        { _id: id, ...scope },
         { $set: insuranceUpdate },
         { new: true }
       );
@@ -277,11 +275,9 @@ export async function DELETE(req, context) {
 
     await connectDB();
 
-    // Delete client (practice-scoped).
-    const deletedClient = await Client.findOneAndDelete({
-      _id: id,
-      practiceId: user.practiceId,
-    });
+    // Delete client (assignment-scoped — same visibility as GET).
+    const scope = await clientScope(user);
+    const deletedClient = await Client.findOneAndDelete({ _id: id, ...scope });
 
     if (!deletedClient) {
       return NextResponse.json({ message: "Client not found" }, { status: 404 });

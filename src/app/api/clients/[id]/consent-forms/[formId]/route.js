@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
+import { clientScope } from "@/lib/practice";
 import { deleteFile } from "@/lib/storage";
 import Client from "@/models/client";
 
@@ -13,8 +14,9 @@ export async function DELETE(request, { params }) {
     const { id, formId } = await params;
 
     // Find the client and remove the consent form using findOneAndUpdate
+    const scope = await clientScope(user);
     const client = await Client.findOneAndUpdate(
-      { _id: id, practiceId: user.practiceId },
+      { _id: id, ...scope },
       { $pull: { consentForms: { _id: formId } } },
       { new: true }
     );

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
+import { clientScope } from "@/lib/practice";
 import Client from "@/models/client";
 import { deleteFile } from "@/lib/storage";
 import mongoose from "mongoose";
@@ -42,8 +43,9 @@ export async function PATCH(req, context) {
       }));
     }
 
+    const scope = await clientScope(user);
     const updatedClient = await Client.findOneAndUpdate(
-      { _id: id, practiceId: user.practiceId },
+      { _id: id, ...scope },
       { $set: billingUpdate },
       { new: true }
     );
@@ -72,8 +74,9 @@ export async function DELETE(req, context) {
 
     await connectDB();
 
-    // Find the client and verify ownership
-    const client = await Client.findOne({ _id: id, practiceId: user.practiceId });
+    // Find the client and verify visibility
+    const scope = await clientScope(user);
+    const client = await Client.findOne({ _id: id, ...scope });
     if (!client) {
       return NextResponse.json({ message: "Client not found" }, { status: 404 });
     }
@@ -89,7 +92,7 @@ export async function DELETE(req, context) {
 
     // Remove the billing information using $unset
     const updatedClient = await Client.findOneAndUpdate(
-      { _id: id, practiceId: user.practiceId },
+      { _id: id, ...scope },
       { $unset: { billing: 1 } },
       { new: true }
     );

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAuth, getCurrentUser } from "@/lib/auth";
+import { visibleClientIds } from "@/lib/practice";
 import { connectDB } from "@/lib/mongodb";
-import Client from "@/models/client";
 import Session from "@/models/session";
 import Report from "@/models/report";
 
@@ -12,33 +12,37 @@ export const GET = requireAuth(async (req) => {
 
     await connectDB();
 
-    // Practice-scoped counts — every clinician in the practice sees the
-    // same totals (which IS the dashboard story for a multi-clinician
-    // practice; identical to today for a solo practice).
-    const totalClients = await Client.countDocuments({ practiceId });
+    // Assignment-based stats: clinicians see numbers for their own caseload;
+    // owners see everything in the practice. Sessions/Reports inherit from
+    // client visibility.
+    const allowedClientIds = await visibleClientIds(user);
+    const totalClients = allowedClientIds.length;
+
+    const sessionScope = { practiceId, clientId: { $in: allowedClientIds } };
+    const reportScope = { practiceId, clientId: { $in: allowedClientIds } };
 
     const activeSessions = await Session.countDocuments({
-      practiceId,
+      ...sessionScope,
       status: { $in: ["scheduled", "in-progress"] },
     });
 
     const completedSessions = await Session.countDocuments({
-      practiceId,
+      ...sessionScope,
       status: "completed",
     });
 
     const reportsGenerated = await Report.countDocuments({
-      practiceId,
+      ...reportScope,
       status: "completed",
     });
 
     const [recentSessions, recentReports] = await Promise.all([
-      Session.find({ practiceId })
+      Session.find(sessionScope)
         .sort({ updatedAt: -1 })
         .limit(5)
         .populate("clientId", "name")
         .lean(),
-      Report.find({ practiceId })
+      Report.find(reportScope)
         .sort({ createdAt: -1 })
         .limit(5)
         .populate("clientId", "name")

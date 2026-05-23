@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { getCurrentUser } from "@/lib/auth";
+import { visibleClientIds } from "@/lib/practice";
 import AIReport from "@/models/aiReport";
 
 // GET a single AIReport (agent envelope) for this client.
@@ -11,6 +12,10 @@ export async function GET(_req, { params }) {
   const { id: clientId, reportId } = await params;
 
   await connectDB();
+  const allowed = await visibleClientIds(user);
+  if (!allowed.some((id) => id.toString() === clientId)) {
+    return NextResponse.json({ error: "Report not found" }, { status: 404 });
+  }
   const report = await AIReport.findOne({
     _id: reportId,
     clientId,

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Report from "@/models/report";
 import { getCurrentUser, getSession } from "@/lib/auth";
+import { visibleClientIds } from "@/lib/practice";
 import AIReport from "@/models/aiReport";
 
 // Get all AI reports for a specific client
@@ -15,8 +16,12 @@ export async function GET(req, context) {
     await connectDB();
     const { id: clientId } = await context.params;
 
-    // Practice-scoped: any clinician in the practice sees the AI reports
-    // tied to that client.
+    // Inherit visibility from the parent client.
+    const allowedClientIds = await visibleClientIds(user);
+    const inScope = allowedClientIds.some((id) => id.toString() === clientId);
+    if (!inScope) {
+      return NextResponse.json({ message: "No reports found for this client" }, { status: 404 });
+    }
     const reports = await AIReport.find({
       clientId,
       practiceId: user.practiceId,
@@ -51,12 +56,14 @@ export async function PATCH(req, context) {
     const body = await req.json();
     const { content, type, recommendations, followUp } = body;
 
-    // Find the report and ensure it belongs to the counselor
+    // Find the report and ensure it's visible to the caller (inherits from client).
     // Note: This currently operates on the standard 'Report' model, not AIReport.
     // Decide if PATCH should apply to AIReport or standard Report.
+    const allowedClientIds = await visibleClientIds(user);
     const existingReport = await Report.findOne({
       _id: id,
       practiceId: user.practiceId,
+      clientId: { $in: allowedClientIds },
     });
 
     if (!existingReport) {

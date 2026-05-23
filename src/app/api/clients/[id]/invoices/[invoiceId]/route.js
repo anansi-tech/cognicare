@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
+import { clientScope } from "@/lib/practice";
 import Client from "@/models/client";
 import { deleteFile } from "@/lib/storage";
 import { connectDB } from "@/lib/mongodb";
@@ -15,8 +16,9 @@ export async function DELETE(req, context) {
 
     await connectDB();
 
-    // Find the client and verify ownership
-    const client = await Client.findOne({ _id: id, practiceId: user.practiceId });
+    // Find the client and verify visibility
+    const scope = await clientScope(user);
+    const client = await Client.findOne({ _id: id, ...scope });
     if (!client) {
       return NextResponse.json({ message: "Client not found" }, { status: 404 });
     }
@@ -39,7 +41,7 @@ export async function DELETE(req, context) {
 
     // Remove the invoice from the client's billing.invoices array
     const updatedClient = await Client.findOneAndUpdate(
-      { _id: id, practiceId: user.practiceId },
+      { _id: id, ...scope },
       { $pull: { "billing.invoices": { _id: invoiceId } } },
       { new: true }
     );

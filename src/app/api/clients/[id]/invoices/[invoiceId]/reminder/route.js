@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
+import { clientScope } from "@/lib/practice";
 import Client from "@/models/client";
 import { connectDB } from "@/lib/mongodb";
 import { Resend } from "resend";
@@ -16,8 +17,9 @@ export async function POST(req, context) {
 
     await connectDB();
 
-    // Find the client and invoice
-    const client = await Client.findOne({ _id: id, practiceId: user.practiceId });
+    // Find the client and invoice (assignment-scoped)
+    const scope = await clientScope(user);
+    const client = await Client.findOne({ _id: id, ...scope });
     if (!client) {
       return NextResponse.json({ message: "Client not found" }, { status: 404 });
     }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Client from "@/models/client";
 import { requireAuth, getCurrentUser } from "@/lib/auth";
+import { clientScope } from "@/lib/practice";
 import {
   logAuditEvent,
   auditMetaFromRequest,
@@ -19,9 +20,9 @@ export const GET = requireAuth(async (req) => {
     const status = searchParams.get("status");
     const search = searchParams.get("search");
 
-    // Visibility = practice scope (all clinicians in the practice see the
-    // roster). Assignment (counselorId) is who's working with a given client.
-    const query = { practiceId: user.practiceId };
+    // Visibility = assignment-based. Owner sees the whole practice roster;
+    // a clinician sees only clients assigned to them (counselorId === user.id).
+    const query = await clientScope(user);
     if (status) query.status = status;
     if (search) {
       query.$or = [

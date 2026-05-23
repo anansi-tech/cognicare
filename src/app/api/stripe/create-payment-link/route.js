@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { getCurrentUser } from "@/lib/auth";
+import { clientScope } from "@/lib/practice";
 import Client from "@/models/client";
 import { connectDB } from "@/lib/mongodb";
 
@@ -20,8 +21,9 @@ export async function POST(req) {
 
     await connectDB();
 
-    // Verify client ownership
-    const client = await Client.findOne({ _id: clientId, practiceId: user.practiceId });
+    // Verify client visibility (assignment-scoped)
+    const scope = await clientScope(user);
+    const client = await Client.findOne({ _id: clientId, ...scope });
     if (!client) {
       console.log("Client not found:", clientId);
       return NextResponse.json({ message: "Client not found" }, { status: 404 });

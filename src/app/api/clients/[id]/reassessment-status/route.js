@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/mongodb";
 import Session from "@/models/session";
 import AIReport from "@/models/aiReport";
 import { getSession } from "@/lib/auth";
+import { visibleClientIds } from "@/lib/practice";
 
 export async function GET(req, { params }) {
   try {
@@ -17,6 +18,11 @@ export async function GET(req, { params }) {
     }
 
     await connectDB();
+
+    const allowed = await visibleClientIds(session.user);
+    if (!allowed.some((id) => id.toString() === clientId)) {
+      return NextResponse.json({ error: "Client not found" }, { status: 404 });
+    }
 
     const mostRecentSession = await Session.findOne({
       clientId,

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
+import { visibleClientIds } from "@/lib/practice";
 import { runWorkflow } from "@/lib/ai/orchestrator";
 
 export const runtime = "nodejs";
@@ -13,6 +14,11 @@ export async function POST(req) {
   const { type, clientId, sessionId, sessionData } = await req.json();
   if (!type || !clientId) {
     return NextResponse.json({ error: "type and clientId required" }, { status: 400 });
+  }
+
+  const allowed = await visibleClientIds(user);
+  if (!allowed.some((id) => id.toString() === String(clientId))) {
+    return NextResponse.json({ error: "Client not found" }, { status: 404 });
   }
 
   try {

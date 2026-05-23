@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
+import { visibleClientIds } from "@/lib/practice";
 import { connectDB } from "@/lib/mongodb";
 import AIReport from "@/models/aiReport";
 
@@ -13,6 +14,10 @@ export async function GET(_req, { params }) {
   const { id: clientId } = await params;
 
   await connectDB();
+  const allowed = await visibleClientIds(user);
+  if (!allowed.some((id) => id.toString() === clientId)) {
+    return NextResponse.json({ riskTimeline: [] }, { status: 404 });
+  }
   const assessments = await AIReport.find({
     clientId,
     practiceId: user.practiceId,

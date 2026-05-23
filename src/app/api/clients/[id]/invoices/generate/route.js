@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
+import { clientScope } from "@/lib/practice";
 import Client from "@/models/client";
 import { uploadFile, generateFileKey } from "@/lib/storage";
 import { connectDB } from "@/lib/mongodb";
@@ -16,8 +17,9 @@ export async function POST(req, context) {
 
     await connectDB();
 
-    // Get client data
-    const client = await Client.findOne({ _id: id, practiceId: user.practiceId });
+    // Get client data (assignment-scoped)
+    const scope = await clientScope(user);
+    const client = await Client.findOne({ _id: id, ...scope });
     if (!client) {
       return NextResponse.json({ message: "Client not found" }, { status: 404 });
     }
@@ -445,7 +447,7 @@ export async function POST(req, context) {
 
     // Update client with new invoice
     const updatedClient = await Client.findOneAndUpdate(
-      { _id: id, practiceId: user.practiceId },
+      { _id: id, ...scope },
       { $push: { "billing.invoices": invoiceData } },
       { new: true }
     );

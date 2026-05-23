@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Session from "@/models/session";
 import { requireAuth, getCurrentUser } from "@/lib/auth";
+import { visibleClientIds } from "@/lib/practice";
 import {
   logAuditEvent,
   auditMetaFromRequest,
@@ -17,9 +18,12 @@ export const GET = requireAuth(async (req) => {
     const url = new URL(req.url);
     const id = url.pathname.split("/").pop();
 
+    // Sessions inherit visibility from their parent client.
+    const allowedClientIds = await visibleClientIds(user);
     const sessionData = await Session.findOne({
       _id: id,
       practiceId: user.practiceId,
+      clientId: { $in: allowedClientIds },
     })
       .populate("clientId", "name")
       .lean();
@@ -46,10 +50,12 @@ export const PATCH = requireAuth(async (req) => {
     const body = await req.json();
     const { notes, status, date, duration, type, format } = body;
 
-    // Find the session and ensure it belongs to the counselor
+    // Find the session through assignment-aware visibility.
+    const allowedClientIds = await visibleClientIds(user);
     const existingSession = await Session.findOne({
       _id: id,
       practiceId: user.practiceId,
+      clientId: { $in: allowedClientIds },
     });
 
     if (!existingSession) {
@@ -94,9 +100,11 @@ export const DELETE = requireAuth(async (req) => {
     const url = new URL(req.url);
     const id = url.pathname.split("/").pop();
 
+    const allowedClientIds = await visibleClientIds(user);
     const deletedSession = await Session.findOneAndDelete({
       _id: id,
       practiceId: user.practiceId,
+      clientId: { $in: allowedClientIds },
     });
 
     if (!deletedSession) {

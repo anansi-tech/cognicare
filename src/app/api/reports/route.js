@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Report from "@/models/report";
 import { requireAuth, getCurrentUser } from "@/lib/auth";
+import { visibleClientIds } from "@/lib/practice";
 
 // Get all reports for the authenticated counselor
 export const GET = requireAuth(async (req) => {
@@ -15,10 +16,16 @@ export const GET = requireAuth(async (req) => {
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
 
-    // Visibility = practice scope (createdBy stays as authorship metadata
-    // populated on each doc).
-    const query = { practiceId: user.practiceId };
-    if (clientId) query.clientId = clientId;
+    // Reports inherit visibility from their parent client.
+    const allowedClientIds = await visibleClientIds(user);
+    const query = {
+      practiceId: user.practiceId,
+      clientId: clientId
+        ? allowedClientIds.some((id) => id.toString() === clientId)
+          ? clientId
+          : { $in: [] }
+        : { $in: allowedClientIds },
+    };
     if (type) query.type = type;
     if (startDate || endDate) {
       query.createdAt = {};

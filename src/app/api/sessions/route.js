@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Session from "@/models/session";
 import { requireAuth, getCurrentUser } from "@/lib/auth";
+import { visibleClientIds } from "@/lib/practice";
 import {
   logAuditEvent,
   auditMetaFromRequest,
@@ -20,9 +21,18 @@ export const GET = requireAuth(async (req) => {
     const status = searchParams.get("status");
     const type = searchParams.get("type");
 
-    // Visibility = practice scope.
-    const query = { practiceId: user.practiceId };
-    if (clientId) query.clientId = clientId;
+    // Visibility derives from clients: a clinician sees sessions for clients
+    // assigned to them; owner sees everything in the practice.
+    const allowedClientIds = await visibleClientIds(user);
+    const query = {
+      practiceId: user.practiceId,
+      clientId: clientId
+        ? // Honor the requested clientId only if it's in the visible set.
+          allowedClientIds.some((id) => id.toString() === clientId)
+          ? clientId
+          : { $in: [] }
+        : { $in: allowedClientIds },
+    };
     if (status) query.status = status;
     if (type) query.type = type;
 

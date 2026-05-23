@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
+import { visibleClientIds } from "@/lib/practice";
 import { connectDB } from "@/lib/mongodb";
 import MeasureAdministration from "@/models/measureAdministration";
 import { scoreInstrument } from "@/lib/mbc/score";
@@ -18,6 +19,10 @@ export async function POST(req, { params }) {
   if (!complete) return NextResponse.json({ error: "Answer all items" }, { status: 400 });
 
   await connectDB();
+  const allowed = await visibleClientIds(user);
+  if (!allowed.some((id) => id.toString() === clientId)) {
+    return NextResponse.json({ error: "Client not found" }, { status: 404 });
+  }
   const doc = await MeasureAdministration.create({
     userId: user.id,
     practiceId: user.practiceId,
@@ -38,5 +43,10 @@ export async function GET(req, { params }) {
   const { id: clientId } = await params;
   const instrumentId = req.nextUrl.searchParams.get("instrumentId");
   if (!instrumentId) return NextResponse.json({ error: "instrumentId required" }, { status: 400 });
+  await connectDB();
+  const allowed = await visibleClientIds(user);
+  if (!allowed.some((id) => id.toString() === clientId)) {
+    return NextResponse.json({ error: "Client not found" }, { status: 404 });
+  }
   return NextResponse.json(await getTrend(clientId, instrumentId, 12));
 }
