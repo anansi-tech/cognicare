@@ -10,11 +10,9 @@ export default function LandingPage() {
   const [email, setEmail] = useState("");
   const { data: session, status } = useSession();
   const router = useRouter();
-
-  // Authed visitors go straight to the dashboard — they have no business on /
-  useState(() => {
-    if (status === "authenticated") router.push("/dashboard");
-  });
+  // No auto-redirect from /. Authed users can navigate to /dashboard via the
+  // Navbar. Auto-pushing here chained into /billing for no-sub users via
+  // SubscriptionGate, which was the wrong UX.
 
   const handleGetStarted = () => {
     if (status === "authenticated") {

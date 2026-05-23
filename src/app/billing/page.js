@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
@@ -62,12 +62,14 @@ export default function BillingPage() {
   const [busy, setBusy] = useState(null); // priceId currently checking out / "portal"
   const [seats, setSeats] = useState(2); // Practice plan implies 2+; default 2
 
-  if (status === "loading") {
-    return <div className="p-6">Loading…</div>;
-  }
-  if (status === "unauthenticated") {
-    router.replace("/login");
-    return null;
+  // Unauthed users get bounced to the marketing landing (pricing already
+  // lives there). Done in an effect — never call router.replace during render.
+  useEffect(() => {
+    if (status === "unauthenticated") router.replace("/");
+  }, [status, router]);
+
+  if (status !== "authenticated") {
+    return <div className="p-6 text-sm text-muted-foreground">Loading…</div>;
   }
 
   const subStatus = session?.user?.stripeSubscriptionStatus;
