@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import { getCurrentUser } from "@/lib/auth";
 import { clientScope } from "@/lib/practice";
 import Client from "@/models/client";
+import Invoice from "@/models/invoice";
 import { connectDB } from "@/lib/mongodb";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -63,6 +64,15 @@ export async function POST(req) {
     });
 
     console.log("Stripe payment link created:", paymentLink.url);
+
+    // Persist the link on the Invoice doc so reminders + UI can surface it.
+    if (invoiceId) {
+      await Invoice.updateOne(
+        { _id: invoiceId, clientId, practiceId: client.practiceId },
+        { $set: { paymentLink: paymentLink.url } }
+      );
+    }
+
     return NextResponse.json({ paymentLink: paymentLink.url });
   } catch (error) {
     console.error("Error creating payment link:", error);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 
 export default function BillingInfo({ client, onUpdate, onDelete }) {
@@ -12,6 +12,25 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
   const [sessions, setSessions] = useState([]);
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
   const [showPaymentDropdown, setShowPaymentDropdown] = useState(null);
+  const [invoices, setInvoices] = useState([]);
+
+  // Round 12: invoices live in their own model now. Fetch them from the
+  // billing GET endpoint instead of reading from client.billing.invoices.
+  const refreshInvoices = async () => {
+    try {
+      const res = await fetch(`/api/clients/${client._id}/billing`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setInvoices(Array.isArray(data.invoices) ? data.invoices : []);
+    } catch (e) {
+      console.error("Failed to load invoices", e);
+    }
+  };
+
+  useEffect(() => {
+    if (client?._id) refreshInvoices();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [client?._id]);
 
   const handleEditBilling = () => {
     setSelectedInvoice(null);
@@ -20,96 +39,28 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
 
   const handleBillingUpdate = async (formData) => {
     try {
-      // Prepare the update data for basic billing info
       const updateData = {
         paymentMethod: formData.paymentMethod,
         rate: parseFloat(formData.rate) || 0,
         initialRate: parseFloat(formData.initialRate) || 0,
         groupRate: parseFloat(formData.groupRate) || 0,
         notes: formData.notes,
-        invoices: client?.billing?.invoices || [],
       };
 
-      // Only process invoice data if an amount is provided
-      if (formData.amount) {
-        let invoiceData = {
-          _id: formData.invoiceId || undefined,
-          date: new Date().toISOString(),
-          amount: formData.amount,
-          status: "pending",
-          notes: formData.invoiceNotes || "",
-        };
-
-        // Add document info if a file was uploaded
-        if (formData.invoiceFile && formData.invoiceFile.size > 0) {
-          console.log("Uploading file:", formData.invoiceFile);
-          const uploadFormData = new FormData();
-          uploadFormData.append("file", formData.invoiceFile);
-
-          const uploadResponse = await fetch("/api/upload", {
-            method: "POST",
-            body: uploadFormData,
-          });
-
-          if (!uploadResponse.ok) {
-            throw new Error("Failed to upload invoice");
-          }
-
-          const uploadResult = await uploadResponse.json();
-          console.log("Upload result:", uploadResult);
-          invoiceData.document = uploadResult.path;
-          invoiceData.documentKey = uploadResult.key;
-        } else if (formData.invoiceId && selectedInvoice?.document) {
-          // Keep existing document if editing and no new file uploaded
-          invoiceData.document = selectedInvoice.document;
-          invoiceData.documentKey = selectedInvoice.documentKey;
-        }
-
-        console.log("Invoice data before update:", invoiceData);
-
-        // Update or add the invoice
-        if (formData.invoiceId) {
-          // Update existing invoice
-          updateData.invoices = updateData.invoices.map((invoice) =>
-            invoice._id === formData.invoiceId ? invoiceData : invoice
-          );
-        } else {
-          // Add new invoice only if it doesn't already exist
-          const existingInvoice = updateData.invoices.find(
-            (inv) => inv.amount === formData.amount && inv.date === invoiceData.date
-          );
-          if (!existingInvoice) {
-            updateData.invoices = [...updateData.invoices, invoiceData];
-          }
-        }
-      }
-
-      console.log("Update data:", updateData);
-
-      // Update client billing information
       const response = await fetch(`/api/clients/${client._id}/billing`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updateData),
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to update billing information");
-      }
+      if (!response.ok) throw new Error("Failed to update billing information");
 
       const updatedBilling = await response.json();
-      console.log("Updated billing:", updatedBilling);
-      onUpdate({
-        ...client,
-        billing: updatedBilling,
-      });
+      onUpdate({ ...client, billing: updatedBilling });
       setSelectedInvoice(null);
       setShowBillingModal(false);
     } catch (error) {
       console.error("Error updating billing:", error);
-      // Handle error (show toast, etc.)
+      toast.error("Failed to update billing");
     }
   };
 
@@ -120,30 +71,16 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
   };
 
   const handleDeleteInvoice = async (invoiceId) => {
-    if (!confirm("Are you sure you want to delete this invoice?")) {
-      return;
-    }
-
+    if (!confirm("Are you sure you want to delete this invoice?")) return;
     try {
       const response = await fetch(`/api/clients/${client._id}/invoices/${invoiceId}`, {
         method: "DELETE",
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete invoice");
-      }
-
-      // Update the client state by removing the deleted invoice
-      onUpdate({
-        ...client,
-        billing: {
-          ...client.billing,
-          invoices: client.billing.invoices.filter((invoice) => invoice._id !== invoiceId),
-        },
-      });
+      if (!response.ok) throw new Error("Failed to delete invoice");
+      await refreshInvoices();
     } catch (error) {
       console.error("Error deleting invoice:", error);
-      // Handle error (show toast, etc.)
+      toast.error("Failed to delete invoice");
     }
   };
 
@@ -220,20 +157,13 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
       }
 
       const data = await response.json();
-      onUpdate({
-        ...client,
-        billing: {
-          ...client.billing,
-          invoices: [...(client.billing?.invoices || []), data.invoice],
-        },
-      });
-
-      window.open(data.documentUrl, "_blank");
+      await refreshInvoices();
+      if (data.documentUrl) window.open(data.documentUrl, "_blank");
       setShowSessionModal(false);
       setSelectedSessions([]);
     } catch (error) {
       console.error("Error generating invoice:", error);
-      alert("Failed to generate invoice. Please try again.");
+      toast.error("Failed to generate invoice. Please try again.");
     } finally {
       setIsGenerating(false);
     }
@@ -243,43 +173,18 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
     try {
       const response = await fetch(`/api/clients/${client._id}/invoices/${invoiceId}/status`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           status: "paid",
           paymentDate: new Date().toISOString(),
-          paymentMethod: paymentMethod,
+          paymentMethod,
         }),
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to mark invoice as paid");
-      }
-
-      const data = await response.json();
-      if (data.success) {
-        onUpdate({
-          ...client,
-          billing: {
-            ...client.billing,
-            invoices: client.billing.invoices.map((inv) =>
-              inv._id === invoiceId
-                ? {
-                    ...inv,
-                    status: "paid",
-                    paymentDate: new Date().toISOString(),
-                    paymentMethod: paymentMethod,
-                    document: data.invoice.document,
-                    documentKey: data.invoice.documentKey,
-                  }
-                : inv
-            ),
-          },
-        });
-      }
+      if (!response.ok) throw new Error("Failed to mark invoice as paid");
+      await refreshInvoices();
     } catch (error) {
       console.error("Error marking invoice as paid:", error);
+      toast.error("Failed to mark invoice as paid");
     }
   };
 
@@ -544,15 +449,12 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
                 </div>
               )}
 
-              {/* Only show invoices section if there are valid invoices */}
-              {Array.isArray(client?.billing?.invoices) &&
-                client.billing.invoices.length > 0 &&
-                client.billing.invoices.some((inv) => inv.amount) && (
+              {invoices.length > 0 && invoices.some((inv) => inv.amount) && (
                   <div className="sm:col-span-2">
                     <dt className="text-sm font-medium text-gray-500">Recent Invoices</dt>
                     <dd className="mt-1">
                       <div className="space-y-4">
-                        {client.billing.invoices.map((invoice) => (
+                        {invoices.map((invoice) => (
                           <div key={invoice._id} className="border rounded-lg p-4">
                             <div className="flex justify-between items-start">
                               <div>
@@ -642,10 +544,6 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
                   initialRate: formData.get("initialRate"),
                   groupRate: formData.get("groupRate"),
                   notes: formData.get("notes"),
-                  invoiceFile: formData.get("invoiceFile"),
-                  amount: formData.get("amount"),
-                  invoiceNotes: formData.get("invoiceNotes"),
-                  invoiceId: formData.get("invoiceId"),
                 });
               }}
             >
@@ -711,60 +609,6 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
                     defaultValue={client.billing?.notes}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   />
-                </div>
-
-                <div className="border-t pt-4">
-                  <h3 className="text-lg font-medium mb-2">
-                    {selectedInvoice ? "Edit Invoice" : "Add Invoice"}
-                  </h3>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Invoice Document {selectedInvoice?.document && "(Replace Current)"}
-                      </label>
-                      <input
-                        type="file"
-                        name="invoiceFile"
-                        accept=".pdf"
-                        className="mt-1 block w-full"
-                      />
-                      {selectedInvoice?.document && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          Current document:
-                          <a
-                            href={selectedInvoice.document}
-                            target="_blank"
-                            className="text-blue-500 ml-1"
-                          >
-                            View
-                          </a>
-                        </p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Amount</label>
-                      <input
-                        type="number"
-                        name="amount"
-                        defaultValue={selectedInvoice?.amount || ""}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Invoice Notes
-                      </label>
-                      <textarea
-                        name="invoiceNotes"
-                        defaultValue={selectedInvoice?.notes || ""}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                      />
-                    </div>
-
-                    <input type="hidden" name="invoiceId" value={selectedInvoice?._id || ""} />
-                  </div>
                 </div>
 
                 <div className="flex justify-end space-x-2">

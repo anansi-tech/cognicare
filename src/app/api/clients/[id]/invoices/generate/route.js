@@ -2,10 +2,16 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { clientScope } from "@/lib/practice";
 import Client from "@/models/client";
+import Invoice from "@/models/invoice";
 import { uploadFile, generateFileKey } from "@/lib/storage";
 import { connectDB } from "@/lib/mongodb";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
-import mongoose from "mongoose";
+import {
+  logAuditEvent,
+  auditMetaFromRequest,
+  AuditActions,
+  EntityTypes,
+} from "@/lib/audit";
 
 export async function POST(req, context) {
   try {
@@ -382,31 +388,39 @@ export async function POST(req, context) {
       uploadedBy: user._id,
     });
 
-    // Create invoice record
-    const invoiceData = {
-      _id: new mongoose.Types.ObjectId(),
+    // Create the Invoice doc (first-class model since Round 12).
+    const lineItems = sessions.map((s) => {
+      const rate =
+        s.type === "initial"
+          ? client.billing.initialRate || client.billing.rate
+          : s.type === "group"
+            ? client.billing.groupRate || client.billing.rate
+            : client.billing.rate;
+      return {
+        sessionId: s._id,
+        description: s.notes || `${s.type || "standard"} session`,
+        amount: rate,
+      };
+    });
+
+    const invoice = await Invoice.create({
+      practiceId: client.practiceId,
+      clientId: client._id,
+      counselorId: client.counselorId,
+      invoiceNumber: `INV-${timestamp}`,
       date: new Date(),
       amount: totalAmount,
       status: "pending",
+      paymentMethod: client.billing.paymentMethod || "cash",
       notes: notes || "",
       document: documentUrl,
       documentKey: fileKey,
-      invoiceNumber: `INV-${timestamp}`,
-      paymentMethod: client.billing.paymentMethod || "cash",
-      paymentDate: null,
-    };
+      lineItems,
+    });
 
     // Generate payment link only if payment method is credit
     if (client.billing.paymentMethod === "credit") {
-      console.log("Generating payment link for credit card payment");
       try {
-        console.log("Sending request to create payment link:", {
-          clientId: id,
-          invoiceId: invoiceData._id,
-          amount: totalAmount,
-          description: `Invoice ${invoiceData.invoiceNumber} for ${client.name}`,
-        });
-
         const paymentLinkResponse = await fetch(
           `${process.env.NEXT_PUBLIC_APP_URL}/api/stripe/create-payment-link`,
           {
@@ -417,44 +431,38 @@ export async function POST(req, context) {
             },
             body: JSON.stringify({
               clientId: id,
-              invoiceId: invoiceData._id,
+              invoiceId: invoice._id,
               amount: totalAmount,
-              description: `Invoice ${invoiceData.invoiceNumber} for ${client.name}`,
+              description: `Invoice ${invoice.invoiceNumber} for ${client.name}`,
             }),
           }
         );
-
-        console.log("Payment link response status:", paymentLinkResponse.status);
-
         if (paymentLinkResponse.ok) {
           const { paymentLink } = await paymentLinkResponse.json();
-          console.log("Payment link generated:", paymentLink);
-          invoiceData.paymentLink = paymentLink;
+          invoice.paymentLink = paymentLink;
+          await invoice.save();
         } else {
-          const error = await paymentLinkResponse.json();
-          console.error("Payment link generation failed:", error);
+          const err = await paymentLinkResponse.json();
+          console.error("Payment link generation failed:", err);
         }
       } catch (error) {
         console.error("Error generating payment link:", error);
-        // Continue without payment link if there's an error
       }
-    } else {
-      console.log(
-        "Payment method is not credit, skipping payment link generation:",
-        client.billing.paymentMethod
-      );
     }
 
-    // Update client with new invoice
-    const updatedClient = await Client.findOneAndUpdate(
-      { _id: id, ...scope },
-      { $push: { "billing.invoices": invoiceData } },
-      { new: true }
-    );
+    await logAuditEvent({
+      userId: user.id,
+      practiceId: client.practiceId,
+      action: AuditActions.CREATE,
+      entityType: EntityTypes.INVOICE,
+      entityId: invoice._id,
+      details: { clientId: client._id, amount: totalAmount, invoiceNumber: invoice.invoiceNumber },
+      ...auditMetaFromRequest(req),
+    });
 
     return NextResponse.json({
       success: true,
-      invoice: invoiceData,
+      invoice: invoice.toObject(),
       documentUrl,
     });
   } catch (error) {

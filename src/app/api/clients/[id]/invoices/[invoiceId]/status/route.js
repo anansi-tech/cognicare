@@ -1,128 +1,124 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
+import { clientScope } from "@/lib/practice";
 import Client from "@/models/client";
+import Invoice from "@/models/invoice";
 import { uploadFile, generateFileKey } from "@/lib/storage";
 import { connectDB } from "@/lib/mongodb";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import {
+  logAuditEvent,
+  auditMetaFromRequest,
+  AuditActions,
+  EntityTypes,
+} from "@/lib/audit";
 
+// Mark an invoice paid/pending/overdue + regenerate the PDF with the new status.
+// Round 12: rewritten against the Invoice model (the old `userId: user._id`
+// filter was a leftover from the pre-practice schema and silently broke this
+// endpoint for every user). Scope: assigned clinician or owner.
 export async function PATCH(req, { params }) {
   try {
     await connectDB();
     const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { id, invoiceId } = await params;
     const { status, paymentDate, paymentMethod } = await req.json();
 
-    // Find the client and update the invoice
-    const client = await Client.findOne({ _id: id, userId: user._id });
+    const scope = await clientScope(user);
+    const client = await Client.findOne({ _id: id, ...scope });
     if (!client) {
       return NextResponse.json({ error: "Client not found" }, { status: 404 });
     }
 
-    const invoice = client.billing.invoices.id(invoiceId);
+    const invoice = await Invoice.findOne({
+      _id: invoiceId,
+      clientId: client._id,
+      practiceId: client.practiceId,
+    });
     if (!invoice) {
       return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
     }
 
-    // Update invoice status and date
-    invoice.status = status;
-    if (paymentDate) {
-      invoice.paymentDate = paymentDate;
-    }
-    if (paymentMethod) {
-      invoice.paymentMethod = paymentMethod;
-    }
+    const previousStatus = invoice.status;
+    invoice.status = status ?? invoice.status;
+    if (paymentDate) invoice.paymentDate = paymentDate;
+    if (paymentMethod) invoice.paymentMethod = paymentMethod;
 
-    // Regenerate PDF with updated status
+    // Regenerate the PDF stamped with the new status.
     const pdfDoc = await PDFDocument.create();
     const page = pdfDoc.addPage();
     const { width: pageWidth, height: pageHeight } = page.getSize();
     const margin = 50;
+    const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-    // Add company letterhead
     page.drawText("COGNICARE", {
       x: margin,
       y: pageHeight - margin - 24,
       size: 24,
       color: rgb(0.2, 0.4, 0.8),
-      font: await pdfDoc.embedFont(StandardFonts.HelveticaBold),
+      font: bold,
     });
-
     page.drawText("Professional Mental Health Services", {
       x: margin,
       y: pageHeight - margin - 44,
       size: 12,
       color: rgb(0.3, 0.3, 0.3),
     });
-
-    // Add invoice header
     page.drawText("INVOICE", {
       x: margin,
       y: pageHeight - margin - 84,
       size: 20,
       color: rgb(0, 0, 0),
-      font: await pdfDoc.embedFont(StandardFonts.HelveticaBold),
+      font: bold,
     });
-
-    // Add client information section
     page.drawText("Bill To:", {
       x: margin,
       y: pageHeight - margin - 114,
       size: 12,
       color: rgb(0.3, 0.3, 0.3),
-      font: await pdfDoc.embedFont(StandardFonts.HelveticaBold),
+      font: bold,
     });
-
-    page.drawText(`${client.name}`, {
+    page.drawText(client.name, {
       x: margin,
       y: pageHeight - margin - 134,
       size: 12,
       color: rgb(0, 0, 0),
     });
-
-    // Add invoice details
     page.drawText(`Invoice #: ${invoice.invoiceNumber}`, {
       x: pageWidth - margin - 200,
       y: pageHeight - margin - 114,
       size: 12,
       color: rgb(0.3, 0.3, 0.3),
     });
-
     page.drawText(`Date: ${new Date(invoice.date).toLocaleDateString()}`, {
       x: pageWidth - margin - 200,
       y: pageHeight - margin - 134,
       size: 12,
       color: rgb(0.3, 0.3, 0.3),
     });
-
-    // Add payment status
     page.drawText("Payment Status:", {
       x: pageWidth - margin - 200,
       y: pageHeight - margin - 164,
       size: 12,
       color: rgb(0.3, 0.3, 0.3),
-      font: await pdfDoc.embedFont(StandardFonts.HelveticaBold),
+      font: bold,
     });
-
-    page.drawText(status === "paid" ? "Paid" : "Unpaid", {
+    page.drawText(invoice.status === "paid" ? "Paid" : "Unpaid", {
       x: pageWidth - margin - 100,
       y: pageHeight - margin - 164,
       size: 12,
-      color: status === "paid" ? rgb(0, 0.5, 0) : rgb(0.8, 0.2, 0.2),
+      color: invoice.status === "paid" ? rgb(0, 0.5, 0) : rgb(0.8, 0.2, 0.2),
     });
-
-    if (status === "paid") {
-      page.drawText(`Paid on: ${new Date(paymentDate).toLocaleDateString()}`, {
+    if (invoice.status === "paid" && invoice.paymentDate) {
+      page.drawText(`Paid on: ${new Date(invoice.paymentDate).toLocaleDateString()}`, {
         x: pageWidth - margin - 200,
         y: pageHeight - margin - 184,
         size: 12,
         color: rgb(0.3, 0.3, 0.3),
       });
-
-      page.drawText(`Payment Method: ${paymentMethod}`, {
+      page.drawText(`Payment Method: ${invoice.paymentMethod || ""}`, {
         x: pageWidth - margin - 200,
         y: pageHeight - margin - 204,
         size: 12,
@@ -130,211 +126,68 @@ export async function PATCH(req, { params }) {
       });
     }
 
-    // Add sessions table header with more space
-    page.drawText("Description", {
-      x: margin,
-      y: pageHeight - margin - 214,
-      size: 12,
-      color: rgb(0.3, 0.3, 0.3),
-      font: await pdfDoc.embedFont(StandardFonts.HelveticaBold),
-    });
-
-    page.drawText("Date", {
-      x: margin + 200,
-      y: pageHeight - margin - 214,
-      size: 12,
-      color: rgb(0.3, 0.3, 0.3),
-      font: await pdfDoc.embedFont(StandardFonts.HelveticaBold),
-    });
-
-    page.drawText("Amount", {
-      x: margin + 350,
-      y: pageHeight - margin - 214,
-      size: 12,
-      color: rgb(0.3, 0.3, 0.3),
-      font: await pdfDoc.embedFont(StandardFonts.HelveticaBold),
-    });
-
-    // Add sessions table content
-    let yPosition = pageHeight - margin - 234;
-
-    // Add session details
-    page.drawText(`Therapy Session`, {
-      x: margin,
-      y: yPosition,
-      size: 12,
-      color: rgb(0, 0, 0),
-    });
-
+    let y = pageHeight - margin - 234;
+    page.drawText("Therapy Session", { x: margin, y, size: 12, color: rgb(0, 0, 0) });
     page.drawText(new Date(invoice.date).toLocaleDateString(), {
       x: margin + 200,
-      y: yPosition,
+      y,
       size: 12,
       color: rgb(0, 0, 0),
     });
-
-    page.drawText(`$${invoice.amount}`, {
-      x: margin + 350,
-      y: yPosition,
-      size: 12,
-      color: rgb(0, 0, 0),
-    });
-
-    yPosition -= 20;
-
-    // Add total
-    yPosition -= 20;
+    page.drawText(`$${invoice.amount}`, { x: margin + 350, y, size: 12, color: rgb(0, 0, 0) });
+    y -= 40;
     page.drawLine({
-      start: { x: margin, y: yPosition },
-      end: { x: pageWidth - margin, y: yPosition },
+      start: { x: margin, y },
+      end: { x: pageWidth - margin, y },
       thickness: 1,
       color: rgb(0.8, 0.8, 0.8),
     });
-
-    yPosition -= 20;
+    y -= 20;
     page.drawText("Total", {
       x: pageWidth - margin - 100,
-      y: yPosition,
+      y,
       size: 12,
       color: rgb(0.3, 0.3, 0.3),
-      font: await pdfDoc.embedFont(StandardFonts.HelveticaBold),
+      font: bold,
     });
-
     page.drawText(`$${invoice.amount}`, {
       x: pageWidth - margin - 50,
-      y: yPosition,
+      y,
       size: 12,
       color: rgb(0, 0, 0),
-      font: await pdfDoc.embedFont(StandardFonts.HelveticaBold),
+      font: bold,
     });
 
-    // Add payment instructions before footer
-    yPosition = margin + 100;
-    page.drawText("Payment Instructions:", {
-      x: margin,
-      y: yPosition,
-      size: 12,
-      color: rgb(0.3, 0.3, 0.3),
-      font: await pdfDoc.embedFont(StandardFonts.HelveticaBold),
-    });
-
-    yPosition -= 20;
-    page.drawText(`Please make payment via ${client.billing.paymentMethod}`, {
-      x: margin,
-      y: yPosition,
-      size: 11,
-      color: rgb(0.4, 0.4, 0.4),
-    });
-
-    yPosition -= 15;
-    page.drawText("Payment is due within 30 days of invoice date", {
-      x: margin,
-      y: yPosition,
-      size: 11,
-      color: rgb(0.4, 0.4, 0.4),
-    });
-
-    // Add footer with more spacing
-    yPosition = margin + 30;
-    page.drawText("Thank you for your business!", {
-      x: margin,
-      y: yPosition,
-      size: 12,
-      color: rgb(0.3, 0.3, 0.3),
-      font: await pdfDoc.embedFont(StandardFonts.HelveticaBold),
-    });
-
-    yPosition -= 20;
-    page.drawText("COGNICARE", {
-      x: margin,
-      y: yPosition,
-      size: 11,
-      color: rgb(0.4, 0.4, 0.4),
-    });
-
-    yPosition -= 15;
-    page.drawText("Professional Mental Health Services", {
-      x: margin,
-      y: yPosition,
-      size: 10,
-      color: rgb(0.5, 0.5, 0.5),
-    });
-
-    yPosition -= 12;
-    page.drawText("123 Therapy Lane, Suite 100", {
-      x: margin,
-      y: yPosition,
-      size: 10,
-      color: rgb(0.5, 0.5, 0.5),
-    });
-
-    yPosition -= 10;
-    page.drawText("Anytown, ST 12345", {
-      x: margin,
-      y: yPosition,
-      size: 10,
-      color: rgb(0.5, 0.5, 0.5),
-    });
-
-    yPosition -= 10;
-    page.drawText("Phone: (555) 123-4567 | Email: info@cognicare.com", {
-      x: margin,
-      y: yPosition,
-      size: 10,
-      color: rgb(0.5, 0.5, 0.5),
-    });
-
-    // Save and upload the new PDF
     const pdfBytes = await pdfDoc.save();
     const fileKey = generateFileKey("invoices", `${client._id}-${invoiceId}-${Date.now()}.pdf`);
-
-    // Create a Blob from the PDF bytes
     const pdfBlob = new Blob([pdfBytes], { type: "application/pdf" });
     const pdfUrl = await uploadFile(pdfBlob, fileKey, {
       type: "invoice",
-      uploadedBy: user._id,
+      uploadedBy: user.id,
     });
 
-    // Update invoice with new PDF and status
-    const updatedClient = await Client.findOneAndUpdate(
-      {
-        _id: id,
-        userId: user._id,
-        "billing.invoices._id": invoiceId,
-      },
-      {
-        $set: {
-          "billing.invoices.$.document": pdfUrl,
-          "billing.invoices.$.documentKey": fileKey,
-          "billing.invoices.$.status": status,
-          "billing.invoices.$.paymentDate": paymentDate,
-          "billing.invoices.$.paymentMethod": paymentMethod,
-          "billing.invoices.$.invoiceNumber": invoice.invoiceNumber,
-        },
-      },
-      { new: true }
-    );
+    invoice.document = pdfUrl;
+    invoice.documentKey = fileKey;
+    await invoice.save();
 
-    if (!updatedClient) {
-      return NextResponse.json({ error: "Failed to update invoice" }, { status: 500 });
-    }
-
-    // Find the updated invoice
-    const updatedInvoice = updatedClient.billing.invoices.id(invoiceId);
+    await logAuditEvent({
+      userId: user.id,
+      practiceId: invoice.practiceId,
+      action: AuditActions.UPDATE,
+      entityType: EntityTypes.INVOICE,
+      entityId: invoice._id,
+      details: {
+        clientId: invoice.clientId,
+        previousStatus,
+        newStatus: invoice.status,
+        paymentMethod: invoice.paymentMethod,
+      },
+      ...auditMetaFromRequest(req),
+    });
 
     return NextResponse.json({
       success: true,
-      invoice: {
-        _id: updatedInvoice._id.toString(),
-        date: updatedInvoice.date,
-        amount: updatedInvoice.amount,
-        status: updatedInvoice.status,
-        paymentDate: updatedInvoice.paymentDate,
-        notes: updatedInvoice.notes,
-        document: pdfUrl,
-        documentKey: updatedInvoice.documentKey,
-        invoiceNumber: invoice.invoiceNumber,
-      },
+      invoice: invoice.toObject(),
     });
   } catch (error) {
     console.error("Error updating invoice status:", error);
