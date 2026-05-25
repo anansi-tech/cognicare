@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/mongodb";
 import Client from "@/models/client";
 import Session from "@/models/session";
 import Report from "@/models/report";
+import User from "@/models/user";
 import { getCurrentUser } from "@/lib/auth";
 import { clientScope } from "@/lib/practice";
 import {
@@ -38,6 +39,13 @@ export async function GET(req, context) {
       return NextResponse.json({ message: "Client not found" }, { status: 404 });
     }
 
+    // Resolve the assigned clinician's display name (Round 12) without
+    // changing `client.counselorId` from an ObjectId — callers compare it
+    // as a string in several places.
+    const counselor = client.counselorId
+      ? await User.findById(client.counselorId).select("name email").lean()
+      : null;
+
     const recentSessions = await Session.find({
       clientId: id,
       practiceId: user.practiceId,
@@ -67,6 +75,7 @@ export async function GET(req, context) {
 
     return NextResponse.json({
       client,
+      counselor,
       recentSessions,
       recentReports,
     });

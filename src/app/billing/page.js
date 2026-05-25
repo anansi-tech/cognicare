@@ -119,7 +119,7 @@ export default function BillingPage() {
   return (
     <div className="py-10">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Billing</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Subscription</h1>
         {isActive ? (
           <p className="mt-2 text-sm text-gray-600">
             {STATUS_LABEL[subStatus] ?? subStatus}. Manage your plan, payment method, and

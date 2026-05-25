@@ -50,6 +50,7 @@ export default function ClientDetail({ clientId }) {
   const [showNewClientReminder, setShowNewClientReminder] = useState(false);
   const [aiRefreshKey, setAiRefreshKey] = useState(0);
   const [consentForms, setConsentForms] = useState([]);
+  const [counselor, setCounselor] = useState(null);
   const router = useRouter();
   const { bindClient } = useLiam();
 
@@ -141,6 +142,7 @@ export default function ClientDetail({ clientId }) {
       console.log("Client data received:", data);
 
       setClient(data.client);
+      setCounselor(data.counselor || null);
       setRecentSessions(data.recentSessions || []);
       setRecentReports(data.recentReports || []);
     } catch (err) {
@@ -518,22 +520,29 @@ export default function ClientDetail({ clientId }) {
 
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">
-          {client.name}{" "}
-          <span
-            className={`ml-2 px-2 py-1 text-xs font-semibold rounded-full ${
-              client.status === "active"
-                ? "bg-green-100 text-green-800"
-                : client.status === "inactive"
-                  ? "bg-gray-100 text-gray-800"
-                  : client.status === "completed"
-                    ? "bg-blue-100 text-blue-800"
-                    : "bg-yellow-100 text-yellow-800"
-            }`}
-          >
-            {client.status.charAt(0).toUpperCase() + client.status.slice(1)}
-          </span>
-        </h1>
+        <div>
+          <h1 className="text-2xl font-bold">
+            {client.name}{" "}
+            <span
+              className={`ml-2 px-2 py-1 text-xs font-semibold rounded-full ${
+                client.status === "active"
+                  ? "bg-green-100 text-green-800"
+                  : client.status === "inactive"
+                    ? "bg-gray-100 text-gray-800"
+                    : client.status === "completed"
+                      ? "bg-blue-100 text-blue-800"
+                      : "bg-yellow-100 text-yellow-800"
+              }`}
+            >
+              {client.status.charAt(0).toUpperCase() + client.status.slice(1)}
+            </span>
+          </h1>
+          {counselor?.name && (
+            <p className="mt-1 text-sm text-gray-600">
+              Assigned to <span className="font-medium text-gray-800">{counselor.name}</span>
+            </p>
+          )}
+        </div>
         <div className="space-x-2">
           <button
             onClick={() => router.push("/clients")}
@@ -543,9 +552,10 @@ export default function ClientDetail({ clientId }) {
           </button>
           <ReassignControl
             client={client}
-            onReassigned={({ counselorId }) =>
-              setClient((c) => (c ? { ...c, counselorId } : c))
-            }
+            onReassigned={({ counselorId, counselorName }) => {
+              setClient((c) => (c ? { ...c, counselorId } : c));
+              setCounselor((cur) => ({ ...(cur ?? {}), _id: counselorId, name: counselorName }));
+            }}
           />
           <button
             onClick={() => setIsEditing(true)}

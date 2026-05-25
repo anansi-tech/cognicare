@@ -159,7 +159,7 @@ export default function Navbar() {
                         href="/billing"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       >
-                        Billing
+                        Subscription
                       </Link>
                       <Link
                         href="/settings"
