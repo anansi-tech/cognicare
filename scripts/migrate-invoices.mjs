@@ -1,11 +1,12 @@
-// One-off migration: lift each embedded entry from `client.billing.invoices[]`
-// into a real `Invoice` document. Idempotent — skips invoices already migrated
-// (matched by invoiceNumber + clientId).
+// One-off migration: lift the embedded `client.billing.invoices[]` array into
+// real `Invoice` documents AND the embedded `client.consentForms[]` array
+// into `ConsentForm` documents. Idempotent on both — invoice match by
+// (invoiceNumber, clientId); consent match by (token | _id, clientId).
 //
 // Usage:  node scripts/migrate-invoices.mjs   (loads .env.local for MONGODB_URI)
 //
-// After running and verifying, the embedded array is dropped from the client
-// schema in a later commit (Round 12 Part 4). Re-runs are safe.
+// After running and verifying, the embedded fields are dropped from the
+// client schema in a later commit (Round 12 Part 5). Re-runs are safe.
 
 import mongoose from "mongoose";
 import { config } from "dotenv";
@@ -26,25 +27,24 @@ await mongoose.connect(MONGODB_URI);
 // Pull collections directly so we don't depend on Next aliasing.
 const Client = mongoose.connection.collection("clients");
 const Invoice = mongoose.connection.collection("invoices");
+const ConsentForm = mongoose.connection.collection("consentforms");
 
-const cursor = Client.find({ "billing.invoices.0": { $exists: true } });
-let scanned = 0;
-let migrated = 0;
-let skipped = 0;
+// ------------------------- invoices -------------------------
+const invCursor = Client.find({ "billing.invoices.0": { $exists: true } });
+let invScanned = 0;
+let invMigrated = 0;
+let invSkipped = 0;
 
-for await (const client of cursor) {
-  scanned++;
+for await (const client of invCursor) {
+  invScanned++;
   const invoices = client.billing?.invoices ?? [];
   if (!invoices.length) continue;
 
   for (const inv of invoices) {
     const invoiceNumber = inv.invoiceNumber || `INV-${inv._id}`;
-    const exists = await Invoice.findOne({
-      clientId: client._id,
-      invoiceNumber,
-    });
+    const exists = await Invoice.findOne({ clientId: client._id, invoiceNumber });
     if (exists) {
-      skipped++;
+      invSkipped++;
       continue;
     }
     await Invoice.insertOne({
@@ -66,11 +66,59 @@ for await (const client of cursor) {
       createdAt: inv.date ?? inv.createdAt ?? new Date(),
       updatedAt: new Date(),
     });
-    migrated++;
+    invMigrated++;
   }
 }
 
 console.log(
-  `Migration complete. clients scanned: ${scanned}, invoices migrated: ${migrated}, skipped (already present): ${skipped}.`
+  `Invoices: clients scanned ${invScanned}, migrated ${invMigrated}, skipped ${invSkipped}.`
+);
+
+// ------------------------- consent forms -------------------------
+const consentCursor = Client.find({ "consentForms.0": { $exists: true } });
+let consentScanned = 0;
+let consentMigrated = 0;
+let consentSkipped = 0;
+
+for await (const client of consentCursor) {
+  consentScanned++;
+  const forms = client.consentForms ?? [];
+  if (!forms.length) continue;
+
+  for (const f of forms) {
+    // Match by token (unique per request) or by the embedded _id if no token.
+    const matcher = f.token
+      ? { token: f.token }
+      : { clientId: client._id, documentKey: f.documentKey };
+    const exists = await ConsentForm.findOne(matcher);
+    if (exists) {
+      consentSkipped++;
+      continue;
+    }
+    await ConsentForm.insertOne({
+      practiceId: client.practiceId,
+      clientId: client._id,
+      requestedBy: f.requestedBy ?? client.counselorId,
+      type: f.type ?? "general",
+      version: f.version ?? "1.0",
+      status: f.status ?? "pending",
+      document: f.document ?? "",
+      documentKey: f.documentKey ?? "",
+      signedDocument: f.signedDocument ?? null,
+      signedDocumentKey: f.signedDocumentKey ?? null,
+      token: f.token ?? null,
+      tokenExpires: f.tokenExpires ?? null,
+      requestedAt: f.requestedAt ?? new Date(),
+      dateSigned: f.dateSigned ?? null,
+      notes: f.notes ?? "",
+      createdAt: f.requestedAt ?? new Date(),
+      updatedAt: new Date(),
+    });
+    consentMigrated++;
+  }
+}
+
+console.log(
+  `Consent forms: clients scanned ${consentScanned}, migrated ${consentMigrated}, skipped ${consentSkipped}.`
 );
 await mongoose.disconnect();

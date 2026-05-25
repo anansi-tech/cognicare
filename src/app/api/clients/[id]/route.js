@@ -145,26 +145,8 @@ export async function PATCH(req, context) {
       }
     });
 
-    // Handle consent forms updates
-    if (body.consentForms) {
-      if (Array.isArray(body.consentForms)) {
-        // Replace entire consent forms array
-        existingClient.consentForms = body.consentForms;
-      } else if (typeof body.consentForms === "object") {
-        // Add a new consent form
-        if (!existingClient.consentForms) {
-          existingClient.consentForms = [];
-        }
-        existingClient.consentForms.push({
-          type: body.consentForms.type,
-          version: body.consentForms.version || "1.0",
-          dateSigned: body.consentForms.dateSigned ? new Date(body.consentForms.dateSigned) : null,
-          status: body.consentForms.status || "active",
-          document: body.consentForms.document,
-          electronicSignature: body.consentForms.electronicSignature,
-        });
-      }
-    }
+    // Consent forms moved to the ConsentForm model (Round 12); manage via
+    // `/api/consent-forms/*` instead of through this PATCH.
 
     // Handle billing updates
     if (body.billing) {

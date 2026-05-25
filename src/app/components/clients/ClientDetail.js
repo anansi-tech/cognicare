@@ -49,6 +49,7 @@ export default function ClientDetail({ clientId }) {
   const [availableTemplates, setAvailableTemplates] = useState([]);
   const [showNewClientReminder, setShowNewClientReminder] = useState(false);
   const [aiRefreshKey, setAiRefreshKey] = useState(0);
+  const [consentForms, setConsentForms] = useState([]);
   const router = useRouter();
   const { bindClient } = useLiam();
 
@@ -104,6 +105,25 @@ export default function ClientDetail({ clientId }) {
   useEffect(() => {
     setAvailableTemplates(getAvailableTemplates());
   }, []);
+
+  // Consent forms now live in their own model (Round 12). Fetch them
+  // separately from the client doc.
+  const refreshConsentForms = async () => {
+    if (!clientId) return;
+    try {
+      const res = await fetch(`/api/consent-forms?clientId=${clientId}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setConsentForms(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.error("Failed to load consent forms", e);
+    }
+  };
+
+  useEffect(() => {
+    refreshConsentForms();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clientId]);
 
   const fetchClient = async () => {
     try {
@@ -339,8 +359,8 @@ export default function ClientDetail({ clientId }) {
         throw new Error("API did not return the expected consent form data with a token.");
       }
 
-      // Update client state with the updated client data containing the new form
-      setClient(newConsentData.client);
+      // Refresh consent forms list from the model-backed endpoint.
+      await refreshConsentForms();
 
       // Construct the shareable link
       const shareableLink = `${window.location.origin}/client-portal/consent/${newConsentData.newConsentForm.token}`;
@@ -406,20 +426,14 @@ export default function ClientDetail({ clientId }) {
     if (!confirm("Are you sure you want to delete this consent form?")) return;
 
     try {
-      const response = await fetch(`/api/clients/${client._id}/consent-forms/${formId}`, {
+      const response = await fetch(`/api/consent-forms/${formId}`, {
         method: "DELETE",
       });
-
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to delete consent form");
       }
-
-      // Update client state
-      setClient((prev) => ({
-        ...prev,
-        consentForms: prev.consentForms.filter((form) => form._id.toString() !== formId.toString()),
-      }));
+      await refreshConsentForms();
     } catch (error) {
       console.error("Error deleting consent form:", error);
       alert(error.message || "Failed to delete consent form");
@@ -1068,7 +1082,7 @@ export default function ClientDetail({ clientId }) {
               </div>
 
               <div className="space-y-4">
-                {client.consentForms?.map((form) => (
+                {consentForms.map((form) => (
                   <div
                     key={form._id}
                     onClick={() => handleViewConsent(form)}
@@ -1107,13 +1121,13 @@ export default function ClientDetail({ clientId }) {
                         Requested on{" "}
                         {form.requestedAt ? new Date(form.requestedAt).toLocaleDateString() : "N/A"}
                       </p>
-                      {form.signedAt && (
-                        <p>Signed on {new Date(form.signedAt).toLocaleDateString()}</p>
+                      {form.dateSigned && (
+                        <p>Signed on {new Date(form.dateSigned).toLocaleDateString()}</p>
                       )}
                     </div>
                   </div>
                 ))}
-                {(!client.consentForms || client.consentForms.length === 0) && (
+                {consentForms.length === 0 && (
                   <p className="text-sm text-gray-500">No consent forms yet</p>
                 )}
               </div>

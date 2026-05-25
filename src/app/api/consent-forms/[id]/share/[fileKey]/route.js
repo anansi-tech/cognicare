@@ -1,47 +1,36 @@
 import { NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
 import { getSignedDownloadUrl } from "@/lib/storage";
-import Client from "@/models/client";
+import { connectDB } from "@/lib/mongodb";
+import ConsentForm from "@/models/consentForm";
 
+// Generates a short-lived signed download URL for a consent doc. Requires
+// the consent-form token (proves the caller is the intended recipient or has
+// the share link). The fileKey is taken from the form's stored documentKey
+// or signedDocumentKey — we don't trust arbitrary keys.
 export async function GET(request, { params }) {
   try {
     const { id, fileKey } = await params;
     const { searchParams } = new URL(request.url);
     const token = searchParams.get("token");
-
     if (!token) {
       return NextResponse.json({ error: "Missing token" }, { status: 400 });
     }
 
-    // Try to get the current user (for counselor access)
-    const user = await getCurrentUser();
-
-    // Find the client and consent form by token
-    const query = {
-      "consentForms.token": token,
-      "consentForms.tokenExpires": { $gt: new Date() },
-    };
-
-    // Practice-scoped when authed.
-    if (user) {
-      query.practiceId = user.practiceId;
-    }
-
-    const client = await Client.findOne(query);
-
-    if (!client) {
+    await connectDB();
+    const consentForm = await ConsentForm.findOne({
+      _id: id,
+      token,
+      tokenExpires: { $gt: new Date() },
+    }).lean();
+    if (!consentForm) {
       return NextResponse.json({ error: "Consent form not found or expired" }, { status: 404 });
     }
 
-    // Find the specific consent form
-    const consentForm = client.consentForms.find((form) => form.token === token);
-    if (!consentForm) {
-      return NextResponse.json({ error: "Consent form not found" }, { status: 404 });
+    if (consentForm.documentKey !== fileKey && consentForm.signedDocumentKey !== fileKey) {
+      return NextResponse.json({ error: "File key does not match this consent form" }, { status: 403 });
     }
 
-    // Get the signed URL for the file
     const signedUrl = await getSignedDownloadUrl(fileKey);
-
     return NextResponse.json({ url: signedUrl });
   } catch (error) {
     console.error("Error generating share URL:", error);

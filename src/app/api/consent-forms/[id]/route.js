@@ -1,53 +1,28 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
-import Client from "@/models/client";
+import { visibleClientIds } from "@/lib/practice";
+import { deleteFile } from "@/lib/storage";
+import { connectDB } from "@/lib/mongodb";
+import ConsentForm from "@/models/consentForm";
 
+// Fetch a single consent form. Two access paths:
+//   - ?token=true  → public, by token (client portal flow, no auth required)
+//   - default      → counselor access, scope-checked against client visibility
 export async function GET(request, { params }) {
   try {
+    await connectDB();
     const { id } = await params;
     const { searchParams } = new URL(request.url);
     const isTokenAccess = searchParams.get("token") === "true";
 
-    let client;
-    let consentForm;
-
     if (isTokenAccess) {
-      // Token-based access (for clients)
-      client = await Client.findOne({
-        "consentForms.token": id,
-        "consentForms.tokenExpires": { $gt: new Date() },
-      });
-
-      if (!client) {
+      const consentForm = await ConsentForm.findOne({
+        token: id,
+        tokenExpires: { $gt: new Date() },
+      }).lean();
+      if (!consentForm) {
         return NextResponse.json({ error: "Invalid or expired token" }, { status: 404 });
       }
-
-      consentForm = client.consentForms.find((form) => form.token === id);
-    } else {
-      // Regular access (for counselors)
-      const user = await getCurrentUser();
-      if (!user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
-
-      client = await Client.findOne({
-        "consentForms._id": id,
-        practiceId: user.practiceId,
-      });
-
-      if (!client) {
-        return NextResponse.json({ error: "Consent form not found" }, { status: 404 });
-      }
-
-      consentForm = client.consentForms.id(id);
-    }
-
-    if (!consentForm) {
-      return NextResponse.json({ error: "Consent form not found" }, { status: 404 });
-    }
-
-    // Return appropriate data based on access type
-    if (isTokenAccess) {
       return NextResponse.json({
         _id: consentForm._id,
         type: consentForm.type,
@@ -56,66 +31,70 @@ export async function GET(request, { params }) {
         status: consentForm.status,
         dateSigned: consentForm.dateSigned,
       });
-    } else {
-      return NextResponse.json(consentForm);
     }
+
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const consentForm = await ConsentForm.findOne({
+      _id: id,
+      practiceId: user.practiceId,
+    }).lean();
+    if (!consentForm) {
+      return NextResponse.json({ error: "Consent form not found" }, { status: 404 });
+    }
+
+    const allowed = await visibleClientIds(user);
+    if (!allowed.some((cid) => cid.toString() === consentForm.clientId.toString())) {
+      return NextResponse.json({ error: "Consent form not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(consentForm);
   } catch (error) {
     console.error("Error fetching consent form:", error);
     return NextResponse.json({ error: "Failed to fetch consent form" }, { status: 500 });
   }
 }
 
-export async function POST(request, { params }) {
+// Delete a consent form. Replaces the embedded `/api/clients/[id]/consent-forms/[formId]`
+// route. Scope-checked.
+export async function DELETE(_request, { params }) {
   try {
-    const { id } = params;
-    const formData = await request.formData();
-    const file = formData.get("file");
-    const token = formData.get("token");
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    // Find the client and consent form
-    const client = await Client.findOne({
-      "consentForms.token": token || id,
-      "consentForms.tokenExpires": { $gt: new Date() },
-      "consentForms.status": "pending",
-    });
+    await connectDB();
+    const { id } = await params;
 
-    if (!client) {
-      return NextResponse.json({ error: "Invalid or expired token" }, { status: 404 });
-    }
-
-    const consentForm = client.consentForms.find((form) => form.token === (token || id));
-
+    const consentForm = await ConsentForm.findOne({ _id: id, practiceId: user.practiceId });
     if (!consentForm) {
       return NextResponse.json({ error: "Consent form not found" }, { status: 404 });
     }
 
-    // Upload the signed version
-    const fileKey = generateFileKey("signed-consent-forms", file.name);
-    const documentUrl = await uploadFile(file, fileKey, {
-      type: "signed-consent-form",
-      clientId: client._id,
-      formId: consentForm._id,
-    });
+    const allowed = await visibleClientIds(user);
+    if (!allowed.some((cid) => cid.toString() === consentForm.clientId.toString())) {
+      return NextResponse.json({ error: "Consent form not found" }, { status: 404 });
+    }
 
-    // Update the consent form
-    consentForm.signedDocument = documentUrl;
-    consentForm.signedDocumentKey = fileKey;
-    consentForm.status = "signed";
-    consentForm.dateSigned = new Date();
-    consentForm.token = null; // Invalidate the token
-    consentForm.tokenExpires = null;
+    if (consentForm.documentKey) {
+      try {
+        await deleteFile(consentForm.documentKey);
+      } catch (e) {
+        console.error("Error deleting consent file:", e);
+      }
+    }
+    if (consentForm.signedDocumentKey) {
+      try {
+        await deleteFile(consentForm.signedDocumentKey);
+      } catch (e) {
+        console.error("Error deleting signed consent file:", e);
+      }
+    }
 
-    await client.save();
-
-    return NextResponse.json({
-      _id: consentForm._id,
-      type: consentForm.type,
-      version: consentForm.version,
-      status: consentForm.status,
-      dateSigned: consentForm.dateSigned,
-    });
+    await consentForm.deleteOne();
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error uploading signed form:", error);
-    return NextResponse.json({ error: "Failed to upload signed form" }, { status: 500 });
+    console.error("Error deleting consent form:", error);
+    return NextResponse.json({ error: "Failed to delete consent form" }, { status: 500 });
   }
 }

@@ -1,64 +1,46 @@
 import { NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
 import { uploadFile, generateFileKey } from "@/lib/storage";
-import Client from "@/models/client";
+import { connectDB } from "@/lib/mongodb";
+import ConsentForm from "@/models/consentForm";
 
+// Alternate signing path keyed by ConsentForm id; the form's `token` must be
+// passed in the body to authorize the sign (matches the canonical /sign route
+// — same semantics, kept for backward-compat with any client UIs hitting it).
 export async function POST(request, { params }) {
   try {
     const { id } = await params;
     const formData = await request.formData();
     const file = formData.get("file");
     const token = formData.get("token");
-
     if (!file || !token) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // Try to get the current user (for counselor access)
-    const user = await getCurrentUser();
-
-    // Find the client and consent form by token
-    const query = {
-      "consentForms.token": token,
-      "consentForms.tokenExpires": { $gt: new Date() },
-      "consentForms.status": "pending",
-    };
-
-    // If user is authenticated, scope to their practice (any clinician in
-    // the practice can verify a consent token tied to a practice client).
-    if (user) {
-      query.practiceId = user.practiceId;
-    }
-
-    const client = await Client.findOne(query);
-
-    if (!client) {
+    await connectDB();
+    const consentForm = await ConsentForm.findOne({
+      _id: id,
+      token,
+      tokenExpires: { $gt: new Date() },
+      status: "pending",
+    });
+    if (!consentForm) {
       return NextResponse.json({ error: "Consent form not found or expired" }, { status: 404 });
     }
 
-    // Find the specific consent form
-    const consentForm = client.consentForms.find((form) => form.token === token);
-    if (!consentForm) {
-      return NextResponse.json({ error: "Consent form not found" }, { status: 404 });
-    }
-
-    // Upload the signed version
     const fileKey = generateFileKey("signed-consent-forms", file.name);
     const documentUrl = await uploadFile(file, fileKey, {
       type: "signed-consent-form",
-      clientId: client._id,
-      formId: consentForm._id,
+      clientId: String(consentForm.clientId),
+      formId: String(consentForm._id),
     });
 
-    // Update the consent form
     consentForm.signedDocument = documentUrl;
     consentForm.signedDocumentKey = fileKey;
     consentForm.status = "signed";
     consentForm.dateSigned = new Date();
-    consentForm.token = null; // Invalidate the token
+    consentForm.token = null;
     consentForm.tokenExpires = null;
-
-    await client.save();
+    await consentForm.save();
 
     return NextResponse.json({
       _id: consentForm._id,
