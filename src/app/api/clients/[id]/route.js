@@ -157,17 +157,12 @@ export async function PATCH(req, context) {
     // Consent forms moved to the ConsentForm model (Round 12); manage via
     // `/api/consent-forms/*` instead of through this PATCH.
 
-    // Handle billing updates
+    // Handle billing updates (reference info only — invoices live in the
+    // Invoice model since Round 12 and are managed at /api/clients/[id]/invoices).
     if (body.billing) {
       if (!existingClient.billing) {
-        existingClient.billing = {
-          paymentMethod: "self-pay",
-          rate: 0,
-          notes: "",
-          invoices: [],
-        };
+        existingClient.billing = { paymentMethod: "cash", rate: 0, notes: "" };
       }
-
       if (body.billing.paymentMethod !== undefined) {
         existingClient.billing.paymentMethod = body.billing.paymentMethod;
       }
@@ -176,21 +171,6 @@ export async function PATCH(req, context) {
       }
       if (body.billing.notes !== undefined) {
         existingClient.billing.notes = body.billing.notes;
-      }
-      if (body.billing.invoices && Array.isArray(body.billing.invoices)) {
-        if (!existingClient.billing.invoices) {
-          existingClient.billing.invoices = [];
-        }
-        // Clear existing invoices and replace with new ones
-        existingClient.billing.invoices = body.billing.invoices.map((invoice) => ({
-          _id: invoice._id || new mongoose.Types.ObjectId(),
-          date: new Date(invoice.date),
-          amount: invoice.amount,
-          status: invoice.status || "pending",
-          notes: invoice.notes || "",
-          document: invoice.document || null,
-          documentKey: invoice.documentKey || null,
-        }));
       }
     }
 

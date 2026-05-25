@@ -54,60 +54,8 @@ const clientSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  consentForms: [
-    {
-      type: {
-        type: String,
-        required: true,
-        enum: ["general", "telehealth", "minor"],
-      },
-      version: {
-        type: String,
-        required: true,
-      },
-      document: {
-        type: String,
-        required: true,
-      },
-      documentKey: {
-        type: String,
-        required: true,
-      },
-      signedDocument: {
-        type: String,
-      },
-      signedDocumentKey: {
-        type: String,
-      },
-      status: {
-        type: String,
-        required: true,
-        enum: ["pending", "signed", "expired", "revoked"],
-        default: "pending",
-      },
-      token: {
-        type: String,
-        unique: true,
-      },
-      tokenExpires: {
-        type: Date,
-      },
-      requestedBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-      requestedAt: {
-        type: Date,
-        default: Date.now,
-      },
-      dateSigned: {
-        type: Date,
-      },
-      notes: {
-        type: String,
-      },
-    },
-  ],
+  // Consent forms moved to the ConsentForm model in Round 12.
+
   // Billing Information
   billing: {
     paymentMethod: {
@@ -130,41 +78,7 @@ const clientSchema = new mongoose.Schema({
     notes: {
       type: String,
     },
-    invoices: [
-      {
-        _id: {
-          type: mongoose.Schema.Types.ObjectId,
-          default: () => new mongoose.Types.ObjectId(),
-        },
-        invoiceNumber: {
-          type: String,
-        },
-        date: {
-          type: Date,
-          default: Date.now,
-        },
-        amount: {
-          type: Number,
-          required: true,
-        },
-        status: {
-          type: String,
-          enum: ["pending", "paid", "overdue"],
-          default: "pending",
-        },
-        paymentMethod: {
-          type: String,
-          enum: ["cash", "check", "credit", "insurance", "other"],
-          default: "cash",
-        },
-        paymentDate: { type: Date },
-        notes: { type: String },
-        document: { type: String },
-        documentKey: { type: String },
-        paymentLink: { type: String },
-        lastReminderSent: { type: Date },
-      },
-    ],
+    // Invoices moved to the Invoice model in Round 12.
   },
   // Insurance Information
   insurance: {
