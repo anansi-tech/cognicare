@@ -64,7 +64,7 @@ const consentFormSchema = new mongoose.Schema(
 );
 
 consentFormSchema.index({ practiceId: 1, clientId: 1, status: 1 });
-consentFormSchema.index({ token: 1 });
+// `token` is already declared with `index: true` on the field above.
 
 const ConsentForm =
   mongoose.models.ConsentForm || mongoose.model("ConsentForm", consentFormSchema);
