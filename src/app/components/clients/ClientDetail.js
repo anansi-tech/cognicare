@@ -442,6 +442,21 @@ export default function ClientDetail({ clientId }) {
     }
   };
 
+  const handleResendConsent = async (formId, e) => {
+    e.stopPropagation();
+    try {
+      const res = await fetch(`/api/consent-forms/${formId}/resend`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to resend consent form");
+      toast.success("Fresh signing link emailed to the client.");
+      await refreshConsentForms();
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
   const handleClientUpdate = (updatedClient) => {
     setClient(updatedClient);
   };
@@ -1117,6 +1132,15 @@ export default function ClientDetail({ clientId }) {
                         >
                           {form.status}
                         </span>
+                        {form.status !== "signed" && (
+                          <button
+                            onClick={(e) => handleResendConsent(form._id, e)}
+                            className="text-xs text-indigo-600 hover:text-indigo-800"
+                            title="Email the client a fresh signing link"
+                          >
+                            Resend
+                          </button>
+                        )}
                         <button
                           onClick={(e) => handleDeleteConsent(form._id, e)}
                           className="text-red-600 hover:text-red-800"
