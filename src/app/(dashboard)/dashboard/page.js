@@ -263,17 +263,6 @@ export default function DashboardPage() {
           </ul>
         </div>
       </div>
-      <button
-        onClick={async () => {
-          const response = await fetch("/api/test/expire-trial", {
-            method: "POST",
-          });
-          const data = await response.json();
-          console.log(data);
-        }}
-      >
-        Expire Trial in 5 Minutes
-      </button>
     </div>
   );
 }

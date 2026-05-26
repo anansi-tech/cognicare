@@ -29,7 +29,13 @@ function LoginContent() {
       });
 
       if (result?.error) {
-        setError(result.error);
+        // Auth.js v5 returns "CredentialsSignin" as a generic failure code; map
+        // common cases to plain language and fall back to a non-leaky default.
+        const friendly =
+          result.error === "CredentialsSignin"
+            ? "Incorrect email or password."
+            : "Something went wrong. Please try again.";
+        setError(friendly);
         setLoading(false);
         return;
       }

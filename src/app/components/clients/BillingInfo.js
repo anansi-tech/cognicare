@@ -553,7 +553,7 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
                   <select
                     name="paymentMethod"
                     defaultValue={client.billing?.paymentMethod}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2"
                   >
                     <option value="cash">Cash</option>
                     <option value="check">Check</option>
@@ -571,7 +571,7 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
                     type="number"
                     name="rate"
                     defaultValue={client.billing?.rate}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2"
                     placeholder="Standard session rate"
                   />
                 </div>
@@ -584,7 +584,7 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
                     type="number"
                     name="initialRate"
                     defaultValue={client.billing?.initialRate}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2"
                     placeholder="Initial consultation rate"
                   />
                 </div>
@@ -597,7 +597,7 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
                     type="number"
                     name="groupRate"
                     defaultValue={client.billing?.groupRate}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2"
                     placeholder="Group session rate"
                   />
                 </div>
@@ -607,7 +607,7 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
                   <textarea
                     name="notes"
                     defaultValue={client.billing?.notes}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2"
                   />
                 </div>
 

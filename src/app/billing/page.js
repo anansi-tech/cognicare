@@ -67,6 +67,7 @@ export default function BillingPage() {
   // Also catches the post-signOut window where status hasn't transitioned yet
   // but session.user is already cleared (v5 SessionProvider timing).
   const isAuthed = status === "authenticated" && !!session?.user?.id;
+  const isOwner = !!session?.user?.isPracticeOwner;
   useEffect(() => {
     if (status === "unauthenticated" || (status === "authenticated" && !session?.user?.id)) {
       router.replace("/");
@@ -75,6 +76,22 @@ export default function BillingPage() {
 
   if (!isAuthed) {
     return <div className="p-6 text-sm text-muted-foreground">Loading…</div>;
+  }
+
+  // Clinicians (non-owner) can't manage the practice subscription. Show a
+  // read-only "ask your owner" view — don't redirect (the SubscriptionGate
+  // bounces unsubscribed users here, so we need a useful state to land on).
+  if (!isOwner) {
+    return (
+      <div className="py-10">
+        <h1 className="text-2xl font-bold text-gray-900">Subscription</h1>
+        <p className="mt-3 text-sm text-gray-600 max-w-prose">
+          Your practice&apos;s subscription is managed by the practice owner. If
+          something isn&apos;t working (e.g. you&apos;ve been routed here unexpectedly),
+          please reach out to them to confirm the subscription is active.
+        </p>
+      </div>
+    );
   }
 
   const subStatus = session?.user?.stripeSubscriptionStatus;

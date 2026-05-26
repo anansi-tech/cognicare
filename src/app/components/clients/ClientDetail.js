@@ -1221,7 +1221,7 @@ export default function ClientDetail({ clientId }) {
                   <select
                     value={selectedConsentType}
                     onChange={handleConsentTypeChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2"
                     required
                   >
                     <option value="">Select a consent type</option>
@@ -1264,7 +1264,7 @@ export default function ClientDetail({ clientId }) {
                   <textarea
                     value={consentFormNotes}
                     onChange={(e) => setConsentFormNotes(e.target.value)}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2"
                     rows="3"
                   />
                 </div>
