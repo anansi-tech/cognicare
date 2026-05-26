@@ -45,7 +45,10 @@ export const GET = requireAuth(async (req) => {
   }
 });
 
-// Create a new report
+// Create a new report. Scope-guarded — a clinician can only create reports
+// for clients they can see (mirrors the per-client POST). Most callers now
+// use /api/clients/[id]/reports (Round 14); this endpoint is kept for
+// completeness of the global API surface.
 export const POST = requireAuth(async (req) => {
   try {
     await connectDB();
@@ -59,7 +62,6 @@ export const POST = requireAuth(async (req) => {
       createdAt: new Date(),
     };
 
-    // Validate required fields
     const requiredFields = ["clientId", "type", "content"];
     for (const field of requiredFields) {
       if (!newReport[field]) {
@@ -67,10 +69,13 @@ export const POST = requireAuth(async (req) => {
       }
     }
 
-    // Create report
+    const allowed = await visibleClientIds(user);
+    if (!allowed.some((id) => id.toString() === String(newReport.clientId))) {
+      return NextResponse.json({ message: "Client not found" }, { status: 404 });
+    }
+
     const createdReport = await Report.create(newReport);
 
-    // Return populated report
     const populatedReport = await Report.findById(createdReport._id)
       .populate("clientId", "name")
       .populate("sessionId", "date type")

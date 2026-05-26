@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Report from "@/models/report";
-import { getCurrentUser, getSession } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 import { visibleClientIds } from "@/lib/practice";
 import AIReport from "@/models/aiReport";
 
@@ -95,17 +95,24 @@ export async function PATCH(req, context) {
   }
 }
 
-// Delete a report (Refactored)
-export async function DELETE(request, { params }) {
+// Delete a report. Scope-guarded — the parent client must be in the
+// caller's visible set, and the report must belong to their practice.
+export async function DELETE(_request, context) {
   try {
-    const session = await getSession();
-    if (!session) {
+    const user = await getCurrentUser();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await context.params;
     await connectDB();
 
-    const report = await Report.findByIdAndDelete(params.id);
+    const allowed = await visibleClientIds(user);
+    const report = await Report.findOneAndDelete({
+      _id: id,
+      practiceId: user.practiceId,
+      clientId: { $in: allowed },
+    });
     if (!report) {
       return NextResponse.json({ error: "Report not found" }, { status: 404 });
     }
