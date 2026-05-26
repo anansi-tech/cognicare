@@ -48,6 +48,15 @@ const consentFormSchema = new mongoose.Schema(
     dateSigned: { type: Date },
     expiresAt: { type: Date },
     notes: { type: String },
+    // Legal record of the e-signature act (Round 13). Typed name + intent ("I
+    // agree") + timestamp + IP/UA satisfies the US ESIGN Act for binding
+    // electronic signatures.
+    signature: {
+      typedName: { type: String },
+      agreedAt: { type: Date },
+      ipAddress: { type: String },
+      userAgent: { type: String },
+    },
   },
   { timestamps: true }
 );
