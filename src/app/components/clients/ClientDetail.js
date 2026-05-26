@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import toast from "react-hot-toast";
 import ClientForm from "./ClientForm";
 import ClientInsights from "./ClientInsights";
@@ -35,11 +36,6 @@ export default function ClientDetail({ clientId }) {
   const [isEditing, setIsEditing] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
   const [showReportModal, setShowReportModal] = useState(false);
-  const [showGenerateModal, setShowGenerateModal] = useState(false);
-  const [reportType, setReportType] = useState("progress");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
   const [showConsentModal, setShowConsentModal] = useState(false);
   const [selectedConsent, setSelectedConsent] = useState(null);
   const [selectedConsentType, setSelectedConsentType] = useState("");
@@ -72,16 +68,6 @@ export default function ClientDetail({ clientId }) {
       fetchClient();
     }
   }, [clientId]);
-
-  // Set default dates to last 30 days
-  useEffect(() => {
-    const end = new Date();
-    const start = new Date();
-    start.setDate(start.getDate() - 30);
-
-    setEndDate(end.toISOString().split("T")[0]);
-    setStartDate(start.toISOString().split("T")[0]);
-  }, []);
 
   console.log(selectedReport);
 
@@ -203,41 +189,6 @@ export default function ClientDetail({ clientId }) {
 
   const handleViewReport = (report) => {
     window.open(`/clients/${clientId}/reports/${report._id}/view`, "_blank");
-  };
-
-  const handleGenerateReport = async () => {
-    if (!startDate || !endDate) {
-      alert("Please select both start and end dates");
-      return;
-    }
-
-    setIsGenerating(true);
-    try {
-      const response = await fetch(`/api/clients/${clientId}/reports`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          type: reportType,
-          startDate,
-          endDate,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to generate report");
-      }
-
-      // Close the generate modal and refresh only the reports list
-      setShowGenerateModal(false);
-      fetchReports();
-    } catch (error) {
-      console.error("Error generating report:", error);
-      alert("Failed to generate report. Please try again.");
-    } finally {
-      setIsGenerating(false);
-    }
   };
 
   const handleDeleteReport = async (reportId) => {
@@ -883,12 +834,12 @@ export default function ClientDetail({ clientId }) {
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <h2 className="text-lg font-medium text-gray-900">Reports</h2>
-              <button
-                onClick={() => setShowGenerateModal(true)}
+              <Link
+                href={`/clients/${clientId}/reports/new`}
                 className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
               >
-                Generate Report
-              </button>
+                New report
+              </Link>
             </div>
             {recentReports.length > 0 ? (
               <div className="overflow-x-auto">
@@ -947,72 +898,6 @@ export default function ClientDetail({ clientId }) {
                 <p className="text-sm text-gray-400 mt-2">
                   Generate a new report to document assessment findings or treatment progress.
                 </p>
-              </div>
-            )}
-
-            {/* Generate Report Modal */}
-            {showGenerateModal && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-                <div className="bg-white rounded-lg w-1/2 p-6">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xl font-semibold">Generate New Report</h3>
-                    <button
-                      onClick={() => setShowGenerateModal(false)}
-                      className="text-gray-500 hover:text-gray-700"
-                    >
-                      <XMarkIcon className="w-6 h-6" />
-                    </button>
-                  </div>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Report Type</label>
-                      <select
-                        value={reportType}
-                        onChange={(e) => setReportType(e.target.value)}
-                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-                      >
-                        <option value="progress">Progress Report</option>
-                        <option value="documentation">Documentation Report</option>
-                        <option value="assessment">Assessment Report</option>
-                        <option value="diagnostic">Diagnostic Report</option>
-                        <option value="treatment">Treatment Report</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Start Date</label>
-                      <input
-                        type="date"
-                        value={startDate}
-                        onChange={(e) => setStartDate(e.target.value)}
-                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">End Date</label>
-                      <input
-                        type="date"
-                        value={endDate}
-                        onChange={(e) => setEndDate(e.target.value)}
-                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-                      />
-                    </div>
-                    <div className="flex justify-end space-x-3">
-                      <button
-                        onClick={() => setShowGenerateModal(false)}
-                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={handleGenerateReport}
-                        disabled={isGenerating}
-                        className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {isGenerating ? "Generating..." : "Generate Report"}
-                      </button>
-                    </div>
-                  </div>
-                </div>
               </div>
             )}
 
