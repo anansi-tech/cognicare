@@ -81,7 +81,7 @@ export default function ReportsPage() {
             {reports.map((report) => (
               <li key={report._id}>
                 <Link
-                  href={`/clients/${id}/reports/${report._id}`}
+                  href={`/clients/${id}/reports/${report._id}/view`}
                   className="block hover:bg-gray-50"
                 >
                   <div className="px-4 py-4 sm:px-6">

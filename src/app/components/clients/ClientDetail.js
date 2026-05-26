@@ -22,7 +22,6 @@ import InsuranceInfo from "./InsuranceInfo";
 import {
   ClipboardDocumentIcon,
   XMarkIcon,
-  PrinterIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
 
@@ -34,8 +33,6 @@ export default function ClientDetail({ clientId }) {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("overview");
   const [isEditing, setIsEditing] = useState(false);
-  const [selectedReport, setSelectedReport] = useState(null);
-  const [showReportModal, setShowReportModal] = useState(false);
   const [showConsentModal, setShowConsentModal] = useState(false);
   const [selectedConsent, setSelectedConsent] = useState(null);
   const [selectedConsentType, setSelectedConsentType] = useState("");
@@ -68,8 +65,6 @@ export default function ClientDetail({ clientId }) {
       fetchClient();
     }
   }, [clientId]);
-
-  console.log(selectedReport);
 
   // Check for tab parameter in URL on component mount
   useEffect(() => {
@@ -901,55 +896,6 @@ export default function ClientDetail({ clientId }) {
               </div>
             )}
 
-            {/* Report View Modal */}
-            {showReportModal && selectedReport && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-                <div className="bg-white rounded-lg w-3/4 max-h-[80vh] overflow-y-auto p-6">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xl font-semibold">{getReportTitle(selectedReport)}</h3>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => window.print()}
-                        className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center gap-1"
-                      >
-                        <PrinterIcon className="w-4 h-4" />
-                        Print
-                      </button>
-                      <button
-                        onClick={() => setShowReportModal(false)}
-                        className="text-gray-500 hover:text-gray-700"
-                      >
-                        <XMarkIcon className="w-6 h-6" />
-                      </button>
-                    </div>
-                  </div>
-                  <div className="prose max-w-none print:prose-sm">
-                    <div className="grid grid-cols-2 gap-4 mb-4">
-                      <div>
-                        <strong>Date Created:</strong> {formatDate(selectedReport.createdAt)}
-                      </div>
-                      <div>
-                        <strong>Created By:</strong> {selectedReport.createdBy?.name || "Unknown"}
-                      </div>
-                      <div>
-                        <strong>Report Period:</strong> {formatDate(selectedReport.startDate)} to{" "}
-                        {formatDate(selectedReport.endDate)}
-                      </div>
-                      <div>
-                        <strong>Type:</strong>{" "}
-                        {selectedReport.type.charAt(0).toUpperCase() + selectedReport.type.slice(1)}
-                      </div>
-                    </div>
-                    <div className="mb-4">
-                      <strong>Content:</strong>
-                      <pre className="mt-2 p-4 bg-gray-50 rounded overflow-x-auto print:bg-white print:border print:border-gray-200">
-                        {JSON.stringify(selectedReport.payload, null, 2)}
-                      </pre>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         )}
 
