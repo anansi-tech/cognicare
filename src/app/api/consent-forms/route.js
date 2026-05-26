@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { clientScope, visibleClientIds } from "@/lib/practice";
-import { uploadFile, generateFileKey } from "@/lib/storage";
 import { getConsentFormTemplate } from "@/lib/templates/consentFormTemplate";
 import { connectDB } from "@/lib/mongodb";
 import Client from "@/models/client";
@@ -13,18 +12,19 @@ const generateToken = () => crypto.randomBytes(32).toString("hex");
 
 // Create a consent request for a client. Scope-checked: clinicians may only
 // request on their own assigned clients; owner on any practice client.
+// Round 13: no file upload — the template is the source of truth; the
+// signed PDF is generated server-side at sign time.
 export async function POST(request) {
   try {
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const formData = await request.formData();
-    const clientId = formData.get("clientId");
-    const type = formData.get("type");
-    const file = formData.get("file");
-    const notes = formData.get("notes");
+    const body = await request.json();
+    const clientId = body.clientId;
+    const type = body.type;
+    const notes = body.notes;
 
-    if (!clientId || !type || !file) {
+    if (!clientId || !type) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
@@ -37,14 +37,6 @@ export async function POST(request) {
 
     const template = getConsentFormTemplate(type);
 
-    const fileKey = generateFileKey("consent-forms", file.name);
-    const documentUrl = await uploadFile(file, fileKey, {
-      type: "consent-form",
-      clientId: String(client._id),
-      formType: type,
-      version: template.version,
-    });
-
     const token = generateToken();
     const tokenExpires = new Date();
     tokenExpires.setDate(tokenExpires.getDate() + 7);
@@ -55,8 +47,6 @@ export async function POST(request) {
       requestedBy: user.id,
       type,
       version: template.version,
-      document: documentUrl,
-      documentKey: fileKey,
       status: "pending",
       token,
       tokenExpires,

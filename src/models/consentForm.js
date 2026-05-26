@@ -35,9 +35,11 @@ const consentFormSchema = new mongoose.Schema(
       enum: ["pending", "signed", "expired", "revoked"],
       default: "pending",
     },
-    // Original document (the request the counselor sent)
-    document: { type: String, required: true },
-    documentKey: { type: String, required: true },
+    // Round 13: consent text comes from the template, so no upload is needed
+    // at request time. These fields remain on signed forms (server-generated
+    // signed PDF lives in signedDocument*) and on any legacy pre-R13 records.
+    document: { type: String },
+    documentKey: { type: String },
     // Client's countersigned upload
     signedDocument: { type: String },
     signedDocumentKey: { type: String },

@@ -45,7 +45,6 @@ export default function ClientDetail({ clientId }) {
   const [selectedConsentType, setSelectedConsentType] = useState("");
   const [consentFormContent, setConsentFormContent] = useState("");
   const [consentFormNotes, setConsentFormNotes] = useState("");
-  const [consentFormFile, setConsentFormFile] = useState(null);
   const [availableTemplates, setAvailableTemplates] = useState([]);
   const [showNewClientReminder, setShowNewClientReminder] = useState(false);
   const [aiRefreshKey, setAiRefreshKey] = useState(0);
@@ -323,27 +322,22 @@ export default function ClientDetail({ clientId }) {
   const handleRequestConsent = async (e) => {
     e.preventDefault();
 
-    if (!consentFormFile) {
-      toast.error("Please upload a PDF file");
-      return;
-    }
     if (!selectedConsentType) {
       toast.error("Please select a consent type");
       return;
     }
-
-    const formData = new FormData();
-    formData.append("clientId", client._id);
-    formData.append("type", selectedConsentType);
-    formData.append("file", consentFormFile);
-    formData.append("notes", consentFormNotes);
 
     const toastId = toast.loading("Requesting consent...");
 
     try {
       const response = await fetch("/api/consent-forms", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientId: client._id,
+          type: selectedConsentType,
+          notes: consentFormNotes,
+        }),
       });
 
       if (!response.ok) {
@@ -371,7 +365,6 @@ export default function ClientDetail({ clientId }) {
       setSelectedConsentType("");
       setConsentFormContent("");
       setConsentFormNotes("");
-      setConsentFormFile(null);
       setShowConsentModal(false);
 
       // Show success toast with the link and copy button
@@ -1265,23 +1258,6 @@ export default function ClientDetail({ clientId }) {
                     </div>
                   </div>
                 )}
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Upload Document (PDF)
-                  </label>
-                  <input
-                    type="file"
-                    accept=".pdf"
-                    onChange={(e) => setConsentFormFile(e.target.files[0])}
-                    className="mt-1 block w-full text-sm text-gray-500
-                      file:mr-4 file:py-2 file:px-4
-                      file:rounded-md file:border-0
-                      file:text-sm file:font-semibold
-                      file:bg-blue-50 file:text-blue-700
-                      hover:file:bg-blue-100"
-                  />
-                </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Notes</label>
