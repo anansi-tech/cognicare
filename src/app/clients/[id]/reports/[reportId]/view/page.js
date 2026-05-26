@@ -1,42 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { format } from "date-fns";
-import { AgentReportBody } from "@/components/ai/AgentReportBody";
+import toast from "react-hot-toast";
 
-// Renders a compiled Report. Report.content is the array of AIReport envelopes
-// gathered by gatherAgentReports (newest first); each entry has summary, payload,
-// agentType, createdAt.
+// Compiled report viewer (Round 14). Renders the synthesized narrative,
+// lets the clinician edit it while draft, marks it completed, and exports
+// the PDF deliverable. The raw source AIReports are listed at the bottom
+// for traceability.
 
 const titleCase = (s) =>
   typeof s === "string" && s.length > 0 ? s.charAt(0).toUpperCase() + s.slice(1) : s;
-
-
-function EnvelopeCard({ envelope, agentType, index }) {
-  const p = envelope?.payload;
-  return (
-    <div className="bg-white p-6 rounded-lg shadow border border-gray-100">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">
-          {titleCase(agentType)} Report #{index + 1}
-        </h2>
-        {envelope?.createdAt && (
-          <p className="text-sm text-gray-500">
-            {format(new Date(envelope.createdAt), "MMM d, yyyy")}
-          </p>
-        )}
-      </div>
-      {envelope?.summary && (
-        <div className="bg-blue-50 p-4 rounded-lg mb-4">
-          <h3 className="text-sm font-medium text-gray-700 mb-1">Summary</h3>
-          <p className="text-gray-700">{envelope.summary}</p>
-        </div>
-      )}
-      <AgentReportBody agentType={agentType} payload={p} />
-    </div>
-  );
-}
 
 export default function ReportViewPage() {
   const params = useParams();
@@ -45,18 +20,23 @@ export default function ReportViewPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const [narrative, setNarrative] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [finalizing, setFinalizing] = useState(false);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const reportResponse = await fetch(`/api/clients/${params.id}/reports/${params.reportId}`);
-        if (!reportResponse.ok) throw new Error("Failed to fetch report");
-        const reportData = await reportResponse.json();
-        setReport(reportData.report);
+        const r = await fetch(`/api/clients/${params.id}/reports/${params.reportId}`);
+        if (!r.ok) throw new Error("Failed to fetch report");
+        const data = await r.json();
+        setReport(data.report);
+        setNarrative(extractNarrative(data.report));
 
-        const clientResponse = await fetch(`/api/clients/${params.id}`);
-        if (!clientResponse.ok) throw new Error("Failed to fetch client information");
-        const clientData = await clientResponse.json();
-        setClient(clientData.client);
+        const c = await fetch(`/api/clients/${params.id}`);
+        if (!c.ok) throw new Error("Failed to fetch client information");
+        const cdata = await c.json();
+        setClient(cdata.client);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -66,6 +46,46 @@ export default function ReportViewPage() {
     fetchData();
   }, [params.id, params.reportId]);
 
+  const sources = useMemo(() => {
+    if (!report?.content || typeof report.content !== "object") return [];
+    if (Array.isArray(report.content.sources)) return report.content.sources;
+    // Legacy shape: report.content was itself the array of envelopes.
+    if (Array.isArray(report.content)) return report.content;
+    return [];
+  }, [report]);
+
+  const isDraft = report?.status !== "completed";
+
+  const save = async (nextStatus) => {
+    const setBusy = nextStatus === "completed" ? setFinalizing : setSaving;
+    setBusy(true);
+    try {
+      const res = await fetch(
+        `/api/clients/${params.id}/reports/${params.reportId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            narrative,
+            ...(nextStatus ? { status: nextStatus } : {}),
+          }),
+        }
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Save failed");
+      }
+      const data = await res.json();
+      setReport(data.report);
+      setNarrative(extractNarrative(data.report));
+      toast.success(nextStatus === "completed" ? "Report finalized." : "Draft saved.");
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -73,7 +93,6 @@ export default function ReportViewPage() {
       </div>
     );
   }
-
   if (error) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -81,7 +100,6 @@ export default function ReportViewPage() {
       </div>
     );
   }
-
   if (!report) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -90,97 +108,176 @@ export default function ReportViewPage() {
     );
   }
 
-  // Report.content is Array<AIReport>; bound for safety.
-  const envelopes = Array.isArray(report.content) ? report.content : [];
+  const pdfUrl = `/api/clients/${params.id}/reports/${params.reportId}/pdf`;
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="container mx-auto py-8 px-4 max-w-4xl">
       <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex justify-between items-start mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
               {titleCase(report.type)} Report
             </h1>
             <p className="text-gray-600 mt-1">
-              Generated by {report.createdBy?.name ?? "Unknown Counselor"}
+              Prepared by {report.createdBy?.name ?? "Unknown clinician"}
             </p>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => window.print()}
-              className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-md transition-colors flex items-center gap-2"
+          <div className="flex gap-2 flex-shrink-0">
+            <a
+              href={`${pdfUrl}?download=1`}
+              className="px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 rounded-md text-sm font-medium"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                viewBox="0 0 20 20"
-                fill="currentColor"
+              Download PDF
+            </a>
+            <a
+              href={pdfUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-md text-sm font-medium"
+            >
+              Preview PDF
+            </a>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6 p-5 bg-gray-50 rounded-lg">
+          <div>
+            <p className="text-xs uppercase tracking-wide text-gray-500">Client</p>
+            <p className="text-base font-semibold text-gray-900">
+              {client?.name || "Unknown"}
+            </p>
+            <p className="text-sm text-gray-600">
+              {client?.age ?? "—"} yrs · {client?.gender || "—"}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-gray-500">Period</p>
+            <p className="text-base font-semibold text-gray-900">
+              {format(new Date(report.startDate), "MMM d, yyyy")}
+            </p>
+            <p className="text-sm text-gray-600">
+              to {format(new Date(report.endDate), "MMM d, yyyy")}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-gray-500">Generated</p>
+            <p className="text-base font-semibold text-gray-900">
+              {format(new Date(report.createdAt), "MMM d, yyyy")}
+            </p>
+            <p className="text-sm text-gray-600">
+              {format(new Date(report.createdAt), "p")}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-gray-500">Status</p>
+            <span
+              className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                isDraft
+                  ? "bg-yellow-100 text-yellow-800"
+                  : "bg-green-100 text-green-800"
+              }`}
+            >
+              {isDraft ? "Draft" : "Completed"}
+            </span>
+            <p className="text-sm text-gray-600 mt-1">
+              {sources.length} source record{sources.length === 1 ? "" : "s"}
+            </p>
+          </div>
+        </div>
+
+        {isDraft && (
+          <div className="mb-4 rounded-md bg-yellow-50 border border-yellow-200 p-3 text-sm text-yellow-900">
+            This narrative is an AI-generated draft. Please review and edit
+            before marking it completed. Drafts export with a watermark.
+          </div>
+        )}
+
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900">Narrative</h2>
+        </div>
+        <textarea
+          value={narrative}
+          onChange={(e) => setNarrative(e.target.value)}
+          rows={18}
+          readOnly={!isDraft}
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 read-only:bg-gray-50 read-only:cursor-default"
+          placeholder="Narrative will appear here…"
+        />
+
+        <div className="mt-4 flex justify-end gap-2">
+          {isDraft && (
+            <>
+              <button
+                type="button"
+                onClick={() => save()}
+                disabled={saving || finalizing}
+                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-md text-sm font-medium disabled:opacity-60"
               >
-                <path
-                  fillRule="evenodd"
-                  d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v4h6v-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              Print Report
+                {saving ? "Saving…" : "Save draft"}
+              </button>
+              <button
+                type="button"
+                onClick={() => save("completed")}
+                disabled={saving || finalizing || !narrative.trim()}
+                className="px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 rounded-md text-sm font-medium disabled:opacity-60"
+              >
+                {finalizing ? "Finalizing…" : "Mark as completed"}
+              </button>
+            </>
+          )}
+          {!isDraft && (
+            <button
+              type="button"
+              onClick={() => save("draft")}
+              disabled={saving || finalizing}
+              className="px-4 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-md text-sm font-medium disabled:opacity-60"
+            >
+              Re-open as draft
             </button>
-          </div>
+          )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 p-6 bg-gray-50 rounded-lg">
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-gray-500">Client</p>
-            <p className="text-lg font-semibold text-gray-900">
-              {client?.name || "Unknown Client"}
+        {sources.length > 0 && (
+          <div className="mt-10">
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">
+              Source records
+            </h2>
+            <p className="text-sm text-gray-600 mb-3">
+              The narrative was synthesized from {sources.length} agent record
+              {sources.length === 1 ? "" : "s"} in the chart:
             </p>
-            <p className="text-sm text-gray-600">
-              {client?.age || "N/A"} years old • {client?.gender || "N/A"}
-            </p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-gray-500">Report Date</p>
-            <p className="text-lg font-semibold text-gray-900">
-              {format(new Date(report.createdAt), "PPP")}
-            </p>
-            <p className="text-sm text-gray-600">{format(new Date(report.createdAt), "p")}</p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-gray-500">Time Period</p>
-            <p className="text-lg font-semibold text-gray-900">
-              {format(new Date(report.startDate), "MMM d, yyyy")} -{" "}
-              {format(new Date(report.endDate), "MMM d, yyyy")}
-            </p>
-            <p className="text-sm text-gray-600">
-              {Math.round(
-                (new Date(report.endDate) - new Date(report.startDate)) / (1000 * 60 * 60 * 24)
-              )}{" "}
-              days
-            </p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-gray-500">Status</p>
-            <p className="text-lg font-semibold text-gray-900 capitalize">{report.status}</p>
-            <p className="text-sm text-gray-600">Total entries: {envelopes.length}</p>
-          </div>
-        </div>
-
-        {envelopes.length === 0 ? (
-          <p className="text-gray-500">
-            No agent outputs were found for the selected date range.
-          </p>
-        ) : (
-          <div className="space-y-6">
-            {envelopes.map((env, i) => (
-              <EnvelopeCard
-                key={env._id ?? i}
-                envelope={env}
-                agentType={env.agentType ?? report.type}
-                index={i}
-              />
-            ))}
+            <ul className="divide-y divide-gray-100 border border-gray-100 rounded-md">
+              {sources.map((s, i) => (
+                <li key={s.id ?? s._id ?? i} className="px-4 py-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium text-gray-800">
+                      {titleCase(s.agentType)}
+                    </span>
+                    {s.createdAt && (
+                      <span className="text-gray-500">
+                        {format(new Date(s.createdAt), "PPp")}
+                      </span>
+                    )}
+                  </div>
+                  {s.summary && (
+                    <p className="mt-1 text-sm text-gray-600">{s.summary}</p>
+                  )}
+                </li>
+              ))}
+            </ul>
           </div>
         )}
       </div>
     </div>
   );
+}
+
+function extractNarrative(report) {
+  if (!report?.content) return "";
+  if (typeof report.content === "string") return report.content;
+  if (Array.isArray(report.content)) return ""; // legacy: prior reports stored an array of envelopes
+  if (typeof report.content === "object" && report.content !== null) {
+    return report.content.narrative || "";
+  }
+  return "";
 }
