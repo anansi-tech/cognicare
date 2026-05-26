@@ -1,55 +1,79 @@
 import { NextResponse } from "next/server";
-import { uploadFile, generateFileKey } from "@/lib/storage";
 import { connectDB } from "@/lib/mongodb";
 import ConsentForm from "@/models/consentForm";
+import { uploadFile, generateFileKey } from "@/lib/storage";
+import { getConsentFormTemplate } from "@/lib/templates/consentFormTemplate";
+import { buildSignedConsentPdf } from "@/lib/consent-pdf";
 
-// Client-side signing endpoint (called from /client-portal/consent/[token]).
-// Token is the source of authorization here — no user session required.
+// Type-to-sign endpoint. Token from the emailed portal link is the only
+// authorization required (no user session — the client doesn't have an
+// account). Generates the signed PDF server-side and stores it.
 export async function POST(request) {
   try {
-    const formData = await request.formData();
-    const file = formData.get("file");
-    const token = formData.get("token");
-    if (!file || !token) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    const { token, typedName, agreed, guardianRelationship } = await request.json();
+    if (!token || !typedName || !agreed) {
+      return NextResponse.json(
+        { error: "Name and agreement are required" },
+        { status: 400 }
+      );
     }
 
     await connectDB();
-    const consentForm = await ConsentForm.findOne({
+    const form = await ConsentForm.findOne({
       token,
       tokenExpires: { $gt: new Date() },
       status: "pending",
     });
-    if (!consentForm) {
-      return NextResponse.json({ error: "Consent form not found or expired" }, { status: 404 });
+    if (!form) {
+      return NextResponse.json(
+        { error: "This consent link is invalid or has expired" },
+        { status: 404 }
+      );
     }
 
-    const fileKey = generateFileKey("signed-consent-forms", file.name);
-    const documentUrl = await uploadFile(file, fileKey, {
-      type: "signed-consent-form",
-      clientId: String(consentForm.clientId),
-      formId: String(consentForm._id),
+    const ip =
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      request.headers.get("x-real-ip") ||
+      "unknown";
+    const ua = request.headers.get("user-agent") || "unknown";
+    const agreedAt = new Date();
+
+    const template = getConsentFormTemplate(form.type);
+    const pdfBytes = await buildSignedConsentPdf({
+      title: template.title,
+      body: template.content,
+      version: form.version,
+      typedName,
+      agreedAt,
+      ip,
+      guardianRelationship:
+        form.type === "minor" ? guardianRelationship || undefined : undefined,
     });
 
-    consentForm.signedDocument = documentUrl;
-    consentForm.signedDocumentKey = fileKey;
-    consentForm.status = "signed";
-    consentForm.dateSigned = new Date();
-    consentForm.token = null;
-    consentForm.tokenExpires = null;
-    await consentForm.save();
+    const key = generateFileKey("signed-consent-forms", `${form._id}.pdf`);
+    const blob = new Blob([pdfBytes], { type: "application/pdf" });
+    const signedUrl = await uploadFile(blob, key, {
+      type: "signed-consent-form",
+      clientId: String(form.clientId),
+      formId: String(form._id),
+    });
+
+    form.signature = { typedName, agreedAt, ipAddress: ip, userAgent: ua };
+    form.signedDocumentKey = key;
+    form.signedDocument = signedUrl;
+    form.status = "signed";
+    form.dateSigned = agreedAt;
+    form.token = null;
+    form.tokenExpires = null;
+    await form.save();
 
     return NextResponse.json({
-      _id: consentForm._id,
-      type: consentForm.type,
-      version: consentForm.version,
-      status: consentForm.status,
-      dateSigned: consentForm.dateSigned,
-      signedDocument: consentForm.signedDocument,
-      documentUrl: consentForm.document,
+      status: "signed",
+      dateSigned: agreedAt,
+      formId: form._id,
     });
   } catch (error) {
-    console.error("Error uploading signed form:", error);
-    return NextResponse.json({ error: "Failed to upload signed form" }, { status: 500 });
+    console.error("Error signing consent form:", error);
+    return NextResponse.json({ error: "Failed to record signature" }, { status: 500 });
   }
 }
