@@ -112,5 +112,6 @@ export const EntityTypes = {
   SESSION: "session",
   INVOICE: "invoice",
   DOCUMENT: "document",
+  REPORT: "report",
   SETTINGS: "settings",
 };
