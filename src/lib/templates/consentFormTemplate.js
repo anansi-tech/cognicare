@@ -71,41 +71,50 @@ Date: ____________________________
     `,
   },
   minor: {
-    version: "1.0",
+    version: "1.1",
     title: "Minor Therapy Consent Form",
     content: `
 # Minor Therapy Consent Form
 
 ## Introduction
-This form outlines the terms of therapy for minors and parental rights.
+This form is completed by the parent or legal guardian of a minor client. By signing
+below, you confirm that you have the legal authority to consent to mental-health
+services on behalf of the named minor, and that you do so willingly.
 
 ## Parental Rights
-As the parent/guardian, you have the right to:
+As the parent or legal guardian you have the right to:
 - Request general progress updates
 - Be informed of safety concerns
-- Access treatment records
+- Access treatment records, consistent with applicable state law
 
 ## Confidentiality
-While minors have rights to privacy, parents will be informed of:
+While the minor has rights to a private therapeutic relationship, you will be
+informed of:
 - Safety concerns
 - Treatment recommendations
 - Major treatment decisions
 
-## Agreement
-By signing below, you consent to therapy services for your minor child.
+## Treatment Approach
+Therapy with your minor child will use evidence-based approaches tailored to
+their developmental stage and clinical needs.
 
-Parent/Guardian Signature: ________________________
-Date: ____________________________
+## Guardian Acknowledgement
+By signing electronically below, you affirm that:
+- You are the parent or legal guardian of the minor receiving therapy.
+- You have stated your relationship to the minor in the signature block.
+- You are consenting to therapy services on the minor's behalf.
     `,
   },
 };
 
-export function getConsentFormTemplate(type, version = "1.0") {
+export function getConsentFormTemplate(type, version) {
   const template = consentFormTemplates[type];
   if (!template) {
     throw new Error(`No template found for type: ${type}`);
   }
-  if (template.version !== version) {
+  // Only assert the version if the caller pins one (legal-replay context).
+  // Otherwise the current version of the template is what's served.
+  if (version && template.version !== version) {
     throw new Error(`Version ${version} not available for ${type} template`);
   }
   return template;
