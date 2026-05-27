@@ -1,18 +1,16 @@
+// Plan + feature config shared between landing pricing + the in-app
+// /billing surface so the two can't drift again (R19 fix — the old landing
+// advertised a defunct $99 / 25-client plan that didn't match billing).
 export const features = {
   aiAgents: {
     id: "aiAgents",
-    name: "6 AI Agents",
-    description: "Access to all 6 AI agents for therapy assistance",
-  },
-  clientLimit: {
-    id: "clientLimit",
-    name: "Client Limit",
-    description: "Maximum number of clients you can manage",
+    name: "6 AI Agents + LIAM",
+    description: "Assessment, diagnostic, treatment, progress, documentation — plus LIAM in-session copilot",
   },
   fullAccess: {
     id: "fullAccess",
-    name: "Full Feature Access",
-    description: "Access to all platform features",
+    name: "Unlimited clients & sessions",
+    description: "No client limit, no session caps",
   },
   emailSupport: {
     id: "emailSupport",
@@ -22,75 +20,47 @@ export const features = {
   sessionNotes: {
     id: "sessionNotes",
     name: "AI Session Notes",
-    description: "Automated session note generation",
-  },
-  treatmentPlanning: {
-    id: "treatmentPlanning",
-    name: "Treatment Planning",
-    description: "AI-assisted treatment planning",
+    description: "SOAP notes drafted for your review and approval",
   },
   progressAnalytics: {
     id: "progressAnalytics",
     name: "Progress Analytics",
-    description: "AI-powered progress tracking and analytics",
-  },
-  reporting: {
-    id: "reporting",
-    name: "Comprehensive Reporting",
-    description: "Detailed session and progress reports",
-  },
-  riskAssessment: {
-    id: "riskAssessment",
-    name: "Risk Assessment",
-    description: "AI-powered risk assessment tools",
-  },
-  diagnosticTools: {
-    id: "diagnosticTools",
-    name: "Diagnostic Tools",
-    description: "AI-powered diagnostic tools",
-  },
-  sessionPrep: {
-    id: "sessionPrep",
-    name: "Session Preparation",
-    description: "AI-assisted session preparation",
-  },
-  hipaaCompliance: {
-    id: "hipaaCompliance",
-    name: "HIPAA Compliance",
-    description: "Fully HIPAA compliant platform",
+    description: "PHQ-9 / GAD-7 trends with reliable-change detection",
   },
 };
 
 export const plans = {
-  trial: {
-    id: "trial",
-    name: "Free Trial",
-    price: 0,
-    duration: "14 days",
-    features: [
-      { ...features.aiAgents, included: true },
-      { ...features.clientLimit, included: true, value: 3 },
-      { ...features.fullAccess, included: true },
-      { ...features.emailSupport, included: true },
-      { ...features.hipaaCompliance, included: true },
-    ],
-    cta: "Start Free Trial",
-    description: "Try all features for 14 days",
-  },
-  paid: {
-    id: "paid",
-    name: "Single Therapist",
-    price: 99,
+  solo: {
+    id: "solo",
+    name: "Solo",
+    price: 69,
     duration: "month",
+    priceEnvVar: "NEXT_PUBLIC_STRIPE_PRICE_SOLO",
     features: [
       { ...features.aiAgents, included: true },
-      { ...features.clientLimit, included: true, value: 25 },
       { ...features.fullAccess, included: true },
+      { ...features.sessionNotes, included: true },
+      { ...features.progressAnalytics, included: true },
       { ...features.emailSupport, included: true },
-      { ...features.hipaaCompliance, included: true },
     ],
-    cta: "Subscribe Now",
-    description: "Perfect for individual practitioners",
+    cta: "Start 14-day free trial",
+    description: "For independent therapists.",
     popular: true,
+  },
+  practice: {
+    id: "practice",
+    name: "Practice",
+    price: 59,
+    duration: "month / clinician",
+    priceEnvVar: "NEXT_PUBLIC_STRIPE_PRICE_PRACTICE",
+    features: [
+      { ...features.aiAgents, included: true },
+      { ...features.fullAccess, included: true },
+      { ...features.sessionNotes, included: true },
+      { ...features.progressAnalytics, included: true },
+      { ...features.emailSupport, included: true },
+    ],
+    cta: "Start 14-day free trial",
+    description: "For group practices. Billed per clinician.",
   },
 };
