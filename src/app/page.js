@@ -443,48 +443,63 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-4 bg-muted border-t border-border">
-        <div className="max-w-screen-xl mx-auto">
+      <footer className="bg-muted border-t border-border">
+        <div className="max-w-screen-xl mx-auto px-4 pt-12 pb-8">
           <div className="grid md:grid-cols-3 gap-8">
             <div>
-              <h3 className="text-lg font-semibold mb-4 text-primary">CogniCare</h3>
-              <p className="text-gray-600">
+              <h3 className="text-lg font-semibold mb-4 text-foreground">CogniCare</h3>
+              <p className="text-sm text-muted-foreground">
                 Helping therapists focus on what matters most — their clients.
               </p>
             </div>
             <div>
-              <h3 className="text-lg font-semibold mb-4 text-primary">Product</h3>
-              <ul className="space-y-2">
+              <h3 className="text-lg font-semibold mb-4 text-foreground">Product</h3>
+              <ul className="space-y-2 text-sm">
                 <li>
-                  <Link href="#features" className="text-gray-600 hover:text-primary/80">
+                  <Link
+                    href="#features"
+                    className="text-muted-foreground hover:text-primary"
+                  >
                     Features
                   </Link>
                 </li>
                 <li>
-                  <Link href="#pricing" className="text-gray-600 hover:text-primary/80">
+                  <Link
+                    href="#pricing"
+                    className="text-muted-foreground hover:text-primary"
+                  >
                     Pricing
                   </Link>
                 </li>
               </ul>
             </div>
             <div>
-              <h3 className="text-lg font-semibold mb-4 text-primary">Company</h3>
-              <ul className="space-y-2">
+              <h3 className="text-lg font-semibold mb-4 text-foreground">Company</h3>
+              <ul className="space-y-2 text-sm">
                 <li>
-                  <Link href="/about" className="text-gray-600 hover:text-primary/80">
+                  <Link
+                    href="/about"
+                    className="text-muted-foreground hover:text-primary"
+                  >
                     About
                   </Link>
                 </li>
                 <li>
-                  <Link href="/contact" className="text-gray-600 hover:text-primary/80">
+                  <Link
+                    href="/contact"
+                    className="text-muted-foreground hover:text-primary"
+                  >
                     Contact
                   </Link>
                 </li>
               </ul>
             </div>
           </div>
-          <div className="mt-12 pt-8 border-t border-border text-center text-gray-600">
-            <p>© {new Date().getFullYear()} CogniCare. All rights reserved.</p>
+        </div>
+        {/* Copyright bottom bar — its own row, edge-to-edge divider above. */}
+        <div className="border-t border-border">
+          <div className="max-w-screen-xl mx-auto px-4 py-4 text-sm text-muted-foreground text-center">
+            © {new Date().getFullYear()} CogniCare. All rights reserved.
           </div>
         </div>
       </footer>
