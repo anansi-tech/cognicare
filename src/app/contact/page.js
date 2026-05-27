@@ -23,7 +23,7 @@ export default function ContactPage() {
           way to reach us is by email — usually a same-day reply on weekdays.
         </p>
 
-        <div className="mt-6 max-w-md">
+        <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 max-w-2xl">
           <a
             href="mailto:cognicare@anansi.xyz"
             className="block rounded-lg border border-border bg-white p-5 hover:border-primary/40 transition-colors"
@@ -48,6 +48,40 @@ export default function ContactPage() {
               </div>
             </div>
           </a>
+
+          <div className="rounded-lg border border-border bg-white p-5">
+            <div className="flex items-start gap-3">
+              <svg
+                className="h-6 w-6 text-primary flex-shrink-0 mt-0.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+              <div>
+                <p className="text-sm font-semibold text-foreground">Mailing address</p>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  1000 Brickell Ave, Ste 715
+                  <br />
+                  PMB 2209
+                  <br />
+                  Miami, FL 33131
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
