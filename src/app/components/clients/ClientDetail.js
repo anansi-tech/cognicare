@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import ClientForm from "./ClientForm";
@@ -46,6 +46,7 @@ export default function ClientDetail({ clientId }) {
   const [counselor, setCounselor] = useState(null);
   const [attendance, setAttendance] = useState(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { bindClient } = useLiam();
 
   // Bind LIAM to this client so Ask LIAM / Cmd-K consults this record.
@@ -68,22 +69,21 @@ export default function ClientDetail({ clientId }) {
     }
   }, [clientId]);
 
-  // Check for tab parameter in URL on component mount
+  // Sync activeTab with the URL ?tab= param. Runs on mount AND when the
+  // param changes mid-session (e.g. the ReassessmentBanner pushes
+  // ?tab=progress while the user is already on the client page).
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const tabParam = params.get("tab");
-      // Map removed tabs to their new homes.
-      const TAB_ALIAS = { insights: "overview", analytics: "progress", measures: "progress" };
-      const resolved = TAB_ALIAS[tabParam] ?? tabParam;
-      if (
-        resolved &&
-        ["overview", "sessions", "reports", "progress", "consent-billing"].includes(resolved)
-      ) {
-        setActiveTab(resolved);
-      }
+    const tabParam = searchParams.get("tab");
+    if (!tabParam) return;
+    // Map removed tabs to their new homes.
+    const TAB_ALIAS = { insights: "overview", analytics: "progress", measures: "progress" };
+    const resolved = TAB_ALIAS[tabParam] ?? tabParam;
+    if (
+      ["overview", "sessions", "reports", "progress", "consent-billing"].includes(resolved)
+    ) {
+      setActiveTab(resolved);
     }
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     setAvailableTemplates(getAvailableTemplates());
