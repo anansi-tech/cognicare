@@ -159,14 +159,14 @@ export default function BillingPage() {
           <button
             onClick={openPortal}
             disabled={busy === "portal"}
-            className="mt-4 inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-60"
+            className="mt-4 inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-60"
           >
             {busy === "portal" ? "Opening…" : "Manage billing"}
           </button>
         </div>
       ) : (
         <>
-          <div className="mb-8 rounded-lg border border-indigo-100 bg-indigo-50 p-6">
+          <div className="mb-8 rounded-lg border border-border bg-accent p-6">
             <h2 className="text-lg font-semibold text-gray-900">
               Six AI agents handle the clinical heavy lifting
             </h2>
@@ -180,7 +180,7 @@ export default function BillingPage() {
                 const [name, desc] = a.split(" — ");
                 return (
                   <li key={i} className="flex items-start gap-2 text-sm">
-                    <span className="mt-1 text-indigo-500">▸</span>
+                    <span className="mt-1 text-primary">▸</span>
                     <span>
                       <span className="font-medium text-gray-900">{name}</span> —{" "}
                       <span className="text-gray-600">{desc}</span>
@@ -197,12 +197,12 @@ export default function BillingPage() {
                 key={plan.id}
                 className={`relative rounded-lg bg-white p-6 shadow-sm flex flex-col ${
                   plan.highlight
-                    ? "border border-indigo-300 ring-1 ring-indigo-100"
+                    ? "border border-primary ring-1 ring-primary/20"
                     : "border border-gray-200"
                 }`}
               >
                 {plan.highlight && (
-                  <span className="absolute -top-3 left-6 inline-flex items-center rounded-full bg-indigo-600 px-2 py-0.5 text-[11px] font-medium text-white">
+                  <span className="absolute -top-3 left-6 inline-flex items-center rounded-full bg-primary px-2 py-0.5 text-[11px] font-medium text-white">
                     Most popular
                   </span>
                 )}
@@ -215,7 +215,7 @@ export default function BillingPage() {
                 <ul className="mt-4 space-y-1 text-sm text-gray-700">
                   {plan.features.map((f, i) => (
                     <li key={i} className="flex items-start gap-2">
-                      <span className="mt-1 text-indigo-500">•</span>
+                      <span className="mt-1 text-primary">•</span>
                       <span>{f}</span>
                     </li>
                   ))}
@@ -252,7 +252,7 @@ export default function BillingPage() {
                         : subscribe(plan.priceEnv)
                     }
                     disabled={busy === plan.priceEnv}
-                    className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-60"
+                    className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-60"
                   >
                     {busy === plan.priceEnv ? "Redirecting…" : `Subscribe to ${plan.name}`}
                   </button>

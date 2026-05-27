@@ -39,7 +39,7 @@ export default function PaymentCompletePage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           <p className="mt-4 text-gray-600">Verifying your payment...</p>
         </div>
       </div>
@@ -55,7 +55,7 @@ export default function PaymentCompletePage() {
           <p className="text-gray-600 mb-6">{error}</p>
           <button
             onClick={() => router.push(`/clients/${params.id}`)}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+            className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 transition-colors"
           >
             Return to Client
           </button>
@@ -75,7 +75,7 @@ export default function PaymentCompletePage() {
         <div className="space-y-4">
           <button
             onClick={() => router.push(`/clients/${params.id}`)}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+            className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 transition-colors"
           >
             Return to Client
           </button>
@@ -84,7 +84,7 @@ export default function PaymentCompletePage() {
               href={invoice?.document}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
             >
               View Invoice
             </a>

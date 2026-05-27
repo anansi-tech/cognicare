@@ -8,7 +8,7 @@ export default function CalendarPage() {
         <h1 className="text-2xl font-bold text-gray-900">Session Calendar</h1>
         <Link
           href="/sessions/new"
-          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+          className="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90"
         >
           New Session
         </Link>

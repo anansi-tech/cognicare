@@ -137,7 +137,7 @@ export default function ConsentPortalPage() {
                 href={downloadUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 inline-flex items-center px-4 py-2 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+                className="mt-3 inline-flex items-center px-4 py-2 rounded-md text-sm font-medium text-white bg-primary hover:bg-primary/90"
               >
                 Download signed copy
               </a>
@@ -158,7 +158,7 @@ export default function ConsentPortalPage() {
                 autoComplete="name"
                 value={typedName}
                 onChange={(e) => setTypedName(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary"
                 placeholder={isMinor ? "e.g. Jane Doe" : "Type your full legal name"}
                 required
               />
@@ -177,7 +177,7 @@ export default function ConsentPortalPage() {
                   type="text"
                   value={guardianRelationship}
                   onChange={(e) => setGuardianRelationship(e.target.value)}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary"
                   placeholder="e.g. Mother, Father, Legal guardian"
                   required
                 />
@@ -189,7 +189,7 @@ export default function ConsentPortalPage() {
                 type="checkbox"
                 checked={agreed}
                 onChange={(e) => setAgreed(e.target.checked)}
-                className="mt-0.5 h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                className="mt-0.5 h-5 w-5 rounded border-gray-300 text-primary focus:ring-ring"
                 required
               />
               <span>
@@ -208,7 +208,7 @@ export default function ConsentPortalPage() {
             <button
               type="submit"
               disabled={!canSubmit}
-              className="w-full inline-flex justify-center items-center px-4 py-3 rounded-md text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full inline-flex justify-center items-center px-4 py-3 rounded-md text-base font-medium text-white bg-primary hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {submitting ? "Signing…" : "Sign electronically"}
             </button>

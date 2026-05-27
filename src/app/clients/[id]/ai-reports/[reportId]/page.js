@@ -72,7 +72,7 @@ export default function AIReportPage() {
         </div>
 
         {report.summary && (
-          <div className="bg-blue-50 p-4 rounded-lg mb-4">
+          <div className="bg-accent p-4 rounded-lg mb-4">
             <h2 className="text-sm font-medium text-gray-700 mb-1">Summary</h2>
             <p className="text-gray-700">{report.summary}</p>
           </div>

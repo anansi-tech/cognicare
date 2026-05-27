@@ -123,7 +123,7 @@ export default function CalendarView() {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -151,7 +151,7 @@ export default function CalendarView() {
             type="checkbox"
             checked={showCancelled}
             onChange={(e) => setShowCancelled(e.target.checked)}
-            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-ring"
           />
           Show cancelled & no-show
         </label>

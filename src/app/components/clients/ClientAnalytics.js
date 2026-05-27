@@ -84,8 +84,8 @@ export default function ClientAnalytics({ clientId }) {
                 content={({ active, payload, label }) => {
                   if (active && payload && payload.length) {
                     return (
-                      <div className="bg-white p-2 border border-blue-200 rounded shadow-lg">
-                        <p className="font-medium text-blue-600">{formatDate(label)}</p>
+                      <div className="bg-white p-2 border border-border rounded shadow-lg">
+                        <p className="font-medium text-primary">{formatDate(label)}</p>
                         <p className="text-gray-700">
                           Risk: {payload[0].payload.levelText || "Unknown"}
                         </p>

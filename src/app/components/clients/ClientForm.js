@@ -221,7 +221,7 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
             <div className="mt-4">
               <Link
                 href="/subscription"
-                className="inline-block px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+                className="inline-block px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
               >
                 Upgrade Plan
               </Link>
@@ -476,7 +476,7 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
         <button
           type="submit"
           disabled={loading}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-blue-300"
+          className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90 disabled:bg-primary/50"
         >
           {loading ? "Saving..." : "Save Client"}
         </button>

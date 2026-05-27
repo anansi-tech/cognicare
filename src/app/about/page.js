@@ -7,7 +7,7 @@ export default function AboutPage() {
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white">
         {/* Hero Section */}
-        <div className="relative bg-blue-50">
+        <div className="relative bg-accent">
           <div className="max-w-7xl mx-auto py-24 px-4 sm:py-32 sm:px-6 lg:px-8">
             <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
               About CogniCare
@@ -37,7 +37,7 @@ export default function AboutPage() {
             <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
               {/* AI-Powered Analysis */}
               <div className="bg-white p-6 rounded-lg shadow-sm">
-                <div className="text-blue-600 mb-4">
+                <div className="text-primary mb-4">
                   <svg className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path
                       strokeLinecap="round"
@@ -56,7 +56,7 @@ export default function AboutPage() {
 
               {/* Comprehensive Reports */}
               <div className="bg-white p-6 rounded-lg shadow-sm">
-                <div className="text-blue-600 mb-4">
+                <div className="text-primary mb-4">
                   <svg className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path
                       strokeLinecap="round"
@@ -75,7 +75,7 @@ export default function AboutPage() {
 
               {/* Secure Platform */}
               <div className="bg-white p-6 rounded-lg shadow-sm">
-                <div className="text-blue-600 mb-4">
+                <div className="text-primary mb-4">
                   <svg className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path
                       strokeLinecap="round"
@@ -231,17 +231,17 @@ export default function AboutPage() {
         </div>
 
         {/* CTA Section */}
-        <div className="bg-blue-50">
+        <div className="bg-accent">
           <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8 lg:flex lg:items-center lg:justify-between">
             <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
               <span className="block">Ready to get started?</span>
-              <span className="block text-blue-600">Join CogniCare today.</span>
+              <span className="block text-primary">Join CogniCare today.</span>
             </h2>
             <div className="mt-8 flex lg:mt-0 lg:flex-shrink-0">
               <div className="inline-flex rounded-md shadow">
                 <Link
                   href="/signup"
-                  className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                  className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary hover:bg-primary/90"
                 >
                   Get started
                 </Link>
@@ -249,7 +249,7 @@ export default function AboutPage() {
               <div className="ml-3 inline-flex rounded-md shadow">
                 <Link
                   href="/contact"
-                  className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-blue-600 bg-white hover:bg-blue-50"
+                  className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-primary bg-white hover:bg-accent"
                 >
                   Contact us
                 </Link>

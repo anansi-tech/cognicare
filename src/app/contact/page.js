@@ -7,7 +7,7 @@ export default function ContactPage() {
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white">
         {/* Hero Section */}
-        <div className="relative bg-blue-50">
+        <div className="relative bg-accent">
           <div className="max-w-7xl mx-auto py-24 px-4 sm:py-32 sm:px-6 lg:px-8">
             <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
               Contact Us
@@ -32,7 +32,7 @@ export default function ContactPage() {
                 <div className="flex items-start">
                   <div className="flex-shrink-0">
                     <svg
-                      className="h-6 w-6 text-blue-600"
+                      className="h-6 w-6 text-primary"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -54,7 +54,7 @@ export default function ContactPage() {
                 <div className="flex items-start">
                   <div className="flex-shrink-0">
                     <svg
-                      className="h-6 w-6 text-blue-600"
+                      className="h-6 w-6 text-primary"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -76,7 +76,7 @@ export default function ContactPage() {
                 <div className="flex items-start">
                   <div className="flex-shrink-0">
                     <svg
-                      className="h-6 w-6 text-blue-600"
+                      className="h-6 w-6 text-primary"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -165,7 +165,7 @@ export default function ContactPage() {
             </div>
 
             <div className="mt-12 text-center">
-              <Link href="/faq" className="text-blue-600 hover:text-blue-500 font-medium">
+              <Link href="/faq" className="text-primary hover:text-primary/80 font-medium">
                 View all FAQs →
               </Link>
             </div>

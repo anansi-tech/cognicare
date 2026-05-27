@@ -37,7 +37,8 @@ export function SubscriptionGate({ children }) {
   useEffect(() => {
     if (status !== "authenticated") return;
     if (isAllowed(pathname)) return;
-    if (IS_DEV) return;
+    // E2E: dev bypass disabled — uncomment to skip gate locally again.
+    // if (IS_DEV) return;
     const subStatus = session?.user?.stripeSubscriptionStatus;
     if (!ACTIVE.has(subStatus)) {
       router.replace("/billing");

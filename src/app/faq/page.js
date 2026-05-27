@@ -116,7 +116,7 @@ export default function FAQPage() {
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white">
         {/* Hero Section */}
-        <div className="relative bg-blue-50">
+        <div className="relative bg-accent">
           <div className="max-w-7xl mx-auto py-24 px-4 sm:py-32 sm:px-6 lg:px-8">
             <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
               Frequently Asked Questions
@@ -175,13 +175,13 @@ export default function FAQPage() {
           <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8 lg:flex lg:items-center lg:justify-between">
             <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
               <span className="block">Still have questions?</span>
-              <span className="block text-blue-600">Contact our support team.</span>
+              <span className="block text-primary">Contact our support team.</span>
             </h2>
             <div className="mt-8 flex lg:mt-0 lg:flex-shrink-0">
               <div className="inline-flex rounded-md shadow">
                 <Link
                   href="/contact"
-                  className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                  className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary hover:bg-primary/90"
                 >
                   Contact Support
                 </Link>
@@ -189,7 +189,7 @@ export default function FAQPage() {
               <div className="ml-3 inline-flex rounded-md shadow">
                 <Link
                   href="/about"
-                  className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-blue-600 bg-white hover:bg-blue-50"
+                  className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-primary bg-white hover:bg-accent"
                 >
                   Learn More
                 </Link>

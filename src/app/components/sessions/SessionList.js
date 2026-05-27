@@ -135,7 +135,7 @@ export default function SessionList({ initialStatusFilter = "" }) {
   const getStatusBadgeColor = (status) => {
     switch (status.toLowerCase()) {
       case "scheduled":
-        return "bg-blue-100 text-blue-800";
+        return "bg-accent text-primary";
       case "in-progress":
         return "bg-yellow-100 text-yellow-800";
       case "completed":
@@ -153,7 +153,7 @@ export default function SessionList({ initialStatusFilter = "" }) {
   if (!session) {
     return (
       <div className="flex justify-center items-center min-h-[300px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -161,7 +161,7 @@ export default function SessionList({ initialStatusFilter = "" }) {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[300px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -190,7 +190,7 @@ export default function SessionList({ initialStatusFilter = "" }) {
         <h1 className="text-2xl font-bold">Sessions</h1>
         <button
           onClick={() => setShowAddSession(true)}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90"
         >
           New Session
         </button>
@@ -272,7 +272,7 @@ export default function SessionList({ initialStatusFilter = "" }) {
                     {session.clientId ? (
                       <Link
                         href={`/clients/${session.clientId._id}`}
-                        className="text-blue-600 hover:text-blue-800"
+                        className="text-primary hover:text-primary/80"
                       >
                         {session.clientId.name}
                       </Link>
@@ -295,7 +295,7 @@ export default function SessionList({ initialStatusFilter = "" }) {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button
                       onClick={() => router.push(`/sessions/${session._id}`)}
-                      className="text-indigo-600 hover:text-indigo-900 mr-4"
+                      className="text-primary hover:text-primary/80 mr-4"
                     >
                       View
                     </button>

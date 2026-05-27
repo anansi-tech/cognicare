@@ -126,7 +126,7 @@ export default function ReportViewPage() {
           <div className="flex gap-2 flex-shrink-0">
             <a
               href={`${pdfUrl}?download=1`}
-              className="px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 rounded-md text-sm font-medium"
+              className="px-4 py-2 bg-primary text-white hover:bg-primary/90 rounded-md text-sm font-medium"
             >
               Download PDF
             </a>
@@ -201,7 +201,7 @@ export default function ReportViewPage() {
           onChange={(e) => setNarrative(e.target.value)}
           rows={18}
           readOnly={!isDraft}
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 read-only:bg-gray-50 read-only:cursor-default"
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary read-only:bg-gray-50 read-only:cursor-default"
           placeholder="Narrative will appear here…"
         />
 
@@ -220,7 +220,7 @@ export default function ReportViewPage() {
                 type="button"
                 onClick={() => save("completed")}
                 disabled={saving || finalizing || !narrative.trim()}
-                className="px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 rounded-md text-sm font-medium disabled:opacity-60"
+                className="px-4 py-2 bg-primary text-white hover:bg-primary/90 rounded-md text-sm font-medium disabled:opacity-60"
               >
                 {finalizing ? "Finalizing…" : "Mark as completed"}
               </button>

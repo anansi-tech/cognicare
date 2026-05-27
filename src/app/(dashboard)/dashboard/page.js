@@ -50,7 +50,7 @@ export default function DashboardPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading dashboard...</p>
         </div>
       </div>
@@ -98,7 +98,7 @@ export default function DashboardPage() {
       case "completed":
         return "bg-green-100 text-green-800";
       case "scheduled":
-        return "bg-blue-100 text-blue-800";
+        return "bg-accent text-primary";
       case "in-progress":
         return "bg-yellow-100 text-yellow-800";
       case "cancelled":
@@ -137,7 +137,7 @@ export default function DashboardPage() {
           {stats.upcomingThisWeek > 0 && (
             <Link
               href="/sessions/calendar"
-              className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
+              className="text-sm font-medium text-primary hover:text-primary/80"
             >
               {stats.upcomingThisWeek} more this week →
             </Link>
@@ -150,7 +150,7 @@ export default function DashboardPage() {
               <span className="ml-1">
                 <Link
                   href="/sessions/calendar"
-                  className="text-indigo-600 hover:text-indigo-700"
+                  className="text-primary hover:text-primary/80"
                 >
                   {stats.upcomingThisWeek} scheduled later this week.
                 </Link>
@@ -207,7 +207,7 @@ export default function DashboardPage() {
           </div>
           <div className="bg-gray-50 px-5 py-3">
             <div className="text-sm">
-              <Link href="/clients" className="font-medium text-blue-600 hover:text-blue-500">
+              <Link href="/clients" className="font-medium text-primary hover:text-primary/80">
                 View all clients
               </Link>
             </div>
@@ -225,7 +225,7 @@ export default function DashboardPage() {
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">Active Sessions</dt>
                   <dd className="flex items-baseline">
-                    <div className="text-2xl font-semibold text-blue-600">
+                    <div className="text-2xl font-semibold text-primary">
                       {stats.activeSessions}
                     </div>
                   </dd>
@@ -235,7 +235,7 @@ export default function DashboardPage() {
           </div>
           <div className="bg-gray-50 px-5 py-3">
             <div className="text-sm">
-              <Link href="/sessions" className="font-medium text-blue-600 hover:text-blue-500">
+              <Link href="/sessions" className="font-medium text-primary hover:text-primary/80">
                 View all sessions
               </Link>
             </div>
@@ -265,7 +265,7 @@ export default function DashboardPage() {
             <div className="text-sm">
               <Link
                 href="/sessions?status=completed"
-                className="font-medium text-blue-600 hover:text-blue-500"
+                className="font-medium text-primary hover:text-primary/80"
               >
                 View completed sessions
               </Link>
@@ -294,7 +294,7 @@ export default function DashboardPage() {
           </div>
           <div className="bg-gray-50 px-5 py-3">
             <div className="text-sm">
-              <Link href="/reports" className="font-medium text-blue-600 hover:text-blue-500">
+              <Link href="/reports" className="font-medium text-primary hover:text-primary/80">
                 View all reports
               </Link>
             </div>

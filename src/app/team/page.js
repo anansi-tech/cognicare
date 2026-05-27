@@ -176,7 +176,7 @@ export default function TeamPage() {
               {seats.used} of {seats.seats}
             </span>{" "}
             seats used —{" "}
-            <Link href="/billing" className="text-indigo-600 hover:text-indigo-700">
+            <Link href="/billing" className="text-primary hover:text-primary/80">
               manage in Billing
             </Link>
           </div>
@@ -202,12 +202,12 @@ export default function TeamPage() {
             onChange={(e) => setInviteEmail(e.target.value)}
             placeholder="colleague@example.com"
             required
-            className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           />
           <button
             type="submit"
             disabled={inviting || !hasCapacity}
-            className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-60"
+            className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-60"
             title={!hasCapacity ? "Seats are full — add seats in Billing first." : undefined}
           >
             {inviting ? "Sending…" : "Send invite"}
@@ -265,7 +265,7 @@ export default function TeamPage() {
                 <p className="text-sm font-medium text-gray-900">
                   {c.name}
                   {c.isOwner && (
-                    <span className="ml-2 inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700">
+                    <span className="ml-2 inline-flex items-center rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-primary">
                       Owner
                     </span>
                   )}

@@ -49,7 +49,7 @@ export default function InsuranceInfo({ client, onUpdate }) {
           <h3 className="text-lg leading-6 font-medium text-gray-900">Insurance Information</h3>
           <button
             onClick={handleEditInsurance}
-            className="text-sm text-blue-600 hover:text-blue-800"
+            className="text-sm text-primary hover:text-primary/80"
           >
             Edit
           </button>
@@ -129,7 +129,7 @@ export default function InsuranceInfo({ client, onUpdate }) {
                     type="text"
                     name="provider"
                     defaultValue={client.insurance?.provider}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-ring"
                   />
                 </div>
 
@@ -139,7 +139,7 @@ export default function InsuranceInfo({ client, onUpdate }) {
                     type="text"
                     name="policyNumber"
                     defaultValue={client.insurance?.policyNumber}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-ring"
                   />
                 </div>
 
@@ -149,7 +149,7 @@ export default function InsuranceInfo({ client, onUpdate }) {
                     type="text"
                     name="groupNumber"
                     defaultValue={client.insurance?.groupNumber}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-ring"
                   />
                 </div>
 
@@ -158,7 +158,7 @@ export default function InsuranceInfo({ client, onUpdate }) {
                   <select
                     name="coverage"
                     defaultValue={client.insurance?.coverage}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-ring"
                   >
                     <option value="full">Full Coverage</option>
                     <option value="partial">Partial Coverage</option>
@@ -171,7 +171,7 @@ export default function InsuranceInfo({ client, onUpdate }) {
                   <textarea
                     name="notes"
                     defaultValue={client.insurance?.notes}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-ring"
                   />
                 </div>
 
@@ -185,7 +185,7 @@ export default function InsuranceInfo({ client, onUpdate }) {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                    className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90"
                   >
                     Save Changes
                   </button>

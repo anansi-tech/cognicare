@@ -41,21 +41,21 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white">
+    <div className="min-h-screen bg-secondary">
       {/* Header */}
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
-            <Link href="/" className="text-2xl font-bold text-indigo-900">
+            <Link href="/" className="text-2xl font-bold text-primary">
               CogniCare
             </Link>
             <div className="flex items-center space-x-4">
-              <Link href="/login" className="text-indigo-600 hover:text-indigo-800 font-medium">
+              <Link href="/login" className="text-primary hover:text-primary/80 font-medium">
                 Log In
               </Link>
               <button
                 onClick={handleGetStarted}
-                className="bg-indigo-600 text-white px-4 py-2 rounded-full font-medium hover:bg-indigo-700 transition-colors"
+                className="bg-primary text-white px-4 py-2 rounded-full font-medium hover:bg-primary/90 transition-colors"
               >
                 Get Started
               </button>
@@ -66,8 +66,8 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <section className="py-20 px-4 text-center">
-        <h1 className="text-6xl font-bold text-indigo-900 mb-4">CogniCare</h1>
-        <h2 className="text-2xl text-indigo-700 mb-8 font-medium">
+        <h1 className="text-6xl font-bold text-primary mb-4">CogniCare</h1>
+        <h2 className="text-2xl text-primary mb-8 font-medium">
           6 AI Agents. One Powerful Team.
         </h2>
         <p className="text-lg text-gray-600 max-w-xl mx-auto mb-8">
@@ -77,13 +77,13 @@ export default function LandingPage() {
         <div className="flex justify-center gap-4">
           <Link
             href="/login"
-            className="bg-white text-indigo-600 px-8 py-3 rounded-full font-medium border border-indigo-200 hover:bg-indigo-50 transition-colors"
+            className="bg-white text-primary px-8 py-3 rounded-full font-medium border border-border hover:bg-accent transition-colors"
           >
             Log In
           </Link>
           <button
             onClick={handleGetStarted}
-            className="bg-indigo-600 text-white px-8 py-3 rounded-full font-medium hover:bg-indigo-700 transition-colors shadow-lg hover:shadow-indigo-200"
+            className="bg-primary text-white px-8 py-3 rounded-full font-medium hover:bg-primary/90 transition-colors shadow-lg hover:shadow"
           >
             Start Free Trial
           </button>
@@ -93,48 +93,48 @@ export default function LandingPage() {
       {/* Hero Image Section */}
       <section className="py-12 px-4">
         <div className="max-w-6xl mx-auto">
-          <div className="relative rounded-3xl overflow-hidden shadow-2xl bg-gradient-to-br from-indigo-50 to-indigo-100 p-12">
+          <div className="relative rounded-3xl overflow-hidden shadow-2xl bg-primary p-12">
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div className="space-y-6">
-                <h3 className="text-3xl font-bold text-indigo-900">The CogniCare AI Team</h3>
+                <h3 className="text-3xl font-bold text-primary">The CogniCare AI Team</h3>
                 <p className="text-lg text-gray-700">
                   Our team of 6 specialized AI agents in the CogniCare platform works together
                   seamlessly to provide comprehensive support for your practice.
                 </p>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex items-center group">
-                    <div className="w-3 h-3 bg-indigo-600 rounded-full mr-2 group-hover:scale-125 transition-transform"></div>
-                    <span className="text-sm text-gray-700 group-hover:text-indigo-600 transition-colors">
+                    <div className="w-3 h-3 bg-primary rounded-full mr-2 group-hover:scale-125 transition-transform"></div>
+                    <span className="text-sm text-gray-700 group-hover:text-primary/80 transition-colors">
                       Assessment Agent
                     </span>
                   </div>
                   <div className="flex items-center group">
-                    <div className="w-3 h-3 bg-blue-600 rounded-full mr-2 group-hover:scale-125 transition-transform"></div>
-                    <span className="text-sm text-gray-700 group-hover:text-blue-600 transition-colors">
+                    <div className="w-3 h-3 bg-primary rounded-full mr-2 group-hover:scale-125 transition-transform"></div>
+                    <span className="text-sm text-gray-700 group-hover:text-primary/80 transition-colors">
                       Diagnostic Agent
                     </span>
                   </div>
                   <div className="flex items-center group">
-                    <div className="w-3 h-3 bg-indigo-600 rounded-full mr-2 group-hover:scale-125 transition-transform"></div>
-                    <span className="text-sm text-gray-700 group-hover:text-indigo-600 transition-colors">
+                    <div className="w-3 h-3 bg-primary rounded-full mr-2 group-hover:scale-125 transition-transform"></div>
+                    <span className="text-sm text-gray-700 group-hover:text-primary/80 transition-colors">
                       Treatment Agent
                     </span>
                   </div>
                   <div className="flex items-center group">
-                    <div className="w-3 h-3 bg-blue-600 rounded-full mr-2 group-hover:scale-125 transition-transform"></div>
-                    <span className="text-sm text-gray-700 group-hover:text-blue-600 transition-colors">
+                    <div className="w-3 h-3 bg-primary rounded-full mr-2 group-hover:scale-125 transition-transform"></div>
+                    <span className="text-sm text-gray-700 group-hover:text-primary/80 transition-colors">
                       Progress Agent
                     </span>
                   </div>
                   <div className="flex items-center group">
-                    <div className="w-3 h-3 bg-indigo-600 rounded-full mr-2 group-hover:scale-125 transition-transform"></div>
-                    <span className="text-sm text-gray-700 group-hover:text-indigo-600 transition-colors">
+                    <div className="w-3 h-3 bg-primary rounded-full mr-2 group-hover:scale-125 transition-transform"></div>
+                    <span className="text-sm text-gray-700 group-hover:text-primary/80 transition-colors">
                       Documentation Agent
                     </span>
                   </div>
                   <div className="flex items-center group">
-                    <div className="w-3 h-3 bg-blue-600 rounded-full mr-2 group-hover:scale-125 transition-transform"></div>
-                    <span className="text-sm text-gray-700 group-hover:text-blue-600 transition-colors">
+                    <div className="w-3 h-3 bg-primary rounded-full mr-2 group-hover:scale-125 transition-transform"></div>
+                    <span className="text-sm text-gray-700 group-hover:text-primary/80 transition-colors">
                       Conversational Agent
                     </span>
                   </div>
@@ -145,7 +145,7 @@ export default function LandingPage() {
                 <div className="relative w-full h-[300px]">
                   {/* Main Team Circle */}
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <svg width="200" height="200" viewBox="0 0 200 200" className="text-indigo-600">
+                    <svg width="200" height="200" viewBox="0 0 200 200" className="text-primary">
                       <circle
                         cx="100"
                         cy="100"
@@ -255,9 +255,9 @@ export default function LandingPage() {
 
                   {/* AI Agent Icons with Human-like Interaction */}
                   {/* AI Agent Icons with Sequential Highlight */}
-                  <div className="absolute top-1/4 left-1/4 w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center animate-float group hover:bg-indigo-200 transition-colors">
+                  <div className="absolute top-1/4 left-1/4 w-10 h-10 bg-accent rounded-full flex items-center justify-center animate-float group hover:bg-accent transition-colors">
                     <svg
-                      className="w-5 h-5 text-indigo-600"
+                      className="w-5 h-5 text-primary"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -292,9 +292,9 @@ export default function LandingPage() {
                       />
                     </circle>
                   </div>
-                  <div className="absolute top-1/4 right-1/4 w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center animate-float-delay group hover:bg-indigo-200 transition-colors">
+                  <div className="absolute top-1/4 right-1/4 w-10 h-10 bg-accent rounded-full flex items-center justify-center animate-float-delay group hover:bg-accent transition-colors">
                     <svg
-                      className="w-5 h-5 text-indigo-700"
+                      className="w-5 h-5 text-primary"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -331,9 +331,9 @@ export default function LandingPage() {
                       />
                     </circle>
                   </div>
-                  <div className="absolute bottom-1/4 left-1/4 w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center animate-float-delay-2 group hover:bg-indigo-200 transition-colors">
+                  <div className="absolute bottom-1/4 left-1/4 w-10 h-10 bg-accent rounded-full flex items-center justify-center animate-float-delay-2 group hover:bg-accent transition-colors">
                     <svg
-                      className="w-5 h-5 text-indigo-600"
+                      className="w-5 h-5 text-primary"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -370,9 +370,9 @@ export default function LandingPage() {
                       />
                     </circle>
                   </div>
-                  <div className="absolute bottom-1/4 right-1/4 w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center animate-float group hover:bg-indigo-200 transition-colors">
+                  <div className="absolute bottom-1/4 right-1/4 w-10 h-10 bg-accent rounded-full flex items-center justify-center animate-float group hover:bg-accent transition-colors">
                     <svg
-                      className="w-5 h-5 text-indigo-700"
+                      className="w-5 h-5 text-primary"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -409,7 +409,7 @@ export default function LandingPage() {
                       />
                     </circle>
                   </div>
-                  <div className="absolute top-1/2 left-1/2 w-12 h-12 bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-full flex items-center justify-center animate-float-delay group hover:scale-110 transition-transform">
+                  <div className="absolute top-1/2 left-1/2 w-12 h-12 bg-primary rounded-full flex items-center justify-center animate-float-delay group hover:scale-110 transition-transform">
                     <svg
                       className="w-6 h-6 text-white"
                       fill="none"
@@ -458,27 +458,27 @@ export default function LandingPage() {
       {/* Agent Roles Section */}
       <section className="py-16 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-indigo-900 mb-12">
+          <h2 className="text-3xl font-bold text-center text-primary mb-12">
             How Each Agent Contributes
           </h2>
           <div className="grid md:grid-cols-2 gap-8">
             <div className="space-y-6">
-              <div className="p-6 rounded-2xl bg-indigo-50 hover:bg-indigo-100 transition-colors">
-                <h3 className="text-xl font-semibold text-indigo-900 mb-2">Assessment Agent</h3>
+              <div className="p-6 rounded-2xl bg-accent hover:bg-accent transition-colors">
+                <h3 className="text-xl font-semibold text-primary mb-2">Assessment Agent</h3>
                 <p className="text-gray-600">
                   Conducts initial and ongoing assessments, analyzing client responses and behaviors
                   to identify key areas of focus.
                 </p>
               </div>
-              <div className="p-6 rounded-2xl bg-indigo-50 hover:bg-indigo-100 transition-colors">
-                <h3 className="text-xl font-semibold text-indigo-900 mb-2">Diagnostic Agent</h3>
+              <div className="p-6 rounded-2xl bg-accent hover:bg-accent transition-colors">
+                <h3 className="text-xl font-semibold text-primary mb-2">Diagnostic Agent</h3>
                 <p className="text-gray-600">
                   Analyzes assessment data to provide diagnostic insights and identify patterns in
                   client symptoms and behaviors.
                 </p>
               </div>
-              <div className="p-6 rounded-2xl bg-indigo-50 hover:bg-indigo-100 transition-colors">
-                <h3 className="text-xl font-semibold text-indigo-900 mb-2">Treatment Agent</h3>
+              <div className="p-6 rounded-2xl bg-accent hover:bg-accent transition-colors">
+                <h3 className="text-xl font-semibold text-primary mb-2">Treatment Agent</h3>
                 <p className="text-gray-600">
                   Develops personalized treatment plans and suggests evidence-based interventions
                   based on diagnostic insights.
@@ -486,22 +486,22 @@ export default function LandingPage() {
               </div>
             </div>
             <div className="space-y-6">
-              <div className="p-6 rounded-2xl bg-indigo-50 hover:bg-indigo-100 transition-colors">
-                <h3 className="text-xl font-semibold text-indigo-900 mb-2">Progress Agent</h3>
+              <div className="p-6 rounded-2xl bg-accent hover:bg-accent transition-colors">
+                <h3 className="text-xl font-semibold text-primary mb-2">Progress Agent</h3>
                 <p className="text-gray-600">
                   Tracks and analyzes client progress, identifying trends and suggesting adjustments
                   to treatment plans.
                 </p>
               </div>
-              <div className="p-6 rounded-2xl bg-gradient-to-r from-indigo-50 to-indigo-100 hover:from-indigo-100 hover:to-indigo-200 transition-colors">
-                <h3 className="text-xl font-semibold text-indigo-900 mb-2">Documentation Agent</h3>
+              <div className="p-6 rounded-2xl bg-primary hover:bg-accent/80 transition-colors">
+                <h3 className="text-xl font-semibold text-primary mb-2">Documentation Agent</h3>
                 <p className="text-gray-600">
                   Coordinates with all agents to maintain comprehensive records, ensuring HIPAA
                   compliance and easy access to client history.
                 </p>
               </div>
-              <div className="p-6 rounded-2xl bg-indigo-50 hover:bg-indigo-100 transition-colors">
-                <h3 className="text-xl font-semibold text-indigo-900 mb-2">Conversational Agent</h3>
+              <div className="p-6 rounded-2xl bg-accent hover:bg-accent transition-colors">
+                <h3 className="text-xl font-semibold text-primary mb-2">Conversational Agent</h3>
                 <p className="text-gray-600">
                   Real-time AI chat assistant that provides live support during therapy
                   sessions,without breaking session flow.
@@ -515,15 +515,15 @@ export default function LandingPage() {
       {/* How It Works Section */}
       <section id="how-it-works" className="py-16 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-indigo-900 mb-12">
+          <h2 className="text-3xl font-bold text-center text-primary mb-12">
             How CogniCare Works
           </h2>
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="p-6 rounded-2xl bg-indigo-50 transform hover:scale-105 transition-transform">
-              <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-6 mx-auto">
-                <span className="text-2xl text-indigo-600">1</span>
+            <div className="p-6 rounded-2xl bg-accent transform hover:scale-105 transition-transform">
+              <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center mb-6 mx-auto">
+                <span className="text-2xl text-primary">1</span>
               </div>
-              <h3 className="text-xl font-semibold mb-4 text-center text-indigo-900">
+              <h3 className="text-xl font-semibold mb-4 text-center text-primary">
                 Record Your Session
               </h3>
               <p className="text-gray-600 text-center">
@@ -532,11 +532,11 @@ export default function LandingPage() {
               </p>
             </div>
 
-            <div className="p-6 rounded-2xl bg-indigo-50 transform hover:scale-105 transition-transform">
-              <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-6 mx-auto">
-                <span className="text-2xl text-indigo-600">2</span>
+            <div className="p-6 rounded-2xl bg-accent transform hover:scale-105 transition-transform">
+              <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center mb-6 mx-auto">
+                <span className="text-2xl text-primary">2</span>
               </div>
-              <h3 className="text-xl font-semibold mb-4 text-center text-indigo-900">
+              <h3 className="text-xl font-semibold mb-4 text-center text-primary">
                 Get AI Insights
               </h3>
               <p className="text-gray-600 text-center">
@@ -545,11 +545,11 @@ export default function LandingPage() {
               </p>
             </div>
 
-            <div className="p-6 rounded-2xl bg-indigo-50 transform hover:scale-105 transition-transform">
-              <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-6 mx-auto">
-                <span className="text-2xl text-indigo-600">3</span>
+            <div className="p-6 rounded-2xl bg-accent transform hover:scale-105 transition-transform">
+              <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center mb-6 mx-auto">
+                <span className="text-2xl text-primary">3</span>
               </div>
-              <h3 className="text-xl font-semibold mb-4 text-center text-indigo-900">
+              <h3 className="text-xl font-semibold mb-4 text-center text-primary">
                 Focus on Therapy
               </h3>
               <p className="text-gray-600 text-center">
@@ -564,14 +564,14 @@ export default function LandingPage() {
       {/* Key Benefits */}
       <section className="py-16 px-4">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-indigo-900 mb-12">
+          <h2 className="text-3xl font-bold text-center text-primary mb-12">
             Why Therapists Love CogniCare
           </h2>
           <div className="grid md:grid-cols-3 gap-8">
             <div className="p-6 rounded-2xl bg-white shadow-lg hover:shadow-xl transition-shadow">
-              <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
+              <div className="w-12 h-12 bg-accent rounded-full flex items-center justify-center mb-4">
                 <svg
-                  className="w-6 h-6 text-indigo-600"
+                  className="w-6 h-6 text-primary"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -584,7 +584,7 @@ export default function LandingPage() {
                   />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-indigo-900">Smart Documentation</h3>
+              <h3 className="text-xl font-semibold mb-2 text-primary">Smart Documentation</h3>
               <p className="text-gray-600">
                 Save 5+ hours per week on paperwork. Our AI handles the boring stuff so you can
                 focus on your clients.
@@ -592,9 +592,9 @@ export default function LandingPage() {
             </div>
 
             <div className="p-6 rounded-2xl bg-white shadow-lg hover:shadow-xl transition-shadow">
-              <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
+              <div className="w-12 h-12 bg-accent rounded-full flex items-center justify-center mb-4">
                 <svg
-                  className="w-6 h-6 text-indigo-600"
+                  className="w-6 h-6 text-primary"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -607,7 +607,7 @@ export default function LandingPage() {
                   />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-indigo-900">Progress Tracking</h3>
+              <h3 className="text-xl font-semibold mb-2 text-primary">Progress Tracking</h3>
               <p className="text-gray-600">
                 Beautiful charts and insights help you track client progress and celebrate their
                 wins.
@@ -615,9 +615,9 @@ export default function LandingPage() {
             </div>
 
             <div className="p-6 rounded-2xl bg-white shadow-lg hover:shadow-xl transition-shadow">
-              <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
+              <div className="w-12 h-12 bg-accent rounded-full flex items-center justify-center mb-4">
                 <svg
-                  className="w-6 h-6 text-indigo-600"
+                  className="w-6 h-6 text-primary"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -630,7 +630,7 @@ export default function LandingPage() {
                   />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-indigo-900">Treatment Planning</h3>
+              <h3 className="text-xl font-semibold mb-2 text-primary">Treatment Planning</h3>
               <p className="text-gray-600">
                 Get AI-powered treatment suggestions and goal tracking to help your clients succeed.
               </p>
@@ -642,16 +642,16 @@ export default function LandingPage() {
       {/* Features Section */}
       <section id="features" className="py-16 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-indigo-900 mb-12">
+          <h2 className="text-3xl font-bold text-center text-primary mb-12">
             Everything You Need in One Place with CogniCare
           </h2>
           <div className="grid md:grid-cols-2 gap-12">
             <div className="space-y-6">
               <div className="flex items-start">
                 <div className="flex-shrink-0 mt-1">
-                  <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                  <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
                     <svg
-                      className="w-4 h-4 text-indigo-600"
+                      className="w-4 h-4 text-primary"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -666,7 +666,7 @@ export default function LandingPage() {
                   </div>
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-lg font-semibold text-indigo-900">AI Session Notes</h3>
+                  <h3 className="text-lg font-semibold text-primary">AI Session Notes</h3>
                   <p className="text-gray-600">
                     No more late nights writing notes. Our AI captures everything important from
                     your sessions.
@@ -676,9 +676,9 @@ export default function LandingPage() {
 
               <div className="flex items-start">
                 <div className="flex-shrink-0 mt-1">
-                  <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                  <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
                     <svg
-                      className="w-4 h-4 text-indigo-600"
+                      className="w-4 h-4 text-primary"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -693,7 +693,7 @@ export default function LandingPage() {
                   </div>
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-lg font-semibold text-indigo-900">Treatment Planning</h3>
+                  <h3 className="text-lg font-semibold text-primary">Treatment Planning</h3>
                   <p className="text-gray-600">
                     Get personalized treatment suggestions based on evidence-based practices.
                   </p>
@@ -702,9 +702,9 @@ export default function LandingPage() {
 
               <div className="flex items-start">
                 <div className="flex-shrink-0 mt-1">
-                  <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                  <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
                     <svg
-                      className="w-4 h-4 text-indigo-600"
+                      className="w-4 h-4 text-primary"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -719,7 +719,7 @@ export default function LandingPage() {
                   </div>
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-lg font-semibold text-indigo-900">Progress Analytics</h3>
+                  <h3 className="text-lg font-semibold text-primary">Progress Analytics</h3>
                   <p className="text-gray-600">
                     Beautiful charts and insights to track client progress and celebrate their wins.
                   </p>
@@ -728,9 +728,9 @@ export default function LandingPage() {
 
               <div className="flex items-start">
                 <div className="flex-shrink-0 mt-1">
-                  <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                  <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
                     <svg
-                      className="w-4 h-4 text-indigo-600"
+                      className="w-4 h-4 text-primary"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -745,7 +745,7 @@ export default function LandingPage() {
                   </div>
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-lg font-semibold text-indigo-900">Comprehensive Reporting</h3>
+                  <h3 className="text-lg font-semibold text-primary">Comprehensive Reporting</h3>
                   <p className="text-gray-600">
                     Generate detailed reports for insurance, supervision, and client progress
                     tracking. Export in multiple formats with custom branding.
@@ -757,9 +757,9 @@ export default function LandingPage() {
             <div className="space-y-6">
               <div className="flex items-start">
                 <div className="flex-shrink-0 mt-1">
-                  <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                  <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
                     <svg
-                      className="w-4 h-4 text-indigo-600"
+                      className="w-4 h-4 text-primary"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -774,7 +774,7 @@ export default function LandingPage() {
                   </div>
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-lg font-semibold text-indigo-900">Risk Assessment</h3>
+                  <h3 className="text-lg font-semibold text-primary">Risk Assessment</h3>
                   <p className="text-gray-600">
                     AI-powered tools to help you identify and monitor client risk factors.
                   </p>
@@ -783,9 +783,9 @@ export default function LandingPage() {
 
               <div className="flex items-start">
                 <div className="flex-shrink-0 mt-1">
-                  <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                  <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
                     <svg
-                      className="w-4 h-4 text-indigo-600"
+                      className="w-4 h-4 text-primary"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -800,7 +800,7 @@ export default function LandingPage() {
                   </div>
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-lg font-semibold text-indigo-900">Session Prep</h3>
+                  <h3 className="text-lg font-semibold text-primary">Session Prep</h3>
                   <p className="text-gray-600">
                     Get personalized recommendations and focus areas for each session.
                   </p>
@@ -809,9 +809,9 @@ export default function LandingPage() {
 
               <div className="flex items-start">
                 <div className="flex-shrink-0 mt-1">
-                  <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                  <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
                     <svg
-                      className="w-4 h-4 text-indigo-600"
+                      className="w-4 h-4 text-primary"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -826,7 +826,7 @@ export default function LandingPage() {
                   </div>
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-lg font-semibold text-indigo-900">HIPAA Compliant</h3>
+                  <h3 className="text-lg font-semibold text-primary">HIPAA Compliant</h3>
                   <p className="text-gray-600">
                     Your client&apos;s data is always safe and secure with enterprise-grade
                     protection.
@@ -836,9 +836,9 @@ export default function LandingPage() {
 
               <div className="flex items-start">
                 <div className="flex-shrink-0 mt-1">
-                  <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                  <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
                     <svg
-                      className="w-4 h-4 text-indigo-600"
+                      className="w-4 h-4 text-primary"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -853,7 +853,7 @@ export default function LandingPage() {
                   </div>
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-lg font-semibold text-indigo-900">Diagnostic Insights</h3>
+                  <h3 className="text-lg font-semibold text-primary">Diagnostic Insights</h3>
                   <p className="text-gray-600">
                     Get diagnostic insights to help you understand your clients needs better.
                   </p>
@@ -887,7 +887,7 @@ export default function LandingPage() {
       </div>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 text-center bg-gradient-to-r from-indigo-600 to-blue-600 text-white">
+      <section className="py-20 px-4 text-center bg-primary text-white">
         <div className="max-w-2xl mx-auto">
           <h2 className="text-3xl font-bold mb-6">
             Ready to Transform Your Practice with CogniCare?
@@ -899,7 +899,7 @@ export default function LandingPage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={handleGetStarted}
-              className="bg-white text-indigo-600 px-8 py-3 rounded-full font-medium hover:bg-indigo-50 transition-colors shadow-lg"
+              className="bg-white text-primary px-8 py-3 rounded-full font-medium hover:bg-accent transition-colors shadow-lg"
             >
               Start Free Trial
             </button>
@@ -908,65 +908,65 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-4 bg-indigo-50">
+      <footer className="py-12 px-4 bg-accent">
         <div className="max-w-6xl mx-auto">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
-              <h3 className="text-lg font-semibold mb-4 text-indigo-900">CogniCare</h3>
+              <h3 className="text-lg font-semibold mb-4 text-primary">CogniCare</h3>
               <p className="text-gray-600">
                 Helping therapists focus on what matters most - their clients.
               </p>
             </div>
             <div>
-              <h3 className="text-lg font-semibold mb-4 text-indigo-900">Product</h3>
+              <h3 className="text-lg font-semibold mb-4 text-primary">Product</h3>
               <ul className="space-y-2">
                 <li>
-                  <Link href="#features" className="text-gray-600 hover:text-indigo-500">
+                  <Link href="#features" className="text-gray-600 hover:text-primary/80">
                     Features
                   </Link>
                 </li>
                 <li>
-                  <Link href="/demo" className="text-gray-600 hover:text-indigo-500">
+                  <Link href="/demo" className="text-gray-600 hover:text-primary/80">
                     Demo
                   </Link>
                 </li>
               </ul>
             </div>
             <div>
-              <h3 className="text-lg font-semibold mb-4 text-indigo-900">Resources</h3>
+              <h3 className="text-lg font-semibold mb-4 text-primary">Resources</h3>
               <ul className="space-y-2">
                 <li>
-                  <Link href="/blog" className="text-gray-600 hover:text-teal-500">
+                  <Link href="/blog" className="text-gray-600 hover:text-primary/80">
                     Blog
                   </Link>
                 </li>
                 <li>
-                  <Link href="/docs" className="text-gray-600 hover:text-teal-500">
+                  <Link href="/docs" className="text-gray-600 hover:text-primary/80">
                     Documentation
                   </Link>
                 </li>
                 <li>
-                  <Link href="/support" className="text-gray-600 hover:text-teal-500">
+                  <Link href="/support" className="text-gray-600 hover:text-primary/80">
                     Support
                   </Link>
                 </li>
               </ul>
             </div>
             <div>
-              <h3 className="text-lg font-semibold mb-4 text-teal-800">Company</h3>
+              <h3 className="text-lg font-semibold mb-4 text-primary">Company</h3>
               <ul className="space-y-2">
                 <li>
-                  <Link href="/about" className="text-gray-600 hover:text-teal-500">
+                  <Link href="/about" className="text-gray-600 hover:text-primary/80">
                     About
                   </Link>
                 </li>
                 <li>
-                  <Link href="/careers" className="text-gray-600 hover:text-teal-500">
+                  <Link href="/careers" className="text-gray-600 hover:text-primary/80">
                     Careers
                   </Link>
                 </li>
                 <li>
-                  <Link href="/contact" className="text-gray-600 hover:text-teal-500">
+                  <Link href="/contact" className="text-gray-600 hover:text-primary/80">
                     Contact
                   </Link>
                 </li>

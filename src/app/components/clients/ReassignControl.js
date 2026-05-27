@@ -86,7 +86,7 @@ export default function ReassignControl({ client, onReassigned }) {
               id="reassign-target"
               value={target}
               onChange={(e) => setTarget(e.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="mt-1 w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="">Select a clinician…</option>
               {others.map((c) => (
@@ -107,7 +107,7 @@ export default function ReassignControl({ client, onReassigned }) {
                 type="button"
                 onClick={submit}
                 disabled={submitting || !target}
-                className="px-3 py-1 text-sm rounded bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60"
+                className="px-3 py-1 text-sm rounded bg-primary text-white hover:bg-primary/90 disabled:opacity-60"
               >
                 {submitting ? "Reassigning…" : "Reassign"}
               </button>

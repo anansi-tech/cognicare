@@ -296,7 +296,7 @@ export default function SessionForm({
             name="status"
             value={formData.status}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
           >
             <option value="scheduled">Scheduled</option>
             <option value="in-progress">In Progress</option>
@@ -339,7 +339,7 @@ export default function SessionForm({
             <select
               value={recurrenceFrequency}
               onChange={(e) => setRecurrenceFrequency(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="none">Does not repeat</option>
               <option value="weekly">Weekly</option>
@@ -354,7 +354,7 @@ export default function SessionForm({
                   max={26}
                   value={recurrenceOccurrences}
                   onChange={(e) => setRecurrenceOccurrences(e.target.value)}
-                  className="w-20 px-2 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-20 px-2 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 />
                 <span className="text-xs text-gray-500">(max 26)</span>
               </label>
@@ -374,7 +374,7 @@ export default function SessionForm({
         </button>
         <button
           type="submit"
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+          className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 disabled:opacity-50"
           disabled={loading}
         >
           {loading ? "Saving..." : "Save Session"}

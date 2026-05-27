@@ -221,7 +221,7 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
         </span>
         <button
           onClick={() => handleSendReminder(invoice._id)}
-          className="text-xs text-blue-600 hover:text-blue-800"
+          className="text-xs text-primary hover:text-primary/80"
         >
           Send Reminder
         </button>
@@ -384,7 +384,7 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
           <div>
             <button
               onClick={handleEditBilling}
-              className="text-sm text-blue-600 hover:text-blue-800 mr-4"
+              className="text-sm text-primary hover:text-primary/80 mr-4"
             >
               {client?.billing ? "Edit Billing" : "Add Billing Information"}
             </button>
@@ -486,7 +486,7 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
                                     href={invoice.paymentLink}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-blue-600 hover:text-blue-800 text-sm"
+                                    className="text-primary hover:text-primary/80 text-sm"
                                   >
                                     Pay Online
                                   </a>
@@ -499,7 +499,7 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
                                     href={invoice.document}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                                    className="px-3 py-1 text-sm bg-primary text-white rounded hover:bg-primary/90"
                                   >
                                     View PDF
                                   </a>
@@ -553,7 +553,7 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
                   <select
                     name="paymentMethod"
                     defaultValue={client.billing?.paymentMethod}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-ring px-3 py-2"
                   >
                     <option value="cash">Cash</option>
                     <option value="check">Check</option>
@@ -571,7 +571,7 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
                     type="number"
                     name="rate"
                     defaultValue={client.billing?.rate}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-ring px-3 py-2"
                     placeholder="Standard session rate"
                   />
                 </div>
@@ -584,7 +584,7 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
                     type="number"
                     name="initialRate"
                     defaultValue={client.billing?.initialRate}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-ring px-3 py-2"
                     placeholder="Initial consultation rate"
                   />
                 </div>
@@ -597,7 +597,7 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
                     type="number"
                     name="groupRate"
                     defaultValue={client.billing?.groupRate}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-ring px-3 py-2"
                     placeholder="Group session rate"
                   />
                 </div>
@@ -607,7 +607,7 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
                   <textarea
                     name="notes"
                     defaultValue={client.billing?.notes}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-ring px-3 py-2"
                   />
                 </div>
 
@@ -621,7 +621,7 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                    className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90"
                   >
                     Save Changes
                   </button>
@@ -660,14 +660,14 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
                           );
                         }
                       }}
-                      className="h-4 w-4 text-blue-600"
+                      className="h-4 w-4 text-primary"
                     />
                     <div className="flex-1">
                       <div className="flex items-center space-x-2">
                         <span className="font-medium">
                           {new Date(session.date).toLocaleDateString()}
                         </span>
-                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-accent text-primary">
                           {session.type
                             ? session.type.charAt(0).toUpperCase() + session.type.slice(1)
                             : "Standard"}
@@ -720,7 +720,7 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
                 <button
                   onClick={handleSessionSelection}
                   disabled={isGenerating || selectedSessions.length === 0}
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+                  className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90 disabled:opacity-50"
                 >
                   {isGenerating ? "Generating..." : "Generate Invoice"}
                 </button>

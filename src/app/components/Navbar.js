@@ -47,7 +47,7 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="bg-gradient-to-r from-indigo-600 to-indigo-400 shadow-lg">
+    <nav className="bg-primary shadow-lg">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex justify-between h-16">
           <div className="flex">
@@ -62,7 +62,7 @@ export default function Navbar() {
                 className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
                   isActive("/dashboard")
                     ? "border-white text-white"
-                    : "border-transparent text-indigo-100 hover:border-indigo-200 hover:text-white"
+                    : "border-transparent text-primary-foreground hover:border-border hover:text-white"
                 }`}
               >
                 Dashboard
@@ -72,7 +72,7 @@ export default function Navbar() {
                 className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
                   isActive("/clients")
                     ? "border-white text-white"
-                    : "border-transparent text-indigo-100 hover:border-indigo-200 hover:text-white"
+                    : "border-transparent text-primary-foreground hover:border-border hover:text-white"
                 }`}
               >
                 Clients
@@ -82,7 +82,7 @@ export default function Navbar() {
                 className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
                   isActive("/sessions")
                     ? "border-white text-white"
-                    : "border-transparent text-indigo-100 hover:border-indigo-200 hover:text-white"
+                    : "border-transparent text-primary-foreground hover:border-border hover:text-white"
                 }`}
               >
                 Sessions
@@ -92,7 +92,7 @@ export default function Navbar() {
                 className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
                   isActive("/sessions/calendar")
                     ? "border-white text-white"
-                    : "border-transparent text-indigo-100 hover:border-indigo-200 hover:text-white"
+                    : "border-transparent text-primary-foreground hover:border-border hover:text-white"
                 }`}
               >
                 Calendar
@@ -102,7 +102,7 @@ export default function Navbar() {
                 className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
                   isActive("/reports")
                     ? "border-white text-white"
-                    : "border-transparent text-indigo-100 hover:border-indigo-200 hover:text-white"
+                    : "border-transparent text-primary-foreground hover:border-border hover:text-white"
                 }`}
               >
                 Reports
@@ -113,7 +113,7 @@ export default function Navbar() {
                   className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
                     isActive("/team")
                       ? "border-white text-white"
-                      : "border-transparent text-indigo-100 hover:border-indigo-200 hover:text-white"
+                      : "border-transparent text-primary-foreground hover:border-border hover:text-white"
                   }`}
                 >
                   Team
@@ -128,13 +128,13 @@ export default function Navbar() {
               className="inline-flex items-center gap-2 rounded-md bg-white/10 px-3 py-1.5 text-sm font-medium text-white hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/40"
             >
               Ask LIAM
-              <span className="hidden sm:inline rounded bg-white/10 px-1.5 py-0.5 text-[10px] text-indigo-100">⌘K</span>
+              <span className="hidden sm:inline rounded bg-white/10 px-1.5 py-0.5 text-[10px] text-primary-foreground">⌘K</span>
             </button>
             <div className="flex-shrink-0">
               <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center text-sm text-indigo-100 hover:text-white focus:outline-none"
+                  className="flex items-center text-sm text-primary-foreground hover:text-white focus:outline-none"
                 >
                   <span className="mr-2">{session.user.name}</span>
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -198,14 +198,14 @@ export default function Navbar() {
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setShowConfirmDialog(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSignOut}
                 disabled={isSigningOut}
-                className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSigningOut ? "Signing out..." : "Sign Out"}
               </button>

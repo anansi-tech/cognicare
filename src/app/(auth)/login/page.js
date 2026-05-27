@@ -52,7 +52,7 @@ function LoginContent() {
       {/* Back to home link */}
       <Link
         href="/"
-        className="absolute top-4 left-4 text-indigo-600 hover:text-indigo-500 flex items-center space-x-1"
+        className="absolute top-4 left-4 text-primary hover:text-primary/80 flex items-center space-x-1"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -66,7 +66,7 @@ function LoginContent() {
       </Link>
 
       {/* Left side - Visual */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-indigo-600 to-blue-600 items-center justify-center p-12">
+      <div className="hidden lg:flex lg:w-1/2 bg-primary items-center justify-center p-12">
         <div className="max-w-md text-white">
           <h1 className="text-4xl font-bold mb-6">Welcome Back</h1>
           <p className="text-lg mb-8 opacity-90">
@@ -121,12 +121,12 @@ function LoginContent() {
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
             <Link href="/" className="inline-block">
-              <h1 className="text-3xl font-bold text-indigo-900">CogniCare</h1>
+              <h1 className="text-3xl font-bold text-primary">CogniCare</h1>
             </Link>
             <h2 className="mt-6 text-2xl font-bold text-gray-900">Sign in to your account</h2>
             <p className="mt-2 text-sm text-gray-600">
               Or{" "}
-              <Link href="/signup" className="font-medium text-indigo-600 hover:text-indigo-500">
+              <Link href="/signup" className="font-medium text-primary hover:text-primary/80">
                 create a new account
               </Link>
             </p>
@@ -143,7 +143,7 @@ function LoginContent() {
                   type="email"
                   autoComplete="email"
                   required
-                  className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                  className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-ring focus:border-primary focus:z-10 sm:text-sm"
                   placeholder="Email address"
                 />
               </div>
@@ -157,7 +157,7 @@ function LoginContent() {
                   type="password"
                   autoComplete="current-password"
                   required
-                  className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                  className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-ring focus:border-primary focus:z-10 sm:text-sm"
                   placeholder="Password"
                 />
               </div>
@@ -173,7 +173,7 @@ function LoginContent() {
               <button
                 type="submit"
                 disabled={loading}
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {loading ? "Signing in..." : "Sign in"}
               </button>

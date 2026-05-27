@@ -72,7 +72,7 @@ export default function NewReportPage({ params }) {
             id="type"
             value={formData.type}
             onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-ring focus:border-primary sm:text-sm rounded-md"
           >
             {REPORT_TYPES.map((rt) => (
               <option key={rt.value} value={rt.value}>
@@ -92,7 +92,7 @@ export default function NewReportPage({ params }) {
               id="startDate"
               value={formData.startDate}
               onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:ring-ring focus:border-primary sm:text-sm"
             />
           </div>
           <div>
@@ -104,13 +104,13 @@ export default function NewReportPage({ params }) {
               id="endDate"
               value={formData.endDate}
               onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:ring-ring focus:border-primary sm:text-sm"
             />
           </div>
         </div>
 
         {isGenerating && (
-          <div className="rounded-md bg-blue-50 border border-blue-200 p-3 text-sm text-blue-800">
+          <div className="rounded-md bg-accent border border-border p-3 text-sm text-primary">
             Synthesizing the narrative from agent records in this period — this
             usually takes 10–30 seconds.
           </div>
@@ -133,7 +133,7 @@ export default function NewReportPage({ params }) {
           <button
             type="submit"
             disabled={isGenerating}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isGenerating ? "Generating…" : "Generate report"}
           </button>

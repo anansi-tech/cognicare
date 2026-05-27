@@ -334,7 +334,7 @@ export default function ClientDetail({ clientId }) {
                   navigator.clipboard.writeText(shareableLink);
                   toast.success("Link copied!", { id: "copy-toast" });
                 }}
-                className="p-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200"
+                className="p-1 bg-accent text-primary rounded hover:bg-accent"
               >
                 <ClipboardDocumentIcon className="h-4 w-4" />
               </button>
@@ -411,7 +411,7 @@ export default function ClientDetail({ clientId }) {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -459,14 +459,14 @@ export default function ClientDetail({ clientId }) {
     <div className="container mx-auto px-4 py-8">
       {/* New Client Reminder Banner (logic remains the same) */}
       {showNewClientReminder && (
-        <div className="mb-4 p-3 bg-blue-50 border border-blue-300 text-blue-800 rounded-lg flex justify-between items-center">
+        <div className="mb-4 p-3 bg-accent border border-primary text-primary rounded-lg flex justify-between items-center">
           <span>
             ✨ Client created. The AI assessment is generating now — it&apos;ll appear on the
             Overview shortly.
           </span>
           <button
             onClick={dismissNewClientReminder}
-            className="text-blue-600 hover:text-blue-800 ml-4"
+            className="text-primary hover:text-primary/80 ml-4"
             aria-label="Dismiss reminder"
           >
             <XMarkIcon className="h-5 w-5" />
@@ -486,7 +486,7 @@ export default function ClientDetail({ clientId }) {
                   : client.status === "inactive"
                     ? "bg-gray-100 text-gray-800"
                     : client.status === "completed"
-                      ? "bg-blue-100 text-blue-800"
+                      ? "bg-accent text-primary"
                       : "bg-yellow-100 text-yellow-800"
               }`}
             >
@@ -538,7 +538,7 @@ export default function ClientDetail({ clientId }) {
           />
           <button
             onClick={() => setIsEditing(true)}
-            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+            className="px-3 py-1 bg-primary text-white rounded hover:bg-primary/90"
           >
             Edit
           </button>
@@ -558,7 +558,7 @@ export default function ClientDetail({ clientId }) {
             onClick={() => setActiveTab("overview")}
             className={`py-2 px-1 border-b-2 font-medium text-sm ${
               activeTab === "overview"
-                ? "border-blue-500 text-blue-600"
+                ? "border-primary text-primary"
                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
             }`}
           >
@@ -568,7 +568,7 @@ export default function ClientDetail({ clientId }) {
             onClick={() => setActiveTab("sessions")}
             className={`py-2 px-1 border-b-2 font-medium text-sm ${
               activeTab === "sessions"
-                ? "border-blue-500 text-blue-600"
+                ? "border-primary text-primary"
                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
             }`}
           >
@@ -578,7 +578,7 @@ export default function ClientDetail({ clientId }) {
             onClick={() => setActiveTab("progress")}
             className={`py-2 px-1 border-b-2 font-medium text-sm ${
               activeTab === "progress"
-                ? "border-blue-500 text-blue-600"
+                ? "border-primary text-primary"
                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
             }`}
           >
@@ -588,7 +588,7 @@ export default function ClientDetail({ clientId }) {
             onClick={() => setActiveTab("reports")}
             className={`py-2 px-1 border-b-2 font-medium text-sm ${
               activeTab === "reports"
-                ? "border-blue-500 text-blue-600"
+                ? "border-primary text-primary"
                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
             }`}
           >
@@ -598,7 +598,7 @@ export default function ClientDetail({ clientId }) {
             onClick={() => setActiveTab("consent-billing")}
             className={`py-2 px-1 border-b-2 font-medium text-sm ${
               activeTab === "consent-billing"
-                ? "border-blue-500 text-blue-600"
+                ? "border-primary text-primary"
                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
             }`}
           >
@@ -733,7 +733,7 @@ export default function ClientDetail({ clientId }) {
                 <h2 className="text-lg font-medium text-gray-900">Initial Assessment</h2>
                 <button
                   onClick={() => router.push(`/sessions/new?clientId=${clientId}`)}
-                  className="text-sm text-blue-600 hover:text-blue-800"
+                  className="text-sm text-primary hover:text-primary/80"
                 >
                   + Add New Session
                 </button>
@@ -753,7 +753,7 @@ export default function ClientDetail({ clientId }) {
               <h2 className="text-lg font-medium text-gray-900">Therapy Sessions</h2>
               <button
                 onClick={() => router.push(`/sessions/new?clientId=${clientId}`)}
-                className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                className="px-3 py-1 bg-primary text-white rounded hover:bg-primary/90"
               >
                 New Session
               </button>
@@ -792,7 +792,7 @@ export default function ClientDetail({ clientId }) {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <a
                             href={`/sessions/${session._id}`}
-                            className="text-blue-600 hover:text-blue-900 mr-4"
+                            className="text-primary hover:text-primary/80 mr-4"
                           >
                             View
                           </a>
@@ -819,7 +819,7 @@ export default function ClientDetail({ clientId }) {
               <h2 className="text-lg font-medium text-gray-900">Reports</h2>
               <Link
                 href={`/clients/${clientId}/reports/new`}
-                className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                className="px-3 py-1 bg-primary text-white rounded hover:bg-primary/90"
               >
                 New report
               </Link>
@@ -859,7 +859,7 @@ export default function ClientDetail({ clientId }) {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <button
                             onClick={() => handleViewReport(report)}
-                            className="text-blue-600 hover:text-blue-900 mr-4"
+                            className="text-primary hover:text-primary/80 mr-4"
                           >
                             View
                           </button>
@@ -912,7 +912,7 @@ export default function ClientDetail({ clientId }) {
                 <h3 className="text-lg font-medium text-gray-900">Consent Forms</h3>
                 <button
                   onClick={() => setShowConsentModal(true)}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
                 >
                   Request New Consent
                 </button>
@@ -947,7 +947,7 @@ export default function ClientDetail({ clientId }) {
                         {form.status !== "signed" && (
                           <button
                             onClick={(e) => handleResendConsent(form._id, e)}
-                            className="text-xs text-indigo-600 hover:text-indigo-800"
+                            className="text-xs text-primary hover:text-primary/80"
                             title="Email the client a fresh signing link"
                           >
                             Resend
@@ -1020,7 +1020,7 @@ export default function ClientDetail({ clientId }) {
                       href={selectedConsent.signedDocument || selectedConsent.document}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
+                      className="text-primary hover:underline"
                     >
                       {selectedConsent.signedDocument
                         ? "View Signed Document"
@@ -1057,7 +1057,7 @@ export default function ClientDetail({ clientId }) {
                   <select
                     value={selectedConsentType}
                     onChange={handleConsentTypeChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-ring px-3 py-2"
                     required
                   >
                     <option value="">Select a consent type</option>
@@ -1083,7 +1083,7 @@ export default function ClientDetail({ clientId }) {
                   <textarea
                     value={consentFormNotes}
                     onChange={(e) => setConsentFormNotes(e.target.value)}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-ring px-3 py-2"
                     rows="3"
                   />
                 </div>
@@ -1098,7 +1098,7 @@ export default function ClientDetail({ clientId }) {
                   </button>
                   <button
                     type="submit"
-                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                    className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90"
                   >
                     Request Consent
                   </button>

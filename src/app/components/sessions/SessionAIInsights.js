@@ -67,8 +67,8 @@ export default function SessionAIInsights({ session, refreshKey = 0 }) {
 
   if (!assessment && !diagnostic && !treatment && !progress) {
     return (
-      <div className="bg-blue-50 p-4 rounded-lg">
-        <p className="text-blue-600">
+      <div className="bg-accent p-4 rounded-lg">
+        <p className="text-primary">
           No AI insights available yet. They will appear once the agents run.
         </p>
       </div>

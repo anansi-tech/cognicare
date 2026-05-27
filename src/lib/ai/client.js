@@ -9,7 +9,8 @@ export const openai = createOpenAI({ apiKey: process.env.OPENAI_API_KEY });
 //   clinical: "gpt-5.5",       // specialists + (Round 2) LIAM
 //   background: "gpt-5.4-mini", // titles, summaries, digests (later rounds)
 // };
-//TODO: use nano models for testing; replace with the ones above when ready.
+// COST MODE: nano while iterating. Flip clinical -> "gpt-5.5", background -> "gpt-5.4-mini"
+// before real clinical use / quality evaluation.
 export const MODELS = {
   clinical: "gpt-5.4-nano", // specialists + (Round 2) LIAM
   background: "gpt-5.4-nano", // titles, summaries, digests (later rounds)

@@ -70,12 +70,12 @@ export default function ClientInsights({ clientId, refreshKey = 0 }) {
 
   if (!assessment && !diagnostic && !treatment && !progress) {
     return (
-      <div className="bg-blue-100 p-4 rounded-lg">
+      <div className="bg-accent p-4 rounded-lg">
         <div className="flex items-center gap-3">
           <span className="text-2xl">🌙</span>
           <div>
-            <h3 className="font-medium text-blue-700">No insights yet</h3>
-            <p className="text-blue-700 text-sm mt-1">
+            <h3 className="font-medium text-primary">No insights yet</h3>
+            <p className="text-primary text-sm mt-1">
               Agent reports generate automatically — open a scheduled session to prep, or
               complete one for the post-session note.
             </p>
@@ -84,7 +84,7 @@ export default function ClientInsights({ clientId, refreshKey = 0 }) {
         <div className="mt-3 flex justify-end">
           <button
             onClick={() => setLiamOpen(true)}
-            className="text-xs bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+            className="text-xs bg-primary text-white px-3 py-1 rounded hover:bg-primary/90"
           >
             Ask LIAM
           </button>

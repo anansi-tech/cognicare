@@ -91,7 +91,7 @@ export default function ClientList() {
   if (!session) {
     return (
       <div className="flex justify-center items-center min-h-[300px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -99,7 +99,7 @@ export default function ClientList() {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[300px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -128,7 +128,7 @@ export default function ClientList() {
         <h1 className="text-2xl font-bold">Clients</h1>
         <button
           onClick={() => setShowAddClient(true)}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90"
         >
           Add New Client
         </button>
@@ -192,7 +192,7 @@ export default function ClientList() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <Link
                       href={`/clients/${client._id}`}
-                      className="text-blue-600 hover:text-blue-800"
+                      className="text-primary hover:text-primary/80"
                     >
                       {client.name}
                     </Link>
@@ -208,7 +208,7 @@ export default function ClientList() {
                           : client.status === "inactive"
                             ? "bg-gray-100 text-gray-800"
                             : client.status === "completed"
-                              ? "bg-blue-100 text-blue-800"
+                              ? "bg-accent text-primary"
                               : "bg-yellow-100 text-yellow-800"
                       }`}
                     >
@@ -221,7 +221,7 @@ export default function ClientList() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <Link
                       href={`/clients/${client._id}`}
-                      className="text-indigo-600 hover:text-indigo-900 mr-4"
+                      className="text-primary hover:text-primary/80 mr-4"
                     >
                       View
                     </Link>

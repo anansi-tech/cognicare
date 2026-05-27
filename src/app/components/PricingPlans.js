@@ -67,16 +67,16 @@ export default function PricingPlans({
 
       <div
         className={`p-6 rounded-2xl border ${
-          subscription?.status === "trial" ? "border-indigo-600 bg-indigo-50" : "border-gray-200"
+          subscription?.status === "trial" ? "border-primary bg-accent" : "border-gray-200"
         } hover:shadow-lg transition-shadow`}
       >
         <h3 className="text-xl font-semibold mb-4">{trialPlan.name}</h3>
         {subscription?.status === "trial" && (
-          <div className="mb-4 p-2 bg-indigo-100 text-indigo-800 rounded text-sm">
+          <div className="mb-4 p-2 bg-accent text-primary rounded text-sm">
             Your Current Plan
           </div>
         )}
-        <div className="text-4xl font-bold text-indigo-600 mb-6">
+        <div className="text-4xl font-bold text-primary mb-6">
           ${trialPlan.price}
           <span className="text-lg text-gray-500">/{trialPlan.duration}</span>
         </div>
@@ -108,7 +108,7 @@ export default function PricingPlans({
           <button
             onClick={handleGetStarted}
             disabled={upgrading}
-            className="block w-full text-center bg-gradient-to-r from-indigo-600 to-indigo-700 text-white py-3 rounded-full font-medium hover:from-indigo-700 hover:to-indigo-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="block w-full text-center bg-primary text-white py-3 rounded-full font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {upgrading ? (
               <span className="flex items-center justify-center">
@@ -144,17 +144,17 @@ export default function PricingPlans({
       <div
         className={`p-6 rounded-2xl ${
           subscription?.status === "active"
-            ? "border-2 border-indigo-600 bg-indigo-50"
-            : "border-2 border-indigo-600 bg-indigo-50"
+            ? "border-2 border-primary bg-accent"
+            : "border-2 border-primary bg-accent"
         } transform scale-105`}
       >
         {paidPlan.popular && (
-          <div className="absolute top-0 right-0 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white px-4 py-1 rounded-bl-lg text-sm font-medium">
+          <div className="absolute top-0 right-0 bg-primary text-white px-4 py-1 rounded-bl-lg text-sm font-medium">
             Most Popular
           </div>
         )}
         {subscription?.status === "active" && (
-          <div className="mb-4 p-2 bg-indigo-100 text-indigo-800 rounded text-sm">
+          <div className="mb-4 p-2 bg-accent text-primary rounded text-sm">
             Your Current Plan
           </div>
         )}
@@ -167,7 +167,7 @@ export default function PricingPlans({
           <div className="mb-4 p-2 bg-red-100 text-red-800 rounded text-sm">Payment Failed</div>
         )}
         <h3 className="text-xl font-semibold mb-4">{paidPlan.name}</h3>
-        <div className="text-4xl font-bold text-indigo-600 mb-6">
+        <div className="text-4xl font-bold text-primary mb-6">
           ${paidPlan.price}
           <span className="text-lg text-gray-500">/{paidPlan.duration}</span>
         </div>
@@ -202,7 +202,7 @@ export default function PricingPlans({
             <button
               onClick={handleUpgrade}
               disabled={upgrading}
-              className="block w-full text-center bg-gradient-to-r from-indigo-600 to-indigo-700 text-white py-3 rounded-full font-medium hover:from-indigo-700 hover:to-indigo-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="block w-full text-center bg-primary text-white py-3 rounded-full font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {upgrading ? (
                 <span className="flex items-center justify-center">

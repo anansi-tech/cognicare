@@ -155,7 +155,7 @@ export default function SessionDetail({ sessionId }) {
   const getStatusBadgeColor = (status) => {
     switch (status.toLowerCase()) {
       case "scheduled":
-        return "bg-blue-100 text-blue-800";
+        return "bg-accent text-primary";
       case "in-progress":
         return "bg-yellow-100 text-yellow-800";
       case "completed":
@@ -172,7 +172,7 @@ export default function SessionDetail({ sessionId }) {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[200px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -201,7 +201,7 @@ export default function SessionDetail({ sessionId }) {
         <p className="text-gray-600">Session not found</p>
         <button
           onClick={() => router.push("/sessions")}
-          className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          className="mt-4 bg-primary text-white px-4 py-2 rounded hover:bg-primary/90"
         >
           Back to Sessions
         </button>
@@ -235,7 +235,7 @@ export default function SessionDetail({ sessionId }) {
           </button>
           <button
             onClick={() => setIsEditing(true)}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90"
           >
             Edit
           </button>
@@ -294,7 +294,7 @@ export default function SessionDetail({ sessionId }) {
                   value={cancelReason}
                   onChange={(e) => setCancelReason(e.target.value)}
                   rows={3}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary"
                   placeholder="e.g. Client called to reschedule"
                 />
               </div>
@@ -306,7 +306,7 @@ export default function SessionDetail({ sessionId }) {
                     type="checkbox"
                     checked={cancelApplyToFuture}
                     onChange={(e) => setCancelApplyToFuture(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary focus:ring-ring"
                   />
                   <span>
                     Also{" "}
@@ -366,7 +366,7 @@ export default function SessionDetail({ sessionId }) {
                     {session.clientId ? (
                       <Link
                         href={`/clients/${session.clientId._id}`}
-                        className="text-blue-600 hover:text-blue-800"
+                        className="text-primary hover:text-primary/80"
                       >
                         {session.clientId.name}
                       </Link>

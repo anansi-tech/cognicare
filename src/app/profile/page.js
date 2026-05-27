@@ -57,7 +57,7 @@ export default function ProfilePage() {
         {error}
         <button
           onClick={fetchUserProfile}
-          className="ml-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          className="ml-4 bg-primary text-white px-4 py-2 rounded hover:bg-primary/90"
         >
           Try Again
         </button>

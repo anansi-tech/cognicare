@@ -45,7 +45,7 @@ function CheckoutContent() {
           <div className="mt-8 text-center">
             <a
               href="/dashboard"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary/90"
             >
               Return to Dashboard
             </a>

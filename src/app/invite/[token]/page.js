@@ -88,7 +88,7 @@ export default function InviteAcceptPage() {
           <p className="mt-3 text-sm text-gray-600">{error}</p>
           <Link
             href="/"
-            className="mt-6 inline-block text-indigo-600 hover:text-indigo-500"
+            className="mt-6 inline-block text-primary hover:text-primary/80"
           >
             Back to home
           </Link>
@@ -101,7 +101,7 @@ export default function InviteAcceptPage() {
     <div className="min-h-screen flex items-center justify-center p-8">
       <div className="max-w-md w-full space-y-6">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-indigo-900">CogniCare</h1>
+          <h1 className="text-3xl font-bold text-primary">CogniCare</h1>
           <h2 className="mt-4 text-xl font-bold text-gray-900">Join {info.practiceName}</h2>
           <p className="mt-2 text-sm text-gray-600">
             You&apos;ve been invited as <span className="font-medium">{info.email}</span>.
@@ -115,19 +115,19 @@ export default function InviteAcceptPage() {
             type="text"
             required
             placeholder="Full Name"
-            className="appearance-none rounded-md block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            className="appearance-none rounded-md block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-ring focus:border-primary sm:text-sm"
           />
           <input
             name="licenseNumber"
             type="text"
             placeholder="Professional License Number (optional)"
-            className="appearance-none rounded-md block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            className="appearance-none rounded-md block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-ring focus:border-primary sm:text-sm"
           />
           <input
             name="specialization"
             type="text"
             placeholder="Specialization (optional)"
-            className="appearance-none rounded-md block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            className="appearance-none rounded-md block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-ring focus:border-primary sm:text-sm"
           />
           <input
             name="password"
@@ -135,7 +135,7 @@ export default function InviteAcceptPage() {
             autoComplete="new-password"
             required
             placeholder="Password"
-            className="appearance-none rounded-md block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            className="appearance-none rounded-md block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-ring focus:border-primary sm:text-sm"
           />
           <input
             name="confirmPassword"
@@ -143,7 +143,7 @@ export default function InviteAcceptPage() {
             autoComplete="new-password"
             required
             placeholder="Confirm Password"
-            className="appearance-none rounded-md block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            className="appearance-none rounded-md block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-ring focus:border-primary sm:text-sm"
           />
           {error && (
             <div className="text-red-500 text-sm text-center bg-red-50 p-3 rounded-md">{error}</div>
@@ -151,14 +151,14 @@ export default function InviteAcceptPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-colors"
+            className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50 transition-colors"
           >
             {submitting ? "Creating account…" : "Accept invitation"}
           </button>
         </form>
         <p className="text-center text-xs text-gray-500">
           Already have a CogniCare account?{" "}
-          <Link href="/login" className="text-indigo-600 hover:text-indigo-500">
+          <Link href="/login" className="text-primary hover:text-primary/80">
             Sign in
           </Link>
         </p>
