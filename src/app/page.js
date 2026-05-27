@@ -443,7 +443,7 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-4 bg-accent">
+      <footer className="py-12 px-4 bg-muted border-t border-border">
         <div className="max-w-screen-xl mx-auto">
           <div className="grid md:grid-cols-3 gap-8">
             <div>
