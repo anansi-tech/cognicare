@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import ClientForm from "./ClientForm";
 import { useSession } from "next-auth/react";
-import { ageFromDob } from "@/lib/age";
+import { ageFromDob, genderLabel } from "@/lib/age";
 
 export default function ClientList() {
   const [allClients, setAllClients] = useState([]);
@@ -198,7 +198,7 @@ export default function ClientList() {
                     </Link>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {ageFromDob(client.dateOfBirth) ?? "—"} / {client.gender ? client.gender.charAt(0).toUpperCase() + client.gender.slice(1) : "—"}
+                    {ageFromDob(client.dateOfBirth) ?? "—"} / {genderLabel(client.gender)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span

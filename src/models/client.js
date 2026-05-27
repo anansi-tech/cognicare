@@ -28,8 +28,17 @@ const clientSchema = new mongoose.Schema({
   gender: {
     type: String,
     required: true,
-    enum: ["male", "female", "other"],
+    enum: [
+      "female",
+      "male",
+      "non-binary",
+      "transgender",
+      "other",
+      "prefer-not-to-say",
+    ],
   },
+  // Optional free-text pronouns (clinically useful in mental health).
+  pronouns: { type: String, trim: true },
   contactInfo: {
     email: {
       type: String,

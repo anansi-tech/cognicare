@@ -8,7 +8,8 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
   const [formData, setFormData] = useState({
     name: client ? client.name || "" : "",
     dateOfBirth: client ? toDateInputValue(client.dateOfBirth) : "",
-    gender: client ? client.gender || "male" : "male",
+    gender: client ? client.gender || "prefer-not-to-say" : "prefer-not-to-say",
+    pronouns: client ? client.pronouns || "" : "",
     contactInfo: {
       email: client ? client.contactInfo?.email || "" : "",
       phone: client ? client.contactInfo?.phone || "" : "",
@@ -47,7 +48,8 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
       setFormData({
         name: client.name || "",
         dateOfBirth: toDateInputValue(client.dateOfBirth),
-        gender: client.gender || "male",
+        gender: client.gender || "prefer-not-to-say",
+        pronouns: client.pronouns || "",
         contactInfo: {
           email: client.contactInfo?.email || "",
           phone: client.contactInfo?.phone || "",
@@ -280,14 +282,32 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
                 validationErrors.gender ? "border-red-500" : "border-gray-300"
               }`}
             >
-              <option value="male">Male</option>
               <option value="female">Female</option>
+              <option value="male">Male</option>
+              <option value="non-binary">Non-binary</option>
+              <option value="transgender">Transgender</option>
               <option value="other">Other</option>
+              <option value="prefer-not-to-say">Prefer not to say</option>
             </select>
             {validationErrors.gender && (
               <p className="text-red-500 text-xs mt-1">{validationErrors.gender}</p>
             )}
           </div>
+        </div>
+
+        {/* Pronouns (optional) */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Pronouns <span className="text-gray-400 font-normal">(optional)</span>
+          </label>
+          <input
+            type="text"
+            name="pronouns"
+            value={formData.pronouns}
+            onChange={handleChange}
+            placeholder="e.g. she/her, he/him, they/them"
+            className="w-full p-2 border border-gray-300 rounded"
+          />
         </div>
 
         {/* Contact Information */}

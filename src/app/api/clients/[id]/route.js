@@ -168,7 +168,7 @@ export async function PATCH(req, context) {
     }
 
     // Update other fields
-    const updateableFields = ["name", "dateOfBirth", "gender", "initialAssessment", "status"];
+    const updateableFields = ["name", "dateOfBirth", "gender", "pronouns", "initialAssessment", "status"];
     updateableFields.forEach((field) => {
       if (body[field] !== undefined) {
         existingClient[field] = body[field];

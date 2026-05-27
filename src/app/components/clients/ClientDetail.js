@@ -8,7 +8,7 @@ import ClientForm from "./ClientForm";
 import ClientInsights from "./ClientInsights";
 import ClientAnalytics from "./ClientAnalytics";
 import ReassignControl from "./ReassignControl";
-import { ageFromDob } from "@/lib/age";
+import { ageFromDob, genderLabel } from "@/lib/age";
 import { MeasuresPanel } from "@/components/measures/MeasuresPanel";
 import { useLiam } from "@/components/liam/LiamProvider";
 import { AutoIntake } from "@/components/ai/AutoIntake";
@@ -644,7 +644,12 @@ export default function ClientDetail({ clientId }) {
                   <div className="py-2 grid grid-cols-3">
                     <dt className="text-sm font-medium text-gray-500">Gender</dt>
                     <dd className="text-sm text-gray-900 col-span-2">
-                      {client.gender.charAt(0).toUpperCase() + client.gender.slice(1)}
+                      {genderLabel(client.gender)}
+                      {client.pronouns && (
+                        <span className="ml-2 text-xs text-gray-500">
+                          ({client.pronouns})
+                        </span>
+                      )}
                     </dd>
                   </div>
                   <div className="py-2 grid grid-cols-3">
