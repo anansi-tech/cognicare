@@ -6,15 +6,15 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white">
-        {/* Hero Section */}
-        <div className="relative bg-accent">
-          <div className="max-w-7xl mx-auto py-24 px-4 sm:py-32 sm:px-6 lg:px-8">
-            <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
+        {/* Hero Section — neutral, calm header (was a heavy blue band) */}
+        <div className="border-b border-border">
+          <div className="max-w-7xl mx-auto py-12 px-4 sm:py-16 sm:px-6 lg:px-8">
+            <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
               About CogniCare
             </h1>
-            <p className="mt-6 text-xl text-gray-500 max-w-3xl">
-              The Cognitive Care Collective (CogniCare). A team of 6 AI agents, empowering mental health professionals with
-              AI-driven insights and tools to deliver better care.
+            <p className="mt-3 text-lg text-muted-foreground max-w-3xl">
+              The Cognitive Care Collective. A team of 6 AI agents empowering mental-health
+              professionals with AI-driven insights and tools to deliver better care.
             </p>
           </div>
         </div>
@@ -230,30 +230,25 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* CTA Section */}
-        <div className="bg-accent">
-          <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8 lg:flex lg:items-center lg:justify-between">
-            <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-              <span className="block">Ready to get started?</span>
-              <span className="block text-primary">Join CogniCare today.</span>
+        {/* CTA Section — neutral surface, the primary button carries the blue */}
+        <div className="bg-muted border-t border-border">
+          <div className="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8 lg:flex lg:items-center lg:justify-between">
+            <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+              Ready to get started?
             </h2>
-            <div className="mt-8 flex lg:mt-0 lg:flex-shrink-0">
-              <div className="inline-flex rounded-md shadow">
-                <Link
-                  href="/signup"
-                  className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary hover:bg-primary/90"
-                >
-                  Get started
-                </Link>
-              </div>
-              <div className="ml-3 inline-flex rounded-md shadow">
-                <Link
-                  href="/contact"
-                  className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-primary bg-white hover:bg-accent"
-                >
-                  Contact us
-                </Link>
-              </div>
+            <div className="mt-6 flex gap-3 lg:mt-0 lg:flex-shrink-0">
+              <Link
+                href="/signup"
+                className="inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium rounded-md text-primary-foreground bg-primary hover:bg-primary/90"
+              >
+                Get started
+              </Link>
+              <Link
+                href="/contact"
+                className="inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium rounded-md text-foreground bg-white border border-border hover:bg-accent/30"
+              >
+                Contact us
+              </Link>
             </div>
           </div>
         </div>
