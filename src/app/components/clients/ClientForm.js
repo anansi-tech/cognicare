@@ -29,7 +29,6 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
-  const [aiProcessing, setAiProcessing] = useState(false);
 
   useEffect(() => {
     if (client) {
@@ -361,18 +360,12 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
         </button>
         <button
           type="submit"
-          disabled={loading || aiProcessing}
+          disabled={loading}
           className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-blue-300"
         >
-          {loading ? "Saving..." : aiProcessing ? "Processing..." : "Save Client"}
+          {loading ? "Saving..." : "Save Client"}
         </button>
       </div>
-
-      {aiProcessing && (
-        <div className="mt-4 p-4 bg-blue-50 text-blue-700 rounded">
-          <p className="text-sm">AI assessment in progress... This may take a few moments.</p>
-        </div>
-      )}
     </form>
   );
 }
