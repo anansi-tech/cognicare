@@ -23,8 +23,18 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
             phone: "",
           },
     },
-    initialAssessment: client ? client.initialAssessment || "" : "",
     status: client ? client.status || "active" : "active",
+  });
+  // Light-structured initial assessment (Round 16). On submit these get
+  // concatenated under headers into the single `initialAssessment` string
+  // that the agents consume. When editing an existing client whose
+  // initialAssessment is a single blob, we preload it into Presenting
+  // Concerns so nothing is lost — we don't try to parse old blobs.
+  const [intake, setIntake] = useState({
+    presentingConcerns: client?.initialAssessment || "",
+    relevantHistory: "",
+    riskIndicators: "",
+    currentStressors: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -46,8 +56,13 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
             phone: client.contactInfo?.emergencyContact?.phone || "",
           },
         },
-        initialAssessment: client.initialAssessment || "",
         status: client.status || "active",
+      });
+      setIntake({
+        presentingConcerns: client.initialAssessment || "",
+        relevantHistory: "",
+        riskIndicators: "",
+        currentStressors: "",
       });
     }
   }, [client]);
@@ -92,6 +107,19 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
     }
   };
 
+  const composeInitialAssessment = () => {
+    const sections = [
+      ["Presenting Concerns", intake.presentingConcerns],
+      ["Relevant History", intake.relevantHistory],
+      ["Risk Indicators", intake.riskIndicators],
+      ["Current Stressors", intake.currentStressors],
+    ];
+    return sections
+      .filter(([, v]) => v && v.trim())
+      .map(([label, v]) => `${label}:\n${v.trim()}`)
+      .join("\n\n");
+  };
+
   const validateForm = () => {
     const errors = {};
 
@@ -99,8 +127,8 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
     if (!formData.age) errors.age = "Age is required";
     else if (isNaN(formData.age) || formData.age <= 0) errors.age = "Age must be a positive number";
     if (!formData.gender) errors.gender = "Gender is required";
-    if (!formData.initialAssessment.trim())
-      errors.initialAssessment = "Initial assessment is required";
+    if (!composeInitialAssessment().trim())
+      errors.initialAssessment = "Fill at least one section of the initial assessment.";
 
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
@@ -124,13 +152,15 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
       const method = client ? "PATCH" : "POST";
       const url = client ? `/api/clients/${client._id}` : "/api/clients";
 
-      // Save client data
+      // Save client data — compose the structured intake into the single
+      // initialAssessment string the agents consume.
+      const payload = { ...formData, initialAssessment: composeInitialAssessment() };
       const response = await fetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -310,23 +340,78 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
           </div>
         </div>
 
-        {/* Initial Assessment */}
+        {/* Initial Clinical Assessment — light-structured (Round 16) */}
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Initial Assessment <span className="text-red-500">*</span>
-          </label>
-          <textarea
-            name="initialAssessment"
-            value={formData.initialAssessment}
-            onChange={handleChange}
-            rows={6}
-            className={`w-full p-2 border rounded ${
-              validationErrors.initialAssessment ? "border-red-500" : "border-gray-300"
-            }`}
-            placeholder="Describe the client's presenting issues, mental status, and initial observations..."
-          ></textarea>
+          <div className="mb-2">
+            <h3 className="text-base font-semibold text-gray-900">
+              Initial Clinical Assessment <span className="text-red-500">*</span>
+            </h3>
+            <p className="text-xs text-gray-500 mt-1">
+              A thorough note here improves the AI&apos;s assessment, diagnosis, and treatment
+              suggestions — write naturally; all sections are optional but more detail helps. At
+              least one section must be filled.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Presenting concerns
+              </label>
+              <textarea
+                value={intake.presentingConcerns}
+                onChange={(e) =>
+                  setIntake((s) => ({ ...s, presentingConcerns: e.target.value }))
+                }
+                rows={4}
+                className="w-full p-2 border border-gray-300 rounded"
+                placeholder="What brings them in — current symptoms, the precipitating event, what they're hoping to address."
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Relevant history
+              </label>
+              <textarea
+                value={intake.relevantHistory}
+                onChange={(e) =>
+                  setIntake((s) => ({ ...s, relevantHistory: e.target.value }))
+                }
+                rows={3}
+                className="w-full p-2 border border-gray-300 rounded"
+                placeholder="Mental health / treatment / medical history as known — prior diagnoses, medications, prior therapy."
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Risk indicators
+              </label>
+              <textarea
+                value={intake.riskIndicators}
+                onChange={(e) =>
+                  setIntake((s) => ({ ...s, riskIndicators: e.target.value }))
+                }
+                rows={3}
+                className="w-full p-2 border border-gray-300 rounded"
+                placeholder="Suicidal/homicidal ideation, safety concerns — or 'none noted'."
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Current stressors / context
+              </label>
+              <textarea
+                value={intake.currentStressors}
+                onChange={(e) =>
+                  setIntake((s) => ({ ...s, currentStressors: e.target.value }))
+                }
+                rows={3}
+                className="w-full p-2 border border-gray-300 rounded"
+                placeholder="Situational factors — relationships, work, finances, recent changes, supports."
+              />
+            </div>
+          </div>
           {validationErrors.initialAssessment && (
-            <p className="text-red-500 text-xs mt-1">{validationErrors.initialAssessment}</p>
+            <p className="text-red-500 text-xs mt-2">{validationErrors.initialAssessment}</p>
           )}
         </div>
 
