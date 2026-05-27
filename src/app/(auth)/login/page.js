@@ -49,22 +49,6 @@ function LoginContent() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Back to home link */}
-      <Link
-        href="/"
-        className="absolute top-4 left-4 text-primary hover:text-primary/80 flex items-center space-x-1"
-      >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M10 19l-7-7m0 0l7-7m-7 7h18"
-          />
-        </svg>
-        <span>Back to Home</span>
-      </Link>
-
       {/* Left side - Visual */}
       <div className="hidden lg:flex lg:w-1/2 bg-primary items-center justify-center p-12">
         <div className="max-w-md text-white">
