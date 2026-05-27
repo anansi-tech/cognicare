@@ -730,68 +730,19 @@ export default function ClientDetail({ clientId }) {
 
             {/* Initial Assessment */}
             <div>
-              <h2 className="text-lg font-medium text-gray-900 mb-2">Initial Assessment</h2>
-              <div className="bg-gray-50 p-4 rounded border border-gray-200">
-                <p className="text-sm text-gray-900 whitespace-pre-line">
-                  {client.initialAssessment}
-                </p>
-              </div>
-            </div>
-
-            {/* Recent Activity */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h2 className="text-lg font-medium text-gray-900 mb-2">Recent Sessions</h2>
-                {recentSessions.length > 0 ? (
-                  <ul className="divide-y divide-gray-200">
-                    {recentSessions.map((session) => (
-                      <li key={session._id} className="py-2">
-                        <a
-                          href={`/sessions/${session._id}`}
-                          className="block hover:bg-gray-50 transition duration-150 ease-in-out"
-                        >
-                          <p className="text-sm font-medium text-blue-600">
-                            {formatDate(session.date)}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            {session.notes?.substring(0, 100)}...
-                          </p>
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-gray-500">No recent sessions found.</p>
-                )}
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-lg font-medium text-gray-900">Initial Assessment</h2>
                 <button
                   onClick={() => router.push(`/sessions/new?clientId=${clientId}`)}
-                  className="mt-4 text-sm text-blue-600 hover:text-blue-800"
+                  className="text-sm text-blue-600 hover:text-blue-800"
                 >
                   + Add New Session
                 </button>
               </div>
-
-              <div>
-                <h2 className="text-lg font-medium text-gray-900 mb-2">Recent Reports</h2>
-                {recentReports.length > 0 ? (
-                  <ul className="divide-y divide-gray-200">
-                    {recentReports.map((report) => (
-                      <li key={report._id} className="py-2">
-                        <a
-                          href={`/clients/${clientId}/reports/${report._id}/view`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block hover:bg-gray-50 transition duration-150 ease-in-out"
-                        >
-                          <p className="text-sm font-medium text-blue-600">{report.title}</p>
-                          <p className="text-xs text-gray-500">{formatDate(report.createdAt)}</p>
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-gray-500">No recent reports found.</p>
-                )}
+              <div className="bg-gray-50 p-4 rounded border border-gray-200">
+                <p className="text-sm text-gray-900 whitespace-pre-line">
+                  {client.initialAssessment}
+                </p>
               </div>
             </div>
           </div>
