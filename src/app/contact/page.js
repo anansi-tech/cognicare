@@ -1,7 +1,5 @@
 "use client";
 
-import Link from "next/link";
-
 export default function ContactPage() {
   return (
     <div className="min-h-screen bg-gray-50">
@@ -164,11 +162,6 @@ export default function ContactPage() {
               </div>
             </div>
 
-            <div className="mt-12 text-center">
-              <Link href="/faq" className="text-primary hover:text-primary/80 font-medium">
-                View all FAQs →
-              </Link>
-            </div>
           </div>
         </div>
       </div>
