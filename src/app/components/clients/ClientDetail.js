@@ -43,6 +43,7 @@ export default function ClientDetail({ clientId }) {
   const [aiRefreshKey, setAiRefreshKey] = useState(0);
   const [consentForms, setConsentForms] = useState([]);
   const [counselor, setCounselor] = useState(null);
+  const [attendance, setAttendance] = useState(null);
   const router = useRouter();
   const { bindClient } = useLiam();
 
@@ -123,6 +124,7 @@ export default function ClientDetail({ clientId }) {
 
       setClient(data.client);
       setCounselor(data.counselor || null);
+      setAttendance(data.attendance || null);
       setRecentSessions(data.recentSessions || []);
       setRecentReports(data.recentReports || []);
     } catch (err) {
@@ -496,6 +498,29 @@ export default function ClientDetail({ clientId }) {
               Assigned to <span className="font-medium text-gray-800">{counselor.name}</span>
             </p>
           )}
+          {attendance &&
+            (attendance.noShows90 > 0 || attendance.cancellations90 > 0) && (
+              <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                {attendance.noShows90 > 0 && (
+                  <span
+                    className="inline-flex items-center px-2 py-0.5 rounded-full bg-red-100 text-red-800"
+                    title="No-shows in the last 90 days"
+                  >
+                    {attendance.noShows90} no-show
+                    {attendance.noShows90 === 1 ? "" : "s"} (90d)
+                  </span>
+                )}
+                {attendance.cancellations90 > 0 && (
+                  <span
+                    className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-100 text-amber-800"
+                    title="Cancellations in the last 90 days"
+                  >
+                    {attendance.cancellations90} cancel
+                    {attendance.cancellations90 === 1 ? "" : "s"} (90d)
+                  </span>
+                )}
+              </div>
+            )}
         </div>
         <div className="space-x-2">
           <button

@@ -302,6 +302,7 @@ export default function SessionForm({
             <option value="in-progress">In Progress</option>
             <option value="completed">Completed</option>
             <option value="cancelled">Cancelled</option>
+            <option value="no-show">No-show</option>
           </select>
         </div>
 

@@ -46,6 +46,26 @@ export async function GET(req, context) {
       ? await User.findById(client.counselorId).select("name email").lean()
       : null;
 
+    // Attendance signal (Round 15): no-shows + cancellations in the last 90
+    // days. Cheap signal that flags clients with attendance issues.
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+    const [noShows90, cancellations90] = await Promise.all([
+      Session.countDocuments({
+        clientId: id,
+        practiceId: user.practiceId,
+        status: "no-show",
+        date: { $gte: ninetyDaysAgo },
+      }),
+      Session.countDocuments({
+        clientId: id,
+        practiceId: user.practiceId,
+        status: "cancelled",
+        date: { $gte: ninetyDaysAgo },
+      }),
+    ]);
+    const attendance = { noShows90, cancellations90 };
+
     const recentSessions = await Session.find({
       clientId: id,
       practiceId: user.practiceId,
@@ -76,6 +96,7 @@ export async function GET(req, context) {
     return NextResponse.json({
       client,
       counselor,
+      attendance,
       recentSessions,
       recentReports,
     });
