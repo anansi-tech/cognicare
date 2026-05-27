@@ -32,11 +32,15 @@ export default function CalendarView() {
   const [error, setError] = useState(null);
   const [view, setView] = useState("week");
   const [date, setDate] = useState(new Date());
+  const [showCancelled, setShowCancelled] = useState(false);
 
   useEffect(() => {
     fetchSessions();
   }, []);
 
+  // Visibility is inherited from /api/sessions, which Round 10 scopes to the
+  // caller's clientScope (clinician → own clients only; owner → entire
+  // practice). No client-side filtering needed beyond what the API returns.
   const fetchSessions = async () => {
     try {
       const response = await fetch("/api/sessions");
@@ -100,7 +104,13 @@ export default function CalendarView() {
     };
   };
 
-  const events = sessions.map((session) => ({
+  // Cancelled / no-show events clutter the schedule view. Hide them by
+  // default; the user can toggle them back on to review patterns.
+  const visibleSessions = showCancelled
+    ? sessions
+    : sessions.filter((s) => s.status !== "cancelled" && s.status !== "no-show");
+
+  const events = visibleSessions.map((session) => ({
     id: session._id,
     title: `${session.clientId.name} - ${session.type}`,
     start: new Date(session.date),
@@ -134,7 +144,18 @@ export default function CalendarView() {
   }
 
   return (
-    <div className="h-[600px] p-4">
+    <div className="h-[640px] p-4">
+      <div className="mb-2 flex items-center justify-end">
+        <label className="flex items-center gap-2 text-xs text-gray-600">
+          <input
+            type="checkbox"
+            checked={showCancelled}
+            onChange={(e) => setShowCancelled(e.target.checked)}
+            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+          />
+          Show cancelled & no-show
+        </label>
+      </div>
       <DnDCalendar
         localizer={localizer}
         events={events}
