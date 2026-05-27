@@ -469,7 +469,6 @@ export default function ClientDetail({ clientId }) {
             className="text-blue-600 hover:text-blue-800 ml-4"
             aria-label="Dismiss reminder"
           >
-            {/* TODO: add a close icon from heroicons */}
             <XMarkIcon className="h-5 w-5" />
           </button>
         </div>
