@@ -96,6 +96,8 @@ export const GET = requireAuth(async (req) => {
         clientName: report.clientId?.name || "Unknown Client",
         status: report.status,
         id: report._id.toString(),
+        // Needed to deep-link to the real viewer at /clients/:cid/reports/:rid/view.
+        clientId: report.clientId?._id?.toString() ?? null,
       })),
     ]
       .sort((a, b) => new Date(b.date) - new Date(a.date))

@@ -61,7 +61,11 @@ export default function DashboardPage() {
     if (activity.type === "session") {
       router.push(`/sessions/${activity.id}`);
     } else if (activity.type === "report") {
-      router.push(`/reports/${activity.id}`);
+      // The real report viewer is client-scoped (Round 14). Skip silently if
+      // for some reason clientId is missing rather than 404 to /reports/:id.
+      if (activity.clientId) {
+        router.push(`/clients/${activity.clientId}/reports/${activity.id}/view`);
+      }
     }
   };
 
