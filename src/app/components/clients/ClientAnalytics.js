@@ -70,7 +70,7 @@ export default function ClientAnalytics({ clientId }) {
         ) : (
           <ResponsiveContainer width="100%" height={240}>
             <LineChart data={riskTimeline}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis dataKey="date" tickFormatter={formatDate} tick={{ fontSize: 10 }} />
               <YAxis
                 domain={[0, 4]}
@@ -99,11 +99,11 @@ export default function ClientAnalytics({ clientId }) {
               <Line
                 type="monotone"
                 dataKey="level"
-                stroke="#ff7300"
+                stroke="var(--chart-4)"
                 name="Risk Level"
                 strokeWidth={2}
-                dot={{ r: 4, fill: "#ff7300" }}
-                activeDot={{ r: 6, fill: "#ff7300" }}
+                dot={{ r: 4, fill: "var(--chart-4)" }}
+                activeDot={{ r: 6, fill: "var(--chart-4)" }}
               />
             </LineChart>
           </ResponsiveContainer>
