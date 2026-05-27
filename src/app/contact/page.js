@@ -124,7 +124,7 @@ export default function ContactPage() {
                 Frequently Asked Questions
               </h2>
               <p className="mt-4 text-lg text-gray-500">
-                Can't find what you're looking for? Check our FAQ section.
+                A few common ones below — if your question isn&apos;t answered, send us a note.
               </p>
             </div>
 
@@ -140,16 +140,17 @@ export default function ContactPage() {
               <div>
                 <h3 className="text-lg font-medium text-gray-900">What are your pricing plans?</h3>
                 <p className="mt-2 text-gray-500">
-                  We offer flexible pricing plans to suit your needs. Visit our pricing page for
-                  detailed information about our subscription options.
+                  Two plans: Solo at $69/mo for independent therapists, Practice at $59/mo
+                  per clinician for group practices. Both include a 14-day free trial.
                 </p>
               </div>
 
               <div>
                 <h3 className="text-lg font-medium text-gray-900">Is my data secure?</h3>
                 <p className="mt-2 text-gray-500">
-                  Yes, we take data security very seriously. Our platform uses enterprise-grade
-                  security measures to protect your information.
+                  We use practice-scoped access controls, encryption-ready storage, and full
+                  audit logs. HIPAA / BAA coverage is rolling out before clinical use —
+                  synthetic / test data only until then.
                 </p>
               </div>
 

@@ -85,10 +85,10 @@ export default function AboutPage() {
                     />
                   </svg>
                 </div>
-                <h3 className="text-lg font-medium text-gray-900">Secure Platform</h3>
+                <h3 className="text-lg font-medium text-gray-900">Secure by design</h3>
                 <p className="mt-2 text-gray-500">
-                  Enterprise-grade security and compliance to ensure client data privacy and
-                  confidentiality.
+                  Practice-scoped access controls, encryption-ready storage, and full audit
+                  logs. HIPAA / BAA coverage rolling out before clinical use.
                 </p>
               </div>
             </div>
@@ -221,7 +221,7 @@ export default function AboutPage() {
                       </svg>
                     </div>
                     <p className="ml-3 text-gray-500">
-                      Maintain compliance with industry standards
+                      Practice-scoped access and audit logs out of the box
                     </p>
                   </li>
                 </ul>
