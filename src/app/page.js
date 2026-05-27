@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import PricingPlans from "@/app/components/PricingPlans";
+import AgentPipeline from "@/app/components/AgentPipeline";
 
 export default function LandingPage() {
   const [email, setEmail] = useState("");
@@ -85,373 +86,15 @@ export default function LandingPage() {
             onClick={handleGetStarted}
             className="bg-primary text-white px-8 py-3 rounded-full font-medium hover:bg-primary/90 transition-colors shadow-lg hover:shadow"
           >
-            Start Free Trial
+            Start 14-day free trial
           </button>
         </div>
       </section>
 
-      {/* Hero Image Section */}
+      {/* Hero — agent pipeline visual (Round 19 replaces the decorative SVG) */}
       <section className="py-12 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="relative rounded-3xl overflow-hidden shadow-2xl bg-primary p-12">
-            <div className="grid md:grid-cols-2 gap-12 items-center">
-              <div className="space-y-6">
-                <h3 className="text-3xl font-bold text-primary">The CogniCare AI Team</h3>
-                <p className="text-lg text-gray-700">
-                  Our team of 6 specialized AI agents in the CogniCare platform works together
-                  seamlessly to provide comprehensive support for your practice.
-                </p>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex items-center group">
-                    <div className="w-3 h-3 bg-primary rounded-full mr-2 group-hover:scale-125 transition-transform"></div>
-                    <span className="text-sm text-gray-700 group-hover:text-primary/80 transition-colors">
-                      Assessment Agent
-                    </span>
-                  </div>
-                  <div className="flex items-center group">
-                    <div className="w-3 h-3 bg-primary rounded-full mr-2 group-hover:scale-125 transition-transform"></div>
-                    <span className="text-sm text-gray-700 group-hover:text-primary/80 transition-colors">
-                      Diagnostic Agent
-                    </span>
-                  </div>
-                  <div className="flex items-center group">
-                    <div className="w-3 h-3 bg-primary rounded-full mr-2 group-hover:scale-125 transition-transform"></div>
-                    <span className="text-sm text-gray-700 group-hover:text-primary/80 transition-colors">
-                      Treatment Agent
-                    </span>
-                  </div>
-                  <div className="flex items-center group">
-                    <div className="w-3 h-3 bg-primary rounded-full mr-2 group-hover:scale-125 transition-transform"></div>
-                    <span className="text-sm text-gray-700 group-hover:text-primary/80 transition-colors">
-                      Progress Agent
-                    </span>
-                  </div>
-                  <div className="flex items-center group">
-                    <div className="w-3 h-3 bg-primary rounded-full mr-2 group-hover:scale-125 transition-transform"></div>
-                    <span className="text-sm text-gray-700 group-hover:text-primary/80 transition-colors">
-                      Documentation Agent
-                    </span>
-                  </div>
-                  <div className="flex items-center group">
-                    <div className="w-3 h-3 bg-primary rounded-full mr-2 group-hover:scale-125 transition-transform"></div>
-                    <span className="text-sm text-gray-700 group-hover:text-primary/80 transition-colors">
-                      Conversational Agent
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className="relative">
-                {/* AI Team Illustration */}
-                <div className="relative w-full h-[300px]">
-                  {/* Main Team Circle */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <svg width="200" height="200" viewBox="0 0 200 200" className="text-primary">
-                      <circle
-                        cx="100"
-                        cy="100"
-                        r="80"
-                        fill="currentColor"
-                        fillOpacity="0.1"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      />
-                      {/* Connecting Lines with Natural Flow Animation */}
-                      <line
-                        x1="100"
-                        y1="20"
-                        x2="100"
-                        y2="180"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        className="flow-line"
-                      >
-                        <animate
-                          attributeName="stroke-dasharray"
-                          values="0,200;200,0"
-                          dur="4s"
-                          repeatCount="indefinite"
-                        />
-                        <animate
-                          attributeName="stroke-width"
-                          values="2;3;2"
-                          dur="4s"
-                          repeatCount="indefinite"
-                        />
-                      </line>
-                      <line
-                        x1="20"
-                        y1="100"
-                        x2="180"
-                        y2="100"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        className="flow-line"
-                      >
-                        <animate
-                          attributeName="stroke-dasharray"
-                          values="0,200;200,0"
-                          dur="4s"
-                          repeatCount="indefinite"
-                          begin="1s"
-                        />
-                        <animate
-                          attributeName="stroke-width"
-                          values="2;3;2"
-                          dur="4s"
-                          repeatCount="indefinite"
-                          begin="1s"
-                        />
-                      </line>
-                      <line
-                        x1="40"
-                        y1="40"
-                        x2="160"
-                        y2="160"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        className="flow-line"
-                      >
-                        <animate
-                          attributeName="stroke-dasharray"
-                          values="0,200;200,0"
-                          dur="4s"
-                          repeatCount="indefinite"
-                          begin="2s"
-                        />
-                        <animate
-                          attributeName="stroke-width"
-                          values="2;3;2"
-                          dur="4s"
-                          repeatCount="indefinite"
-                          begin="2s"
-                        />
-                      </line>
-                      <line
-                        x1="160"
-                        y1="40"
-                        x2="40"
-                        y2="160"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        className="flow-line"
-                      >
-                        <animate
-                          attributeName="stroke-dasharray"
-                          values="0,200;200,0"
-                          dur="4s"
-                          repeatCount="indefinite"
-                          begin="3s"
-                        />
-                        <animate
-                          attributeName="stroke-width"
-                          values="2;3;2"
-                          dur="4s"
-                          repeatCount="indefinite"
-                          begin="3s"
-                        />
-                      </line>
-                    </svg>
-                  </div>
-
-                  {/* AI Agent Icons with Human-like Interaction */}
-                  {/* AI Agent Icons with Sequential Highlight */}
-                  <div className="absolute top-1/4 left-1/4 w-10 h-10 bg-accent rounded-full flex items-center justify-center animate-float group hover:bg-accent transition-colors">
-                    <svg
-                      className="w-5 h-5 text-primary"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                      />
-                    </svg>
-                    <circle
-                      cx="50%"
-                      cy="50%"
-                      r="45%"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      className="pulse-ring"
-                    >
-                      <animate
-                        attributeName="r"
-                        values="45%;60%;45%"
-                        dur="2s"
-                        repeatCount="indefinite"
-                      />
-                      <animate
-                        attributeName="opacity"
-                        values="1;0;1"
-                        dur="2s"
-                        repeatCount="indefinite"
-                      />
-                    </circle>
-                  </div>
-                  <div className="absolute top-1/4 right-1/4 w-10 h-10 bg-accent rounded-full flex items-center justify-center animate-float-delay group hover:bg-accent transition-colors">
-                    <svg
-                      className="w-5 h-5 text-primary"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                      />
-                    </svg>
-                    <circle
-                      cx="50%"
-                      cy="50%"
-                      r="45%"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      className="pulse-ring"
-                    >
-                      <animate
-                        attributeName="r"
-                        values="45%;60%;45%"
-                        dur="2s"
-                        repeatCount="indefinite"
-                        begin="0.5s"
-                      />
-                      <animate
-                        attributeName="opacity"
-                        values="1;0;1"
-                        dur="2s"
-                        repeatCount="indefinite"
-                        begin="0.5s"
-                      />
-                    </circle>
-                  </div>
-                  <div className="absolute bottom-1/4 left-1/4 w-10 h-10 bg-accent rounded-full flex items-center justify-center animate-float-delay-2 group hover:bg-accent transition-colors">
-                    <svg
-                      className="w-5 h-5 text-primary"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
-                      />
-                    </svg>
-                    <circle
-                      cx="50%"
-                      cy="50%"
-                      r="45%"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      className="pulse-ring"
-                    >
-                      <animate
-                        attributeName="r"
-                        values="45%;60%;45%"
-                        dur="2s"
-                        repeatCount="indefinite"
-                        begin="1s"
-                      />
-                      <animate
-                        attributeName="opacity"
-                        values="1;0;1"
-                        dur="2s"
-                        repeatCount="indefinite"
-                        begin="1s"
-                      />
-                    </circle>
-                  </div>
-                  <div className="absolute bottom-1/4 right-1/4 w-10 h-10 bg-accent rounded-full flex items-center justify-center animate-float group hover:bg-accent transition-colors">
-                    <svg
-                      className="w-5 h-5 text-primary"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                      />
-                    </svg>
-                    <circle
-                      cx="50%"
-                      cy="50%"
-                      r="45%"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      className="pulse-ring"
-                    >
-                      <animate
-                        attributeName="r"
-                        values="45%;60%;45%"
-                        dur="2s"
-                        repeatCount="indefinite"
-                        begin="1.5s"
-                      />
-                      <animate
-                        attributeName="opacity"
-                        values="1;0;1"
-                        dur="2s"
-                        repeatCount="indefinite"
-                        begin="1.5s"
-                      />
-                    </circle>
-                  </div>
-                  <div className="absolute top-1/2 left-1/2 w-12 h-12 bg-primary rounded-full flex items-center justify-center animate-float-delay group hover:scale-110 transition-transform">
-                    <svg
-                      className="w-6 h-6 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M13 10V3L4 14h7v7l9-11h-7z"
-                      />
-                    </svg>
-                    <circle
-                      cx="50%"
-                      cy="50%"
-                      r="45%"
-                      fill="none"
-                      stroke="white"
-                      strokeWidth="2"
-                      className="pulse-ring"
-                    >
-                      <animate
-                        attributeName="r"
-                        values="45%;70%;45%"
-                        dur="2s"
-                        repeatCount="indefinite"
-                        begin="2s"
-                      />
-                      <animate
-                        attributeName="opacity"
-                        values="1;0;1"
-                        dur="2s"
-                        repeatCount="indefinite"
-                        begin="2s"
-                      />
-                    </circle>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div className="max-w-screen-xl mx-auto">
+          <AgentPipeline />
         </div>
       </section>
 
@@ -501,10 +144,10 @@ export default function LandingPage() {
                 </p>
               </div>
               <div className="p-6 rounded-2xl bg-accent hover:bg-accent transition-colors">
-                <h3 className="text-xl font-semibold text-primary mb-2">Conversational Agent</h3>
+                <h3 className="text-xl font-semibold text-primary mb-2">LIAM</h3>
                 <p className="text-gray-600">
-                  Real-time AI chat assistant that provides live support during therapy
-                  sessions,without breaking session flow.
+                  In-session AI copilot that answers from this client&apos;s entire record —
+                  live support without breaking session flow.
                 </p>
               </div>
             </div>
@@ -901,7 +544,7 @@ export default function LandingPage() {
               onClick={handleGetStarted}
               className="bg-white text-primary px-8 py-3 rounded-full font-medium hover:bg-accent transition-colors shadow-lg"
             >
-              Start Free Trial
+              Start 14-day free trial
             </button>
           </div>
         </div>
