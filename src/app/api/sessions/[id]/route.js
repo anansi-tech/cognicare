@@ -48,7 +48,16 @@ export const PATCH = requireAuth(async (req) => {
     const id = url.pathname.split("/").pop();
 
     const body = await req.json();
-    const { notes, status, date, duration, type, format } = body;
+    const {
+      notes,
+      status,
+      date,
+      duration,
+      type,
+      format,
+      cancellationReason,
+      applyToFuture,
+    } = body;
 
     // Find the session through assignment-aware visibility.
     const allowedClientIds = await visibleClientIds(user);
@@ -62,6 +71,8 @@ export const PATCH = requireAuth(async (req) => {
       return NextResponse.json({ message: "Session not found" }, { status: 404 });
     }
 
+    const previousStatus = existingSession.status;
+
     // Update all editable fields if they are provided
     if (notes !== undefined) existingSession.notes = notes;
     if (status !== undefined) existingSession.status = status;
@@ -69,9 +80,39 @@ export const PATCH = requireAuth(async (req) => {
     if (duration !== undefined) existingSession.duration = duration;
     if (type !== undefined) existingSession.type = type;
     if (format !== undefined) existingSession.format = format;
+    // Round 15: capture optional cancellation reason on status changes.
+    if (cancellationReason !== undefined) {
+      existingSession.cancellationReason = cancellationReason || undefined;
+    }
 
-    // Save the updated session
     await existingSession.save();
+
+    // Optional bulk cancel: when cancelling a session in a series, the client
+    // can ask to cancel "this and future" — same status + reason for every
+    // sibling whose date is >= this one.
+    let bulkAffected = 0;
+    const cancelAllFuture =
+      applyToFuture &&
+      status === "cancelled" &&
+      existingSession.seriesId &&
+      existingSession.date;
+    if (cancelAllFuture) {
+      const result = await Session.updateMany(
+        {
+          seriesId: existingSession.seriesId,
+          _id: { $ne: existingSession._id },
+          date: { $gt: existingSession.date },
+          status: "scheduled",
+        },
+        {
+          $set: {
+            status: "cancelled",
+            ...(cancellationReason ? { cancellationReason } : {}),
+          },
+        }
+      );
+      bulkAffected = result.modifiedCount ?? 0;
+    }
 
     await logAuditEvent({
       userId: user.id,
@@ -79,37 +120,56 @@ export const PATCH = requireAuth(async (req) => {
       action: AuditActions.UPDATE,
       entityType: EntityTypes.SESSION,
       entityId: id,
+      details: {
+        previousStatus,
+        newStatus: existingSession.status,
+        ...(cancellationReason ? { cancellationReason } : {}),
+        ...(cancelAllFuture ? { appliedToFuture: bulkAffected } : {}),
+      },
       ...auditMetaFromRequest(req),
     });
 
     // Return the updated session with populated fields
     const updatedSession = await Session.findById(id).populate("clientId", "name").lean();
 
-    return NextResponse.json(updatedSession);
+    return NextResponse.json({ ...updatedSession, bulkAffected });
   } catch (error) {
     console.error("Session PATCH error:", error);
     return NextResponse.json({ message: "Error updating session" }, { status: 500 });
   }
 });
 
-// Delete a session
+// Delete a session. Supports `?applyToFuture=1` for series — deletes the
+// session plus every future scheduled session in the same series.
 export const DELETE = requireAuth(async (req) => {
   try {
     await connectDB();
     const user = await getCurrentUser();
     const url = new URL(req.url);
-    const id = url.pathname.split("/").pop();
+    const id = url.pathname.split("/").pop().split("?")[0];
+    const applyToFuture = url.searchParams.get("applyToFuture") === "1";
 
     const allowedClientIds = await visibleClientIds(user);
-    const deletedSession = await Session.findOneAndDelete({
+    const target = await Session.findOne({
       _id: id,
       practiceId: user.practiceId,
       clientId: { $in: allowedClientIds },
     });
-
-    if (!deletedSession) {
+    if (!target) {
       return NextResponse.json({ message: "Session not found" }, { status: 404 });
     }
+
+    let bulkAffected = 0;
+    if (applyToFuture && target.seriesId) {
+      const result = await Session.deleteMany({
+        seriesId: target.seriesId,
+        _id: { $ne: target._id },
+        date: { $gt: target.date },
+        status: "scheduled",
+      });
+      bulkAffected = result.deletedCount ?? 0;
+    }
+    await target.deleteOne();
 
     await logAuditEvent({
       userId: user.id,
@@ -117,10 +177,14 @@ export const DELETE = requireAuth(async (req) => {
       action: AuditActions.DELETE,
       entityType: EntityTypes.SESSION,
       entityId: id,
+      details: { ...(applyToFuture ? { appliedToFuture: bulkAffected } : {}) },
       ...auditMetaFromRequest(req),
     });
 
-    return NextResponse.json({ message: "Session deleted successfully" }, { status: 200 });
+    return NextResponse.json(
+      { message: "Session deleted successfully", bulkAffected },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Session DELETE error:", error);
     return NextResponse.json({ message: "Error deleting session" }, { status: 500 });

@@ -18,6 +18,11 @@ export default function SessionDetail({ sessionId }) {
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [aiRefreshKey, setAiRefreshKey] = useState(0);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelApplyToFuture, setCancelApplyToFuture] = useState(false);
+  const [cancelMode, setCancelMode] = useState("cancel"); // "cancel" | "noshow" | "delete"
+  const [cancelBusy, setCancelBusy] = useState(false);
   const { bindClient } = useLiam();
 
   useEffect(() => {
@@ -75,40 +80,50 @@ export default function SessionDetail({ sessionId }) {
     fetchSession();
   };
 
-  const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this session?")) return;
+  const openCancelDialog = (mode) => {
+    setCancelMode(mode);
+    setCancelReason("");
+    setCancelApplyToFuture(false);
+    setShowCancelDialog(true);
+  };
 
+  const submitCancelDialog = async () => {
+    setCancelBusy(true);
     try {
-      setLoading(true);
+      if (cancelMode === "delete") {
+        const url = `/api/sessions/${sessionId}${
+          cancelApplyToFuture && session?.seriesId ? "?applyToFuture=1" : ""
+        }`;
+        const response = await fetch(url, { method: "DELETE" });
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          throw new Error(data.message || "Failed to delete session");
+        }
+        router.push("/sessions");
+        return;
+      }
+
+      const newStatus = cancelMode === "noshow" ? "no-show" : "cancelled";
       const response = await fetch(`/api/sessions/${sessionId}`, {
-        method: "DELETE",
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: newStatus,
+          cancellationReason: cancelReason || undefined,
+          applyToFuture:
+            cancelApplyToFuture && newStatus === "cancelled" && !!session?.seriesId,
+        }),
       });
-
-      // Check if the response is empty
-      const text = await response.text();
-      if (!text) {
-        throw new Error("Empty response from server");
-      }
-
-      // Try to parse the JSON
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch (e) {
-        console.error("JSON Parse Error:", e);
-        console.error("Response Text:", text);
-        throw new Error("Invalid response format from server");
-      }
-
       if (!response.ok) {
-        throw new Error(data.message || "Failed to delete session");
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || "Failed to update session");
       }
-
-      router.push("/sessions");
+      setShowCancelDialog(false);
+      fetchSession();
     } catch (err) {
-      console.error("Error deleting session:", err);
-      setError(err.message || "Error deleting session");
-      setLoading(false);
+      setError(err.message || "Error updating session");
+    } finally {
+      setCancelBusy(false);
     }
   };
 
@@ -211,7 +226,7 @@ export default function SessionDetail({ sessionId }) {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Session Details</h1>
-        <div className="space-x-4">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => router.push("/sessions")}
             className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
@@ -224,14 +239,119 @@ export default function SessionDetail({ sessionId }) {
           >
             Edit
           </button>
+          {session.status === "scheduled" && (
+            <>
+              <button
+                onClick={() => openCancelDialog("noshow")}
+                className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600"
+              >
+                Mark no-show
+              </button>
+              <button
+                onClick={() => openCancelDialog("cancel")}
+                className="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700"
+              >
+                Cancel
+              </button>
+            </>
+          )}
           <button
-            onClick={handleDelete}
+            onClick={() => openCancelDialog("delete")}
             className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
           >
             Delete
           </button>
         </div>
       </div>
+
+      {showCancelDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-lg font-semibold text-gray-900">
+              {cancelMode === "delete"
+                ? "Delete session?"
+                : cancelMode === "noshow"
+                  ? "Mark as no-show"
+                  : "Cancel session"}
+            </h3>
+            <p className="mt-2 text-sm text-gray-600">
+              {cancelMode === "delete"
+                ? "This removes the appointment from the schedule. Cancellation history is lost."
+                : cancelMode === "noshow"
+                  ? "Records that the client did not show. Counts toward attendance signal."
+                  : "Cancels this appointment. Add a reason for your records (optional)."}
+            </p>
+            {cancelMode !== "delete" && (
+              <div className="mt-4">
+                <label
+                  htmlFor="cancelReason"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Reason {cancelMode === "noshow" ? "" : "(optional)"}
+                </label>
+                <textarea
+                  id="cancelReason"
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  rows={3}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder="e.g. Client called to reschedule"
+                />
+              </div>
+            )}
+            {session.seriesId &&
+              (cancelMode === "cancel" || cancelMode === "delete") && (
+                <label className="mt-4 flex items-start gap-2 text-sm text-gray-800">
+                  <input
+                    type="checkbox"
+                    checked={cancelApplyToFuture}
+                    onChange={(e) => setCancelApplyToFuture(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <span>
+                    Also{" "}
+                    {cancelMode === "delete" ? "delete" : "cancel"} every future
+                    scheduled session in this series.
+                  </span>
+                </label>
+              )}
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowCancelDialog(false)}
+                className="px-3 py-2 text-sm rounded bg-gray-100 text-gray-700 hover:bg-gray-200"
+                disabled={cancelBusy}
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={submitCancelDialog}
+                disabled={cancelBusy}
+                className={`px-3 py-2 text-sm rounded text-white disabled:opacity-60 ${
+                  cancelMode === "delete"
+                    ? "bg-red-600 hover:bg-red-700"
+                    : cancelMode === "noshow"
+                      ? "bg-orange-600 hover:bg-orange-700"
+                      : "bg-amber-700 hover:bg-amber-800"
+                }`}
+              >
+                {cancelBusy
+                  ? "Saving…"
+                  : cancelMode === "delete"
+                    ? cancelApplyToFuture
+                      ? "Delete series from here"
+                      : "Delete this one"
+                    : cancelMode === "noshow"
+                      ? "Mark no-show"
+                      : cancelApplyToFuture
+                        ? "Cancel this and future"
+                        : "Cancel this one"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-6">
         <div className="bg-white shadow rounded-lg p-6">
