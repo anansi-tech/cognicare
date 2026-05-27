@@ -68,9 +68,7 @@ export default function LandingPage() {
       {/* Hero Section */}
       <section className="py-20 px-4 text-center">
         <h1 className="text-6xl font-bold text-primary mb-4">CogniCare</h1>
-        <h2 className="text-2xl text-primary mb-8 font-medium">
-          6 AI Agents. One Powerful Team.
-        </h2>
+        <h2 className="text-2xl text-primary mb-8 font-medium">6 AI Agents. One Powerful Team.</h2>
         <p className="text-lg text-gray-600 max-w-xl mx-auto mb-8">
           Meet your team of 6 specialized AI agents, working together to enhance your therapy
           practice.
@@ -95,112 +93,6 @@ export default function LandingPage() {
       <section className="py-12 px-4">
         <div className="max-w-screen-xl mx-auto">
           <AgentPipeline />
-        </div>
-      </section>
-
-      {/* Agent Roles Section */}
-      <section className="py-16 px-4 bg-white">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-primary mb-12">
-            How Each Agent Contributes
-          </h2>
-          <div className="grid md:grid-cols-2 gap-8">
-            <div className="space-y-6">
-              <div className="p-6 rounded-2xl bg-accent hover:bg-accent transition-colors">
-                <h3 className="text-xl font-semibold text-primary mb-2">Assessment Agent</h3>
-                <p className="text-gray-600">
-                  Conducts initial and ongoing assessments, analyzing client responses and behaviors
-                  to identify key areas of focus.
-                </p>
-              </div>
-              <div className="p-6 rounded-2xl bg-accent hover:bg-accent transition-colors">
-                <h3 className="text-xl font-semibold text-primary mb-2">Diagnostic Agent</h3>
-                <p className="text-gray-600">
-                  Analyzes assessment data to provide diagnostic insights and identify patterns in
-                  client symptoms and behaviors.
-                </p>
-              </div>
-              <div className="p-6 rounded-2xl bg-accent hover:bg-accent transition-colors">
-                <h3 className="text-xl font-semibold text-primary mb-2">Treatment Agent</h3>
-                <p className="text-gray-600">
-                  Develops personalized treatment plans and suggests evidence-based interventions
-                  based on diagnostic insights.
-                </p>
-              </div>
-            </div>
-            <div className="space-y-6">
-              <div className="p-6 rounded-2xl bg-accent hover:bg-accent transition-colors">
-                <h3 className="text-xl font-semibold text-primary mb-2">Progress Agent</h3>
-                <p className="text-gray-600">
-                  Tracks and analyzes client progress, identifying trends and suggesting adjustments
-                  to treatment plans.
-                </p>
-              </div>
-              <div className="p-6 rounded-2xl bg-primary hover:bg-accent/80 transition-colors">
-                <h3 className="text-xl font-semibold text-primary mb-2">Documentation Agent</h3>
-                <p className="text-gray-600">
-                  Coordinates with all agents to maintain comprehensive records and easy
-                  access to client history.
-                </p>
-              </div>
-              <div className="p-6 rounded-2xl bg-accent hover:bg-accent transition-colors">
-                <h3 className="text-xl font-semibold text-primary mb-2">LIAM</h3>
-                <p className="text-gray-600">
-                  In-session AI copilot that answers from this client&apos;s entire record —
-                  live support without breaking session flow.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works Section */}
-      <section id="how-it-works" className="py-16 px-4 bg-white">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-primary mb-12">
-            How CogniCare Works
-          </h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="p-6 rounded-2xl bg-accent transform hover:scale-105 transition-transform">
-              <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center mb-6 mx-auto">
-                <span className="text-2xl text-primary">1</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-4 text-center text-primary">
-                Record Your Session
-              </h3>
-              <p className="text-gray-600 text-center">
-                Simply record your therapy session or take notes. Our AI will handle the rest,
-                capturing all the important details.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-accent transform hover:scale-105 transition-transform">
-              <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center mb-6 mx-auto">
-                <span className="text-2xl text-primary">2</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-4 text-center text-primary">
-                Get AI Insights
-              </h3>
-              <p className="text-gray-600 text-center">
-                Our AI analyzes the session and provides you with key insights, treatment
-                suggestions, and progress tracking.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-accent transform hover:scale-105 transition-transform">
-              <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center mb-6 mx-auto">
-                <span className="text-2xl text-primary">3</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-4 text-center text-primary">
-                Focus on Therapy
-              </h3>
-              <p className="text-gray-600 text-center">
-                Spend less time on paperwork and more time helping your clients. All your
-                documentation is automatically organized.
-              </p>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -471,8 +363,8 @@ export default function LandingPage() {
                 <div className="ml-4">
                   <h3 className="text-lg font-semibold text-primary">Secure by design</h3>
                   <p className="text-gray-600">
-                    Practice-scoped access controls, encryption-ready storage, and full
-                    audit logs. (Full HIPAA / BAA coverage rolling out before clinical use.)
+                    Practice-scoped access controls, encryption-ready storage, and full audit logs.
+                    (Full HIPAA / BAA coverage rolling out before clinical use.)
                   </p>
                 </div>
               </div>
