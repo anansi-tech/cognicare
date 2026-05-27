@@ -20,8 +20,9 @@ const clientSchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
-  age: {
-    type: Number,
+  // Round 16: store DOB and compute age on demand via lib/age.ageFromDob.
+  dateOfBirth: {
+    type: Date,
     required: true,
   },
   gender: {

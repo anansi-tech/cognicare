@@ -8,6 +8,7 @@ import ClientForm from "./ClientForm";
 import ClientInsights from "./ClientInsights";
 import ClientAnalytics from "./ClientAnalytics";
 import ReassignControl from "./ReassignControl";
+import { ageFromDob } from "@/lib/age";
 import { MeasuresPanel } from "@/components/measures/MeasuresPanel";
 import { useLiam } from "@/components/liam/LiamProvider";
 import { AutoIntake } from "@/components/ai/AutoIntake";
@@ -631,7 +632,14 @@ export default function ClientDetail({ clientId }) {
                   </div>
                   <div className="py-2 grid grid-cols-3">
                     <dt className="text-sm font-medium text-gray-500">Age</dt>
-                    <dd className="text-sm text-gray-900 col-span-2">{client.age}</dd>
+                    <dd className="text-sm text-gray-900 col-span-2">
+                      {ageFromDob(client.dateOfBirth) ?? "—"}
+                      {client.dateOfBirth && (
+                        <span className="ml-2 text-xs text-gray-500">
+                          (DOB {new Date(client.dateOfBirth).toLocaleDateString()})
+                        </span>
+                      )}
+                    </dd>
                   </div>
                   <div className="py-2 grid grid-cols-3">
                     <dt className="text-sm font-medium text-gray-500">Gender</dt>

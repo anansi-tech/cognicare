@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
+import { ageFromDob } from "@/lib/age";
 
 // Compiled report viewer (Round 14). Renders the synthesized narrative,
 // lets the clinician edit it while draft, marks it completed, and exports
@@ -147,7 +148,7 @@ export default function ReportViewPage() {
               {client?.name || "Unknown"}
             </p>
             <p className="text-sm text-gray-600">
-              {client?.age ?? "—"} yrs · {client?.gender || "—"}
+              {ageFromDob(client?.dateOfBirth) ?? "—"} yrs · {client?.gender || "—"}
             </p>
           </div>
           <div>

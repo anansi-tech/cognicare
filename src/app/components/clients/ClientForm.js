@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { toDateInputValue } from "@/lib/age";
 
 export default function ClientForm({ client, onSuccess, onCancel }) {
   const [formData, setFormData] = useState({
     name: client ? client.name || "" : "",
-    age: client ? client.age || "" : "",
+    dateOfBirth: client ? toDateInputValue(client.dateOfBirth) : "",
     gender: client ? client.gender || "male" : "male",
     contactInfo: {
       email: client ? client.contactInfo?.email || "" : "",
@@ -45,7 +46,7 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
       // Populate form with client data for editing
       setFormData({
         name: client.name || "",
-        age: client.age || "",
+        dateOfBirth: toDateInputValue(client.dateOfBirth),
         gender: client.gender || "male",
         contactInfo: {
           email: client.contactInfo?.email || "",
@@ -124,8 +125,16 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
     const errors = {};
 
     if (!formData.name.trim()) errors.name = "Name is required";
-    if (!formData.age) errors.age = "Age is required";
-    else if (isNaN(formData.age) || formData.age <= 0) errors.age = "Age must be a positive number";
+    if (!formData.dateOfBirth) {
+      errors.dateOfBirth = "Date of birth is required";
+    } else {
+      const dob = new Date(formData.dateOfBirth);
+      if (Number.isNaN(dob.getTime())) {
+        errors.dateOfBirth = "Enter a valid date";
+      } else if (dob > new Date()) {
+        errors.dateOfBirth = "Date of birth must be in the past";
+      }
+    }
     if (!formData.gender) errors.gender = "Gender is required";
     if (!composeInitialAssessment().trim())
       errors.initialAssessment = "Fill at least one section of the initial assessment.";
@@ -242,19 +251,20 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Age <span className="text-red-500">*</span>
+              Date of birth <span className="text-red-500">*</span>
             </label>
             <input
-              type="number"
-              name="age"
-              value={formData.age}
+              type="date"
+              name="dateOfBirth"
+              value={formData.dateOfBirth}
+              max={new Date().toISOString().slice(0, 10)}
               onChange={handleChange}
               className={`w-full p-2 border rounded ${
-                validationErrors.age ? "border-red-500" : "border-gray-300"
+                validationErrors.dateOfBirth ? "border-red-500" : "border-gray-300"
               }`}
             />
-            {validationErrors.age && (
-              <p className="text-red-500 text-xs mt-1">{validationErrors.age}</p>
+            {validationErrors.dateOfBirth && (
+              <p className="text-red-500 text-xs mt-1">{validationErrors.dateOfBirth}</p>
             )}
           </div>
 

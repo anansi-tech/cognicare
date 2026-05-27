@@ -1,6 +1,7 @@
 import { generateText } from "ai";
 import { openai, MODELS } from "@/lib/ai/client";
 import { loadPrompt } from "@/lib/ai/prompts";
+import { ageFromDob } from "@/lib/age";
 
 // Synthesize the gathered AIReports for a client + date range into a clinical
 // narrative (free-form prose, not JSON). Used by report generation to produce
@@ -19,7 +20,7 @@ export async function synthesizeReport({ reportType, client, agentReports, from,
   const context = [
     `Report type: ${reportType}.`,
     `Period: ${formatDate(from)} to ${formatDate(to)}.`,
-    `Client: ${client.name || "Unknown"}, age ${client.age ?? "n/a"}.`,
+    `Client: ${client.name || "Unknown"}, age ${ageFromDob(client.dateOfBirth) ?? "n/a"}.`,
     "",
     "Source records (most-recent first):",
     JSON.stringify(records, null, 2),
