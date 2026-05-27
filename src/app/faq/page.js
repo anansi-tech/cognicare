@@ -76,7 +76,7 @@ export default function FAQPage() {
           id: "compliance",
           question: "Is CogniCare HIPAA compliant?",
           answer:
-            "Yes, CogniCare is fully HIPAA compliant. We follow all necessary protocols to ensure the security and privacy of protected health information (PHI).",
+            "CogniCare is built HIPAA-ready — practice-scoped access controls, audit logging, and encryption-ready storage are in place. A signed Business Associate Agreement (BAA) and full HIPAA coverage are rolling out before clinical use with real PHI; until then, synthetic / test data only.",
         },
         {
           id: "access-control",

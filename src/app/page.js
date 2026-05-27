@@ -496,8 +496,8 @@ export default function LandingPage() {
               <div className="p-6 rounded-2xl bg-primary hover:bg-accent/80 transition-colors">
                 <h3 className="text-xl font-semibold text-primary mb-2">Documentation Agent</h3>
                 <p className="text-gray-600">
-                  Coordinates with all agents to maintain comprehensive records, ensuring HIPAA
-                  compliance and easy access to client history.
+                  Coordinates with all agents to maintain comprehensive records and easy
+                  access to client history.
                 </p>
               </div>
               <div className="p-6 rounded-2xl bg-accent hover:bg-accent transition-colors">
@@ -826,10 +826,10 @@ export default function LandingPage() {
                   </div>
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-lg font-semibold text-primary">HIPAA Compliant</h3>
+                  <h3 className="text-lg font-semibold text-primary">Secure by design</h3>
                   <p className="text-gray-600">
-                    Your client&apos;s data is always safe and secure with enterprise-grade
-                    protection.
+                    Practice-scoped access controls, encryption-ready storage, and full
+                    audit logs. (Full HIPAA / BAA coverage rolling out before clinical use.)
                   </p>
                 </div>
               </div>
