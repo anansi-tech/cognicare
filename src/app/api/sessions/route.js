@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import mongoose from "mongoose";
 import { connectDB } from "@/lib/mongodb";
 import Session from "@/models/session";
 import { requireAuth, getCurrentUser } from "@/lib/auth";
@@ -55,24 +56,61 @@ export const POST = requireAuth(async (req) => {
     const user = await getCurrentUser();
 
     const body = await req.json();
-    const newSession = {
-      ...body,
-      // Ownership root + assignment.
+    // `recurrence` is a Round-15 client-only field — don't store it on the
+    // session doc itself; it just controls whether we generate a series.
+    const { recurrence, ...rest } = body;
+    const base = {
+      ...rest,
       practiceId: user.practiceId,
       counselorId: user.id,
-      // Use the status from form data, default to "scheduled" if not provided
-      status: body.status || "scheduled",
+      status: rest.status || "scheduled",
     };
 
-    // Validate required fields
     const requiredFields = ["clientId", "date", "duration", "type", "format"];
     for (const field of requiredFields) {
-      if (!newSession[field]) {
+      if (!base[field]) {
         return NextResponse.json({ message: `Missing required field: ${field}` }, { status: 400 });
       }
     }
 
-    const createdSession = await Session.create(newSession);
+    // Recurring path: pre-generate the whole series up front. Each session is
+    // its own independent doc; the seriesId is the only thing linking them.
+    if (recurrence?.frequency && recurrence.frequency !== "none") {
+      const stepDays = recurrence.frequency === "biweekly" ? 14 : 7;
+      const count = Math.min(
+        Math.max(parseInt(recurrence.occurrences, 10) || 1, 1),
+        26
+      );
+      const seriesId = new mongoose.Types.ObjectId();
+      const docs = [];
+      const startDate = new Date(base.date);
+      for (let i = 0; i < count; i++) {
+        const date = new Date(startDate);
+        date.setDate(date.getDate() + i * stepDays);
+        docs.push({ ...base, date, seriesId });
+      }
+      const created = await Session.insertMany(docs);
+      await logAuditEvent({
+        userId: user.id,
+        practiceId: user.practiceId,
+        action: AuditActions.CREATE,
+        entityType: EntityTypes.SESSION,
+        entityId: seriesId,
+        details: {
+          kind: "recurring_series",
+          clientId: base.clientId,
+          frequency: recurrence.frequency,
+          occurrences: count,
+        },
+        ...auditMetaFromRequest(req),
+      });
+      return NextResponse.json(
+        { sessions: created, seriesId: seriesId.toString() },
+        { status: 201 }
+      );
+    }
+
+    const createdSession = await Session.create(base);
     const populatedSession = await Session.findById(createdSession._id)
       .populate("clientId", "name")
       .lean();
@@ -83,7 +121,7 @@ export const POST = requireAuth(async (req) => {
       action: AuditActions.CREATE,
       entityType: EntityTypes.SESSION,
       entityId: createdSession._id,
-      details: { clientId: newSession.clientId },
+      details: { clientId: base.clientId },
       ...auditMetaFromRequest(req),
     });
 

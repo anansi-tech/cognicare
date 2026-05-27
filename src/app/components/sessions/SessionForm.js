@@ -28,6 +28,10 @@ export default function SessionForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
+  // Recurrence (Round 15) — only meaningful on create.
+  const isEditing = !!session?._id;
+  const [recurrenceFrequency, setRecurrenceFrequency] = useState("none");
+  const [recurrenceOccurrences, setRecurrenceOccurrences] = useState(8);
 
   // Fetch all clients for the dropdown
   useEffect(() => {
@@ -112,9 +116,19 @@ export default function SessionForm({
     const promoteToCompleted =
       formData.notes?.trim() &&
       (formData.status === "scheduled" || formData.status === "in-progress");
-    const payload = promoteToCompleted
+    let payload = promoteToCompleted
       ? { ...formData, status: "completed" }
       : formData;
+
+    // Attach recurrence on create only. The server creates one session per
+    // occurrence and links them with a shared seriesId.
+    if (!isEditing && recurrenceFrequency !== "none") {
+      const occ = Math.min(Math.max(parseInt(recurrenceOccurrences, 10) || 1, 1), 26);
+      payload = {
+        ...payload,
+        recurrence: { frequency: recurrenceFrequency, occurrences: occ },
+      };
+    }
 
     try {
       const url = session?._id ? `/api/sessions/${session._id}` : "/api/sessions";
@@ -312,6 +326,41 @@ export default function SessionForm({
           )}
         </div>
       </div>
+
+      {!isEditing && (
+        <div className="rounded-md border border-gray-200 p-4 bg-gray-50">
+          <p className="text-sm font-medium text-gray-700">Repeat</p>
+          <p className="text-xs text-gray-500 mt-1">
+            Optional — pre-schedule a standing slot. Each occurrence is its own session
+            you can edit or cancel later.
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <select
+              value={recurrenceFrequency}
+              onChange={(e) => setRecurrenceFrequency(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="none">Does not repeat</option>
+              <option value="weekly">Weekly</option>
+              <option value="biweekly">Every 2 weeks</option>
+            </select>
+            {recurrenceFrequency !== "none" && (
+              <label className="flex items-center gap-2 text-sm text-gray-700">
+                Occurrences
+                <input
+                  type="number"
+                  min={1}
+                  max={26}
+                  value={recurrenceOccurrences}
+                  onChange={(e) => setRecurrenceOccurrences(e.target.value)}
+                  className="w-20 px-2 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <span className="text-xs text-gray-500">(max 26)</span>
+              </label>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="flex justify-end space-x-4 pt-4">
         <button

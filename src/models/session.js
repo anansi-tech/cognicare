@@ -46,6 +46,13 @@ const sessionSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
+    // Shared by sessions generated together as a recurring series (Round 15).
+    // Each session is still its own doc; the seriesId only links them so we
+    // can offer "cancel this and future" without modeling a separate series.
+    seriesId: { type: mongoose.Schema.Types.ObjectId, index: true },
+    // Reminder + cancellation metadata (Round 15).
+    reminderSentAt: { type: Date },
+    cancellationReason: { type: String },
     // When the session was marked as completed by AI processing
     completedAt: {
       type: Date,
