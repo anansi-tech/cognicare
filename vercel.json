@@ -3,5 +3,8 @@
     "src/app/api/**/route.js": {
       "maxDuration": 60
     }
-  }
+  },
+  "crons": [
+    { "path": "/api/cron/appointment-reminders", "schedule": "0 14 * * *" }
+  ]
 }
