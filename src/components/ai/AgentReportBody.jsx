@@ -21,12 +21,44 @@ const Field = ({ label, children }) => (
   </div>
 );
 
+// Ordinal status chips — semantic colors only (red/amber/yellow/green/slate),
+// distinct from the brand blue. Lets a clinician scan severity at a glance.
+const RISK_BADGE = {
+  none: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  low: "bg-green-100 text-green-800 border-green-200",
+  moderate: "bg-amber-100 text-amber-800 border-amber-200",
+  high: "bg-orange-100 text-orange-800 border-orange-200",
+  imminent: "bg-red-100 text-red-800 border-red-200",
+};
+const CONFIDENCE_BADGE = {
+  low: "bg-amber-100 text-amber-800 border-amber-200",
+  moderate: "bg-slate-100 text-slate-700 border-slate-200",
+  high: "bg-emerald-100 text-emerald-800 border-emerald-200",
+};
+const GOAL_BADGE = {
+  "not-started": "bg-slate-100 text-slate-600 border-slate-200",
+  emerging: "bg-amber-100 text-amber-800 border-amber-200",
+  progressing: "bg-yellow-100 text-yellow-800 border-yellow-200",
+  met: "bg-green-100 text-green-800 border-green-200",
+  regressed: "bg-red-100 text-red-800 border-red-200",
+};
+const NEUTRAL_BADGE = "bg-slate-100 text-slate-700 border-slate-200";
+
+const StatusBadge = ({ map, value, label }) => {
+  const cls = map[value] || NEUTRAL_BADGE;
+  return (
+    <Badge variant="outline" className={cls}>
+      {label ?? value}
+    </Badge>
+  );
+};
+
 export function AssessmentBody({ payload: p }) {
   if (!p) return null;
   return (
     <div className="space-y-3">
       <Field label="Risk level">
-        <Badge variant="secondary">{p.riskLevel}</Badge>
+        <StatusBadge map={RISK_BADGE} value={p.riskLevel} />
       </Field>
       <Field label="Primary concerns">
         <List items={p.primaryConcerns} />
@@ -61,9 +93,9 @@ export function DiagnosticBody({ payload: p }) {
         <span className="font-medium">
           {d.code} — {d.name}
         </span>{" "}
-        <Badge variant="outline" className="ml-1">
-          {d.confidence}
-        </Badge>
+        <span className="ml-1 inline-flex">
+          <StatusBadge map={CONFIDENCE_BADGE} value={d.confidence} />
+        </span>
         {d.rationale && <p className="text-muted-foreground mt-1">{d.rationale}</p>}
         {d.criteriaMet?.length ? <List items={d.criteriaMet} /> : null}
       </div>
@@ -171,9 +203,9 @@ export function ProgressBody({ payload: p }) {
           <ul className="space-y-1 text-sm">
             {p.goalProgress.map((g, i) => (
               <li key={i}>
-                <Badge variant="outline" className="mr-1">
-                  {g.status}
-                </Badge>
+                <span className="mr-1 inline-flex">
+                  <StatusBadge map={GOAL_BADGE} value={g.status} />
+                </span>
                 {g.goal} — <span className="text-muted-foreground">{g.notes}</span>
               </li>
             ))}
