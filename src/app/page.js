@@ -909,12 +909,12 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="py-12 px-4 bg-accent">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-4 gap-8">
+        <div className="max-w-screen-xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-8">
             <div>
               <h3 className="text-lg font-semibold mb-4 text-primary">CogniCare</h3>
               <p className="text-gray-600">
-                Helping therapists focus on what matters most - their clients.
+                Helping therapists focus on what matters most — their clients.
               </p>
             </div>
             <div>
@@ -926,28 +926,8 @@ export default function LandingPage() {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/demo" className="text-gray-600 hover:text-primary/80">
-                    Demo
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold mb-4 text-primary">Resources</h3>
-              <ul className="space-y-2">
-                <li>
-                  <Link href="/blog" className="text-gray-600 hover:text-primary/80">
-                    Blog
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/docs" className="text-gray-600 hover:text-primary/80">
-                    Documentation
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/support" className="text-gray-600 hover:text-primary/80">
-                    Support
+                  <Link href="#pricing" className="text-gray-600 hover:text-primary/80">
+                    Pricing
                   </Link>
                 </li>
               </ul>
@@ -961,11 +941,6 @@ export default function LandingPage() {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/careers" className="text-gray-600 hover:text-primary/80">
-                    Careers
-                  </Link>
-                </li>
-                <li>
                   <Link href="/contact" className="text-gray-600 hover:text-primary/80">
                     Contact
                   </Link>
@@ -973,8 +948,8 @@ export default function LandingPage() {
               </ul>
             </div>
           </div>
-          <div className="mt-12 pt-8 border-t border-gray-200 text-center text-gray-600">
-            <p>© 2025 CogniCare. All rights reserved.</p>
+          <div className="mt-12 pt-8 border-t border-border text-center text-gray-600">
+            <p>© {new Date().getFullYear()} CogniCare. All rights reserved.</p>
           </div>
         </div>
       </footer>
