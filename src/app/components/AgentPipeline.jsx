@@ -3,6 +3,7 @@
 // real meaning. Shows how the agents actually flow: five specialists chained
 // sequentially, plus LIAM alongside as the in-session copilot. Token-only
 // styling so it inherits the Option C palette.
+import { Fragment } from "react";
 
 const STAGES = [
   {
@@ -48,14 +49,16 @@ export default function AgentPipeline() {
         </p>
       </div>
 
-      {/* Pipeline: horizontal on desktop, vertical on mobile */}
-      <ol className="flex flex-col md:flex-row md:items-stretch gap-3 md:gap-2">
+      {/* Pipeline: horizontal on desktop, vertical on mobile. Cards are
+          flex-1 (all equal width); arrows are separate flex items so they
+          don't steal width from the card next to them. */}
+      <ol
+        role="list"
+        className="flex flex-col md:flex-row md:items-stretch gap-3 md:gap-2"
+      >
         {STAGES.map((stage, i) => (
-          <li
-            key={stage.key}
-            className="flex-1 flex md:flex-col items-center md:items-stretch gap-3 md:gap-2"
-          >
-            <div className="flex-1 rounded-xl border border-border bg-secondary px-4 py-3 hover:border-primary/40 transition-colors min-h-[88px] md:min-h-[110px] flex flex-col justify-center">
+          <Fragment key={stage.key}>
+            <li className="flex-1 rounded-xl border border-border bg-secondary px-4 py-3 hover:border-primary/40 transition-colors min-h-[88px] md:min-h-[110px] flex flex-col justify-center">
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-primary text-primary-foreground text-xs font-semibold">
                   {i + 1}
@@ -65,11 +68,16 @@ export default function AgentPipeline() {
               <p className="mt-2 text-xs text-muted-foreground leading-snug">
                 {stage.caption}
               </p>
-            </div>
+            </li>
             {i < STAGES.length - 1 && (
-              <Arrow className="text-muted-foreground flex-shrink-0" />
+              <li
+                aria-hidden="true"
+                className="flex md:items-center justify-center flex-shrink-0"
+              >
+                <Arrow className="text-muted-foreground" />
+              </li>
             )}
-          </li>
+          </Fragment>
         ))}
       </ol>
 
