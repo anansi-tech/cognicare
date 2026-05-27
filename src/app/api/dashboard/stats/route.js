@@ -36,18 +36,49 @@ export const GET = requireAuth(async (req) => {
       status: "completed",
     });
 
-    const [recentSessions, recentReports] = await Promise.all([
-      Session.find(sessionScope)
-        .sort({ updatedAt: -1 })
-        .limit(5)
-        .populate("clientId", "name")
-        .lean(),
-      Report.find(reportScope)
-        .sort({ createdAt: -1 })
-        .limit(5)
-        .populate("clientId", "name")
-        .lean(),
-    ]);
+    // Today's schedule + a forward-looking "this week" count (Round 17).
+    // Same scoping as the rest — clinicians see their own caseload only.
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+    const endOfWeek = new Date(startOfToday);
+    endOfWeek.setDate(endOfWeek.getDate() + 7);
+
+    const [recentSessions, recentReports, todaysAppointmentsRaw, upcomingThisWeek] =
+      await Promise.all([
+        Session.find(sessionScope)
+          .sort({ updatedAt: -1 })
+          .limit(5)
+          .populate("clientId", "name")
+          .lean(),
+        Report.find(reportScope)
+          .sort({ createdAt: -1 })
+          .limit(5)
+          .populate("clientId", "name")
+          .lean(),
+        Session.find({
+          ...sessionScope,
+          status: "scheduled",
+          date: { $gte: startOfToday, $lte: endOfToday },
+        })
+          .sort({ date: 1 })
+          .populate("clientId", "name")
+          .lean(),
+        Session.countDocuments({
+          ...sessionScope,
+          status: "scheduled",
+          date: { $gt: endOfToday, $lte: endOfWeek },
+        }),
+      ]);
+
+    const todaysAppointments = todaysAppointmentsRaw.map((s) => ({
+      id: s._id.toString(),
+      clientName: s.clientId?.name ?? "Unknown",
+      date: s.date,
+      format: s.format,
+      type: s.type,
+    }));
 
     // Format recent activity
     const recentActivity = [
@@ -76,6 +107,8 @@ export const GET = requireAuth(async (req) => {
       completedSessions,
       reportsGenerated,
       recentActivity,
+      todaysAppointments,
+      upcomingThisWeek,
     });
   } catch (error) {
     console.error("Dashboard stats error:", error);

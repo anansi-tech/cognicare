@@ -10,12 +10,12 @@ export default function DashboardPage() {
   const router = useRouter();
   const [stats, setStats] = useState({
     totalClients: 0,
-    totalSessions: 0,
-    totalReports: 0,
     recentActivity: [],
     activeSessions: 0,
     completedSessions: 0,
     reportsGenerated: 0,
+    todaysAppointments: [],
+    upcomingThisWeek: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -75,6 +75,20 @@ export default function DashboardPage() {
     });
   };
 
+  const formatTime = (dateString) =>
+    new Date(dateString).toLocaleTimeString(undefined, {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+
+  const formatLabel = {
+    "in-person": "In person",
+    video: "Video",
+    phone: "Phone",
+    chat: "Chat",
+  };
+
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
       case "completed":
@@ -103,6 +117,71 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      {/* Today's Schedule — the highest-value pixel on the dashboard */}
+      <div className="bg-white shadow rounded-lg">
+        <div className="px-4 py-4 sm:px-6 flex items-center justify-between border-b border-gray-100">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">Today&apos;s Schedule</h2>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {new Date().toLocaleDateString(undefined, {
+                weekday: "long",
+                month: "long",
+                day: "numeric",
+              })}
+            </p>
+          </div>
+          {stats.upcomingThisWeek > 0 && (
+            <Link
+              href="/sessions/calendar"
+              className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
+            >
+              {stats.upcomingThisWeek} more this week →
+            </Link>
+          )}
+        </div>
+        {stats.todaysAppointments.length === 0 ? (
+          <div className="px-4 py-8 sm:px-6 text-center text-sm text-gray-500">
+            No appointments today.
+            {stats.upcomingThisWeek > 0 && (
+              <span className="ml-1">
+                <Link
+                  href="/sessions/calendar"
+                  className="text-indigo-600 hover:text-indigo-700"
+                >
+                  {stats.upcomingThisWeek} scheduled later this week.
+                </Link>
+              </span>
+            )}
+          </div>
+        ) : (
+          <ul className="divide-y divide-gray-100">
+            {stats.todaysAppointments.map((a) => (
+              <li key={a.id}>
+                <Link
+                  href={`/sessions/${a.id}`}
+                  className="block px-4 py-3 sm:px-6 hover:bg-gray-50"
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-4 min-w-0">
+                      <span className="text-sm font-semibold text-gray-900 tabular-nums w-20 flex-shrink-0">
+                        {formatTime(a.date)}
+                      </span>
+                      <span className="text-sm text-gray-800 truncate">
+                        {a.clientName}
+                      </span>
+                    </div>
+                    <span className="text-xs text-gray-500 flex-shrink-0">
+                      {formatLabel[a.format] || a.format}
+                      {a.type ? ` · ${a.type}` : ""}
+                    </span>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {/* Total Clients Card */}
