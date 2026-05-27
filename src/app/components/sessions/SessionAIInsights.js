@@ -77,28 +77,43 @@ export default function SessionAIInsights({ session, refreshKey = 0 }) {
 
   return (
     <div className="space-y-6">
-      <Section title="Assessment" summary={assessment?.summary}>
+      <Section title="Assessment" summary={assessment?.summary} collapsible defaultOpen>
         {assessment ? (
           <AgentReportBody agentType="assessment" payload={assessment.payload} />
         ) : (
           <Empty>Assessment generates automatically when a client is created.</Empty>
         )}
       </Section>
-      <Section title="Diagnostic Impression" summary={diagnostic?.summary}>
+      <Section
+        title="Diagnostic Impression"
+        summary={diagnostic?.summary}
+        collapsible
+        defaultOpen={false}
+      >
         {diagnostic ? (
           <AgentReportBody agentType="diagnostic" payload={diagnostic.payload} />
         ) : (
           <Empty>Generated automatically after the assessment.</Empty>
         )}
       </Section>
-      <Section title="Treatment Plan" summary={treatment?.summary}>
+      <Section
+        title="Treatment Plan"
+        summary={treatment?.summary}
+        collapsible
+        defaultOpen={false}
+      >
         {treatment ? (
           <AgentReportBody agentType="treatment" payload={treatment.payload} />
         ) : (
           <Empty>Generated automatically when you open a scheduled session.</Empty>
         )}
       </Section>
-      <Section title="Progress Report" summary={progress?.summary}>
+      <Section
+        title="Progress Report"
+        summary={progress?.summary}
+        collapsible
+        defaultOpen={false}
+      >
         {progress ? (
           <AgentReportBody agentType="progress" payload={progress.payload} />
         ) : (
