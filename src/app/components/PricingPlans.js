@@ -64,7 +64,7 @@ export default function PricingPlans({
             {plan.features.map((feature) => (
               <li key={feature.id} className="flex items-start text-sm text-gray-700">
                 <svg
-                  className="w-5 h-5 text-green-500 mr-2 flex-shrink-0"
+                  className="w-5 h-5 text-primary mr-2 flex-shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"

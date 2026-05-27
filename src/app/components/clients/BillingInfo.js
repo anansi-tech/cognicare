@@ -239,7 +239,7 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
           onClick={() =>
             setShowPaymentDropdown(showPaymentDropdown === invoice._id ? null : invoice._id)
           }
-          className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700 flex items-center"
+          className="px-3 py-1 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/90 flex items-center"
         >
           Mark as Paid
           <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
