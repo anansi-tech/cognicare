@@ -67,8 +67,10 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <section className="py-20 px-4 text-center">
-        <h1 className="text-6xl font-bold text-primary mb-4">CogniCare</h1>
-        <h2 className="text-2xl text-primary mb-8 font-medium">6 AI Agents. One Powerful Team.</h2>
+        <h1 className="text-6xl font-bold text-foreground mb-4">CogniCare</h1>
+        <h2 className="text-2xl text-foreground/80 mb-8 font-medium">
+          6 AI Agents. One Powerful Team.
+        </h2>
         <p className="text-lg text-gray-600 max-w-xl mx-auto mb-8">
           Meet your team of 6 specialized AI agents, working together to enhance your therapy
           practice.
@@ -99,7 +101,7 @@ export default function LandingPage() {
       {/* Key Benefits */}
       <section className="py-16 px-4">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-primary mb-12">
+          <h2 className="text-3xl font-bold text-center text-foreground mb-12">
             Why Therapists Love CogniCare
           </h2>
           <div className="grid md:grid-cols-3 gap-8">
@@ -177,7 +179,7 @@ export default function LandingPage() {
       {/* Features Section */}
       <section id="features" className="py-16 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-primary mb-12">
+          <h2 className="text-3xl font-bold text-center text-foreground mb-12">
             Everything You Need in One Place with CogniCare
           </h2>
           <div className="grid md:grid-cols-2 gap-12">
