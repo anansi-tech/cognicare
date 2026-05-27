@@ -47,7 +47,7 @@ export default function ContactPage() {
                   </div>
                   <div className="ml-3">
                     <p className="text-lg font-medium text-gray-900">Email</p>
-                    <p className="mt-1 text-gray-500">support@cognicare.com</p>
+                    <p className="mt-1 text-gray-500">cognicare@anansi.xyz</p>
                   </div>
                 </div>
 

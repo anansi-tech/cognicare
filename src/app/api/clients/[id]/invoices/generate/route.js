@@ -366,7 +366,7 @@ export async function POST(req, context) {
     });
 
     yPos -= 10;
-    page.drawText("Phone: (555) 123-4567 | Email: info@cognicare.com", {
+    page.drawText("Phone: (555) 123-4567 | Email: cognicare@anansi.xyz", {
       x: margin,
       y: yPos,
       size: 10,
