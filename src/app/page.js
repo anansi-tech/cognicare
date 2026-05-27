@@ -102,7 +102,7 @@ export default function LandingPage() {
       <section className="py-16 px-4">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl font-bold text-center text-foreground mb-12">
-            Why Therapists Love CogniCare
+            Why therapists love it
           </h2>
           <div className="grid md:grid-cols-3 gap-8">
             <div className="p-6 rounded-2xl bg-white shadow-lg hover:shadow-xl transition-shadow">
@@ -180,7 +180,7 @@ export default function LandingPage() {
       <section id="features" className="py-16 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl font-bold text-center text-foreground mb-12">
-            Everything You Need in One Place with CogniCare
+            Everything you need in one place
           </h2>
           <div className="grid md:grid-cols-2 gap-12">
             <div className="space-y-6">
@@ -427,11 +427,10 @@ export default function LandingPage() {
       <section className="py-20 px-4 text-center bg-primary text-white">
         <div className="max-w-2xl mx-auto">
           <h2 className="text-3xl font-bold mb-6">
-            Ready to Transform Your Practice with CogniCare?
+            Ready to transform your practice?
           </h2>
           <p className="text-xl mb-8 opacity-90">
-            Join thousands of therapists who are using CogniCare to enhance their practice and
-            improve client outcomes.
+            Join therapists using CogniCare to streamline their work and improve client outcomes.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
