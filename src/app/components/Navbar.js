@@ -197,6 +197,18 @@ export default function Navbar() {
                   Team
                 </Link>
               )}
+              {session.user.isPracticeOwner && (
+                <Link
+                  href="/audit"
+                  className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                    isActive("/audit")
+                      ? "border-white text-white"
+                      : "border-transparent text-primary-foreground hover:border-border hover:text-white"
+                  }`}
+                >
+                  Audit log
+                </Link>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -311,6 +323,16 @@ export default function Navbar() {
                 }`}
               >
                 Team
+              </Link>
+            )}
+            {session.user.isPracticeOwner && (
+              <Link
+                href="/audit"
+                className={`block rounded-md px-3 py-2 text-sm ${
+                  isActive("/audit") ? "bg-white/20 text-white" : "text-primary-foreground hover:bg-white/10"
+                }`}
+              >
+                Audit log
               </Link>
             )}
           </div>
