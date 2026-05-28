@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -8,7 +8,6 @@ import PricingPlans from "@/app/components/PricingPlans";
 import AgentPipeline from "@/app/components/AgentPipeline";
 
 export default function LandingPage() {
-  const [email, setEmail] = useState("");
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -23,7 +22,7 @@ export default function LandingPage() {
   }, [isAuthed, router]);
 
   if (isAuthed) {
-    return <div className="p-6 text-sm text-gray-500">Loading…</div>;
+    return <div className="p-6 text-sm text-muted-foreground">Loading…</div>;
   }
 
   const handleGetStarted = () => {
@@ -43,35 +42,13 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-secondary">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <Link href="/" className="text-2xl font-bold text-primary">
-              CogniCare
-            </Link>
-            <div className="flex items-center space-x-4">
-              <Link href="/login" className="text-primary hover:text-primary/80 font-medium">
-                Log In
-              </Link>
-              <button
-                onClick={handleGetStarted}
-                className="bg-primary text-white px-4 py-2 rounded-full font-medium hover:bg-primary/90 transition-colors"
-              >
-                Get Started
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
       {/* Hero Section */}
-      <section className="py-20 px-4 text-center">
+      <section className="py-16 sm:py-20 px-4 text-center">
         <h1 className="text-6xl font-bold text-foreground mb-4">CogniCare</h1>
         <h2 className="text-2xl text-foreground/80 mb-8 font-medium">
           6 AI Agents. One Powerful Team.
         </h2>
-        <p className="text-lg text-gray-600 max-w-xl mx-auto mb-8">
+        <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-8">
           Meet your team of 6 specialized AI agents, working together to enhance your therapy
           practice.
         </p>
@@ -122,7 +99,7 @@ export default function LandingPage() {
                 </svg>
               </div>
               <h3 className="text-xl font-semibold mb-2 text-primary">Smart Documentation</h3>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 Save 5+ hours per week on paperwork. Our AI handles the boring stuff so you can
                 focus on your clients.
               </p>
@@ -145,7 +122,7 @@ export default function LandingPage() {
                 </svg>
               </div>
               <h3 className="text-xl font-semibold mb-2 text-primary">Progress Tracking</h3>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 Beautiful charts and insights help you track client progress and celebrate their
                 wins.
               </p>
@@ -168,7 +145,7 @@ export default function LandingPage() {
                 </svg>
               </div>
               <h3 className="text-xl font-semibold mb-2 text-primary">Treatment Planning</h3>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 Get AI-powered treatment suggestions and goal tracking to help your clients succeed.
               </p>
             </div>
@@ -204,7 +181,7 @@ export default function LandingPage() {
                 </div>
                 <div className="ml-4">
                   <h3 className="text-lg font-semibold text-primary">AI Session Notes</h3>
-                  <p className="text-gray-600">
+                  <p className="text-muted-foreground">
                     No more late nights writing notes. Our AI captures everything important from
                     your sessions.
                   </p>
@@ -231,7 +208,7 @@ export default function LandingPage() {
                 </div>
                 <div className="ml-4">
                   <h3 className="text-lg font-semibold text-primary">Treatment Planning</h3>
-                  <p className="text-gray-600">
+                  <p className="text-muted-foreground">
                     Get personalized treatment suggestions based on evidence-based practices.
                   </p>
                 </div>
@@ -257,7 +234,7 @@ export default function LandingPage() {
                 </div>
                 <div className="ml-4">
                   <h3 className="text-lg font-semibold text-primary">Progress Analytics</h3>
-                  <p className="text-gray-600">
+                  <p className="text-muted-foreground">
                     Beautiful charts and insights to track client progress and celebrate their wins.
                   </p>
                 </div>
@@ -283,7 +260,7 @@ export default function LandingPage() {
                 </div>
                 <div className="ml-4">
                   <h3 className="text-lg font-semibold text-primary">Comprehensive Reporting</h3>
-                  <p className="text-gray-600">
+                  <p className="text-muted-foreground">
                     Generate detailed reports for insurance, supervision, and client progress
                     tracking. Export in multiple formats with custom branding.
                   </p>
@@ -312,7 +289,7 @@ export default function LandingPage() {
                 </div>
                 <div className="ml-4">
                   <h3 className="text-lg font-semibold text-primary">Risk Assessment</h3>
-                  <p className="text-gray-600">
+                  <p className="text-muted-foreground">
                     AI-powered tools to help you identify and monitor client risk factors.
                   </p>
                 </div>
@@ -338,7 +315,7 @@ export default function LandingPage() {
                 </div>
                 <div className="ml-4">
                   <h3 className="text-lg font-semibold text-primary">Session Prep</h3>
-                  <p className="text-gray-600">
+                  <p className="text-muted-foreground">
                     Get personalized recommendations and focus areas for each session.
                   </p>
                 </div>
@@ -364,7 +341,7 @@ export default function LandingPage() {
                 </div>
                 <div className="ml-4">
                   <h3 className="text-lg font-semibold text-primary">Secure by design</h3>
-                  <p className="text-gray-600">
+                  <p className="text-muted-foreground">
                     Practice-scoped access controls, encryption-ready storage, and full audit logs.
                     (Full HIPAA / BAA coverage rolling out before clinical use.)
                   </p>
@@ -391,7 +368,7 @@ export default function LandingPage() {
                 </div>
                 <div className="ml-4">
                   <h3 className="text-lg font-semibold text-primary">Diagnostic Insights</h3>
-                  <p className="text-gray-600">
+                  <p className="text-muted-foreground">
                     Get diagnostic insights to help you understand your clients needs better.
                   </p>
                 </div>
@@ -402,13 +379,15 @@ export default function LandingPage() {
       </section>
 
       {/* Pricing Section */}
-      <div id="pricing" className="py-16 bg-gray-50">
+      <div id="pricing" className="py-16 bg-muted">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
+            <h2 className="text-3xl font-extrabold text-foreground sm:text-4xl">
               Simple, Fair Pricing
             </h2>
-            <p className="mt-4 text-xl text-gray-600">Choose the plan that works best for you</p>
+            <p className="mt-4 text-xl text-muted-foreground">
+              Choose the plan that works best for you
+            </p>
           </div>
           <div className="mt-12">
             <PricingPlans

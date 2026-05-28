@@ -62,13 +62,25 @@ export default function SessionAIInsights({ session, refreshKey = 0 }) {
     };
   }, [clientId, sessionId, refreshKey]);
 
-  if (loading) return <div className="p-4">Loading insights...</div>;
-  if (error) return <div className="p-4 text-red-500">Error fetching insights: {error}</div>;
+  if (loading) {
+    return (
+      <div className="rounded-lg border border-border bg-background p-4 text-sm text-muted-foreground">
+        Loading insights...
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+        Error fetching insights: {error}
+      </div>
+    );
+  }
 
   if (!assessment && !diagnostic && !treatment && !progress) {
     return (
-      <div className="bg-accent p-4 rounded-lg">
-        <p className="text-primary">
+      <div className="rounded-lg border border-border bg-accent/30 p-4">
+        <p className="text-sm text-muted-foreground">
           No AI insights available yet. They will appear once the agents run.
         </p>
       </div>

@@ -54,37 +54,32 @@ export default function ClientInsights({ clientId, refreshKey = 0 }) {
 
   if (loading) {
     return (
-      <div className="p-4 text-gray-600 flex items-center gap-2">
-        <span className="animate-spin">⏳</span> Loading insights...
+      <div className="rounded-lg border border-border bg-background p-4 text-sm text-muted-foreground">
+        Loading insights...
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-4 text-red-500 flex items-center gap-2">
-        <span className="text-xl">⚠️</span> Error fetching insights: {error}
+      <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+        Error fetching insights: {error}
       </div>
     );
   }
 
   if (!assessment && !diagnostic && !treatment && !progress) {
     return (
-      <div className="bg-accent p-4 rounded-lg">
-        <div className="flex items-center gap-3">
-          <span className="text-2xl">🌙</span>
-          <div>
-            <h3 className="font-medium text-primary">No insights yet</h3>
-            <p className="text-primary text-sm mt-1">
-              Agent reports generate automatically — open a scheduled session to prep, or
-              complete one for the post-session note.
-            </p>
-          </div>
-        </div>
+      <div className="rounded-lg border border-border bg-accent/30 p-4">
+        <h3 className="text-sm font-semibold text-foreground">No insights yet</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Agent reports generate automatically. Open a scheduled session to prep, or complete one
+          for the post-session note.
+        </p>
         <div className="mt-3 flex justify-end">
           <button
             onClick={() => setLiamOpen(true)}
-            className="text-xs bg-primary text-white px-3 py-1 rounded hover:bg-primary/90"
+            className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
           >
             Ask LIAM
           </button>

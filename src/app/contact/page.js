@@ -22,6 +22,10 @@ export default function ContactPage() {
           We&apos;re here to help with any questions you might have about CogniCare. The fastest
           way to reach us is by email — usually a same-day reply on weekdays.
         </p>
+        <p className="mt-3 max-w-2xl rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          CogniCare support is not an emergency service. If you or someone else is in immediate
+          danger, call 911. For 24/7 emotional crisis support in the U.S., call or text 988.
+        </p>
 
         <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 max-w-2xl">
           <a
@@ -122,6 +126,11 @@ export default function ContactPage() {
                 Practice-scoped access controls, encryption-ready storage, and full audit logs.
                 HIPAA / BAA coverage is rolling out before clinical use — synthetic / test data
                 only until then.
+              </p>
+              <p className="mt-2 text-sm">
+                <a href="/about" className="text-primary hover:text-primary/80">
+                  See security overview
+                </a>
               </p>
             </div>
 

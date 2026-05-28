@@ -33,7 +33,7 @@ export default function PricingPlans({
       {error && (
         <div className="md:col-span-2">
           <div
-            className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative"
+            className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-destructive"
             role="alert"
           >
             <span className="block sm:inline">{error}</span>
@@ -53,16 +53,16 @@ export default function PricingPlans({
               Most popular
             </div>
           )}
-          <h3 className="text-xl font-semibold mb-2 text-gray-900">{plan.name}</h3>
-          <p className="text-sm text-gray-500 mb-4">{plan.description}</p>
+          <h3 className="text-xl font-semibold mb-2 text-foreground">{plan.name}</h3>
+          <p className="text-sm text-muted-foreground mb-4">{plan.description}</p>
           <div className="text-4xl font-bold text-primary mb-4">
             ${plan.price}
-            <span className="text-base font-normal text-gray-500">/{plan.duration}</span>
+            <span className="text-base font-normal text-muted-foreground">/{plan.duration}</span>
           </div>
-          <p className="text-xs text-gray-500 mb-6">14-day free trial. Cancel anytime.</p>
+          <p className="text-xs text-muted-foreground mb-6">14-day free trial. Cancel anytime.</p>
           <ul className="space-y-3 mb-8">
             {plan.features.map((feature) => (
-              <li key={feature.id} className="flex items-start text-sm text-gray-700">
+              <li key={feature.id} className="flex items-start text-sm text-foreground/90">
                 <svg
                   className="w-5 h-5 text-primary mr-2 flex-shrink-0"
                   fill="none"
