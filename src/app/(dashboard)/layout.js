@@ -2,7 +2,7 @@
 
 export default function DashboardLayout({ children }) {
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-secondary">
       {/* Main content */}
       <div className="ml-0">
         {/* Page content */}

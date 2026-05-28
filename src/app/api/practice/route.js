@@ -41,9 +41,9 @@ export async function PATCH(req) {
     userId: user.id,
     practiceId: user.practiceId,
     action: "update",
-    entityType: "settings",
+    entityType: "practice",
     entityId: user.practiceId,
-    details: { field: "practiceName", name: trimmed },
+    details: { field: "name", name: trimmed },
   });
   return NextResponse.json({ ok: true, name: trimmed });
 }

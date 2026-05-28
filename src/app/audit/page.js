@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 // is just to render a useful state.
 
 const ACTIONS = ["login", "logout", "create", "read", "update", "delete", "export", "import", "access_denied"];
-const ENTITY_TYPES = ["user", "client", "session", "invoice", "document", "report", "settings"];
+const ENTITY_TYPES = ["user", "client", "session", "invoice", "document", "report", "settings", "practice"];
 
 const ACTION_TONE = {
   delete: "text-destructive font-medium",
