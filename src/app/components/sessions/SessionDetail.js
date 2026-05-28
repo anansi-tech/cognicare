@@ -155,7 +155,7 @@ export default function SessionDetail({ sessionId }) {
   const getStatusBadgeColor = (status) => {
     switch (status.toLowerCase()) {
       case "scheduled":
-        return "bg-accent text-primary";
+        return "bg-accent text-accent-foreground";
       case "in-progress":
         return "bg-yellow-100 text-yellow-800";
       case "completed":

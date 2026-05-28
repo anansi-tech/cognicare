@@ -208,7 +208,7 @@ export default function ClientList() {
                           : client.status === "inactive"
                             ? "bg-gray-100 text-gray-800"
                             : client.status === "completed"
-                              ? "bg-accent text-primary"
+                              ? "bg-accent text-accent-foreground"
                               : "bg-yellow-100 text-yellow-800"
                       }`}
                     >

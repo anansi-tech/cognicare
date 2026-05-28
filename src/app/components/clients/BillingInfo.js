@@ -667,7 +667,7 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
                         <span className="font-medium">
                           {new Date(session.date).toLocaleDateString()}
                         </span>
-                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-accent text-primary">
+                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-accent text-accent-foreground">
                           {session.type
                             ? session.type.charAt(0).toUpperCase() + session.type.slice(1)
                             : "Standard"}

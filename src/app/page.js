@@ -58,7 +58,7 @@ export default function LandingPage() {
         <div className="flex justify-center gap-4">
           <Link
             href="/login"
-            className="bg-white text-primary px-8 py-3 rounded-full font-medium border border-border hover:bg-accent transition-colors"
+            className="bg-white text-primary px-8 py-3 rounded-full font-medium border border-border hover:bg-accent hover:text-accent-foreground hover:border-accent transition-colors"
           >
             Log In
           </Link>
@@ -426,7 +426,7 @@ export default function LandingPage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={handleGetStarted}
-              className="bg-white text-primary px-8 py-3 rounded-full font-medium hover:bg-accent transition-colors shadow-lg"
+              className="bg-white text-primary px-8 py-3 rounded-full font-medium hover:bg-accent hover:text-accent-foreground transition-colors shadow-lg"
             >
               Start 14-day free trial
             </button>

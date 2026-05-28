@@ -334,7 +334,7 @@ export default function ClientDetail({ clientId }) {
                   navigator.clipboard.writeText(shareableLink);
                   toast.success("Link copied!", { id: "copy-toast" });
                 }}
-                className="p-1 bg-accent text-primary rounded hover:bg-accent"
+                className="p-1 bg-accent text-accent-foreground rounded hover:bg-accent/90"
               >
                 <ClipboardDocumentIcon className="h-4 w-4" />
               </button>
@@ -459,14 +459,14 @@ export default function ClientDetail({ clientId }) {
     <div className="container mx-auto px-4 py-8">
       {/* New Client Reminder Banner (logic remains the same) */}
       {showNewClientReminder && (
-        <div className="mb-4 p-3 bg-accent border border-primary text-primary rounded-lg flex justify-between items-center">
+        <div className="mb-4 p-3 bg-accent text-accent-foreground rounded-lg flex justify-between items-center">
           <span>
             ✨ Client created. The AI assessment is generating now — it&apos;ll appear on the
             Overview shortly.
           </span>
           <button
             onClick={dismissNewClientReminder}
-            className="text-primary hover:text-primary/80 ml-4"
+            className="text-accent-foreground hover:opacity-80 ml-4"
             aria-label="Dismiss reminder"
           >
             <XMarkIcon className="h-5 w-5" />
@@ -486,7 +486,7 @@ export default function ClientDetail({ clientId }) {
                   : client.status === "inactive"
                     ? "bg-gray-100 text-gray-800"
                     : client.status === "completed"
-                      ? "bg-accent text-primary"
+                      ? "bg-accent text-accent-foreground"
                       : "bg-yellow-100 text-yellow-800"
               }`}
             >

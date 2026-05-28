@@ -110,7 +110,7 @@ export default function NewReportPage({ params }) {
         </div>
 
         {isGenerating && (
-          <div className="rounded-md bg-accent border border-border p-3 text-sm text-primary">
+          <div className="rounded-md bg-accent p-3 text-sm text-accent-foreground">
             Synthesizing the narrative from agent records in this period — this
             usually takes 10–30 seconds.
           </div>

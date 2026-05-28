@@ -98,7 +98,7 @@ export default function DashboardPage() {
       case "completed":
         return "bg-green-100 text-green-800";
       case "scheduled":
-        return "bg-accent text-primary";
+        return "bg-accent text-accent-foreground";
       case "in-progress":
         return "bg-yellow-100 text-yellow-800";
       case "cancelled":

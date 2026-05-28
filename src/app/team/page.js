@@ -265,7 +265,7 @@ export default function TeamPage() {
                 <p className="text-sm font-medium text-gray-900">
                   {c.name}
                   {c.isOwner && (
-                    <span className="ml-2 inline-flex items-center rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-primary">
+                    <span className="ml-2 inline-flex items-center rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
                       Owner
                     </span>
                   )}

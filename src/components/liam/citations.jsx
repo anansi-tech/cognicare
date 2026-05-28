@@ -26,7 +26,7 @@ export function renderWithCitations(text, clientId) {
         <Link
           key={`c${i++}`}
           href={href}
-          className="mx-0.5 inline-flex items-center gap-1 rounded-md border border-border bg-accent px-1.5 py-0.5 align-baseline text-xs font-medium text-primary no-underline transition-colors hover:bg-accent hover:border-primary"
+          className="mx-0.5 inline-flex items-center gap-1 rounded-md bg-accent px-1.5 py-0.5 align-baseline text-xs font-medium text-accent-foreground no-underline transition-colors hover:bg-accent/90"
         >
           <Icon className="h-3 w-3" strokeWidth={2.25} />
           {kind === "session" ? "Session" : "Report"}
