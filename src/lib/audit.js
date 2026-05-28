@@ -51,6 +51,7 @@ export function auditMetaFromRequest(request) {
 }
 
 export async function getAuditLogs({
+  practiceId,
   userId,
   entityType,
   entityId,
@@ -60,10 +61,15 @@ export async function getAuditLogs({
   page = 1,
   limit = 50,
 }) {
+  // Belt-and-braces tenant isolation: refuse to query without a practiceId
+  // even if an API gate above us forgets to pass one. Audit logs are the one
+  // place a cross-tenant leak is unacceptable.
+  if (!practiceId) throw new Error("getAuditLogs requires practiceId");
+
   try {
     await connectDB();
 
-    const query = {};
+    const query = { practiceId };
     if (userId) query.userId = userId;
     if (entityType) query.entityType = entityType;
     if (entityId) query.entityId = entityId;
@@ -76,7 +82,12 @@ export async function getAuditLogs({
 
     const skip = (page - 1) * limit;
 
-    const logs = await AuditLog.find(query).sort({ timestamp: -1 }).skip(skip).limit(limit).lean();
+    const logs = await AuditLog.find(query)
+      .sort({ timestamp: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate("userId", "name email")
+      .lean();
 
     const total = await AuditLog.countDocuments(query);
 
