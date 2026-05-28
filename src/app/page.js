@@ -49,11 +49,11 @@ export default function LandingPage() {
           <Brand className="text-6xl font-bold" />
         </h1>
         <h2 className="text-2xl text-foreground/80 mb-8 font-medium">
-          6 AI Agents. One Powerful Team.
+          Your AI clinical team
         </h2>
         <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-8">
-          Meet your team of 6 specialized AI agents, working together to enhance your therapy
-          practice.
+          Specialized agents handle assessment, diagnosis, treatment planning, progress tracking, and
+          documentation — so you focus on the therapy, not the paperwork.
         </p>
         <div className="flex justify-center gap-4">
           <Link
