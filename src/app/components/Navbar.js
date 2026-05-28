@@ -56,22 +56,41 @@ export default function Navbar() {
             >
               {showMobileMenu ? (
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               ) : (
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
                 </svg>
               )}
             </button>
             <div className="hidden sm:flex items-center gap-6">
-              <Link href="/about" className="text-sm font-medium text-muted-foreground hover:text-foreground">
+              <Link
+                href="/about"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground"
+              >
                 About
               </Link>
-              <Link href="/contact" className="text-sm font-medium text-muted-foreground hover:text-foreground">
+              <Link
+                href="/contact"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground"
+              >
                 Contact
               </Link>
-              <Link href="/login" className="text-sm font-medium text-primary hover:text-primary/80">
+              <Link
+                href="/login"
+                className="text-sm font-medium text-primary hover:text-primary/80"
+              >
                 Log In
               </Link>
               <Link
@@ -88,7 +107,10 @@ export default function Navbar() {
                 <Link href="/about" className="rounded-md px-3 py-2 text-foreground hover:bg-muted">
                   About
                 </Link>
-                <Link href="/contact" className="rounded-md px-3 py-2 text-foreground hover:bg-muted">
+                <Link
+                  href="/contact"
+                  className="rounded-md px-3 py-2 text-foreground hover:bg-muted"
+                >
                   Contact
                 </Link>
                 <Link href="/login" className="rounded-md px-3 py-2 text-foreground hover:bg-muted">
@@ -221,11 +243,21 @@ export default function Navbar() {
             >
               {showMobileMenu ? (
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               ) : (
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
                 </svg>
               )}
             </button>
@@ -235,7 +267,9 @@ export default function Navbar() {
               className="inline-flex items-center gap-2 rounded-md bg-white/10 px-3 py-1.5 text-sm font-medium text-white hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/40"
             >
               Ask LIAM
-              <span className="hidden sm:inline rounded bg-white/10 px-1.5 py-0.5 text-[10px] text-primary-foreground">⌘K</span>
+              <span className="hidden sm:inline rounded bg-white/10 px-1.5 py-0.5 text-[10px] text-primary-foreground">
+                ⌘K
+              </span>
             </button>
             <div className="flex-shrink-0">
               <div className="relative" ref={userMenuRef}>
@@ -309,7 +343,9 @@ export default function Navbar() {
                 key={href}
                 href={href}
                 className={`block rounded-md px-3 py-2 text-sm ${
-                  isActive(href) ? "bg-white/20 text-white" : "text-primary-foreground hover:bg-white/10"
+                  isActive(href)
+                    ? "bg-white/20 text-white"
+                    : "text-primary-foreground hover:bg-white/10"
                 }`}
               >
                 {label}
@@ -319,7 +355,9 @@ export default function Navbar() {
               <Link
                 href="/team"
                 className={`block rounded-md px-3 py-2 text-sm ${
-                  isActive("/team") ? "bg-white/20 text-white" : "text-primary-foreground hover:bg-white/10"
+                  isActive("/team")
+                    ? "bg-white/20 text-white"
+                    : "text-primary-foreground hover:bg-white/10"
                 }`}
               >
                 Team
@@ -329,7 +367,9 @@ export default function Navbar() {
               <Link
                 href="/audit"
                 className={`block rounded-md px-3 py-2 text-sm ${
-                  isActive("/audit") ? "bg-white/20 text-white" : "text-primary-foreground hover:bg-white/10"
+                  isActive("/audit")
+                    ? "bg-white/20 text-white"
+                    : "text-primary-foreground hover:bg-white/10"
                 }`}
               >
                 Audit log
