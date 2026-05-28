@@ -147,24 +147,6 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* CTA Section */}
-      <section className="py-20 px-4 text-center bg-primary text-white">
-        <div className="max-w-2xl mx-auto">
-          <h2 className="text-3xl font-bold mb-6">Ready to transform your practice?</h2>
-          <p className="text-xl mb-8 opacity-90">
-            Join therapists using CogniCare to streamline their work and improve client outcomes.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button
-              onClick={handleGetStarted}
-              className="bg-white text-primary px-8 py-3 rounded-full font-medium hover:bg-accent hover:text-accent-foreground transition-colors shadow-lg"
-            >
-              Start 14-day free trial
-            </button>
-          </div>
-        </div>
-      </section>
-
       {/* Footer */}
       <footer className="bg-muted border-t border-border">
         <div className="max-w-screen-xl mx-auto px-4 pt-12 pb-8">
