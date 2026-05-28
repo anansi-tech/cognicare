@@ -78,7 +78,7 @@ export default function LandingPage() {
         <div className="max-w-screen-xl mx-auto">
           <div className="rounded-3xl shadow-sm overflow-hidden">
             <Image
-              src="/hero.png"
+              src="/hero2.png"
               alt="How CogniCare works — five specialists, one workflow: Assessment → Diagnostic → Treatment → Progress → Documentation, with LIAM as the in-session copilot."
               width={1600}
               height={900}
@@ -99,7 +99,7 @@ export default function LandingPage() {
             <div className="p-6 rounded-2xl bg-white shadow-lg hover:shadow-xl transition-shadow">
               <div className="w-12 h-12 bg-accent rounded-full flex items-center justify-center mb-4">
                 <svg
-                  className="w-6 h-6 text-primary"
+                  className="w-6 h-6 text-accent-foreground"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -122,7 +122,7 @@ export default function LandingPage() {
             <div className="p-6 rounded-2xl bg-white shadow-lg hover:shadow-xl transition-shadow">
               <div className="w-12 h-12 bg-accent rounded-full flex items-center justify-center mb-4">
                 <svg
-                  className="w-6 h-6 text-primary"
+                  className="w-6 h-6 text-accent-foreground"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -145,7 +145,7 @@ export default function LandingPage() {
             <div className="p-6 rounded-2xl bg-white shadow-lg hover:shadow-xl transition-shadow">
               <div className="w-12 h-12 bg-accent rounded-full flex items-center justify-center mb-4">
                 <svg
-                  className="w-6 h-6 text-primary"
+                  className="w-6 h-6 text-accent-foreground"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -179,7 +179,7 @@ export default function LandingPage() {
                 <div className="flex-shrink-0 mt-1">
                   <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
                     <svg
-                      className="w-4 h-4 text-primary"
+                      className="w-4 h-4 text-accent-foreground"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -206,7 +206,7 @@ export default function LandingPage() {
                 <div className="flex-shrink-0 mt-1">
                   <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
                     <svg
-                      className="w-4 h-4 text-primary"
+                      className="w-4 h-4 text-accent-foreground"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -232,7 +232,7 @@ export default function LandingPage() {
                 <div className="flex-shrink-0 mt-1">
                   <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
                     <svg
-                      className="w-4 h-4 text-primary"
+                      className="w-4 h-4 text-accent-foreground"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -258,7 +258,7 @@ export default function LandingPage() {
                 <div className="flex-shrink-0 mt-1">
                   <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
                     <svg
-                      className="w-4 h-4 text-primary"
+                      className="w-4 h-4 text-accent-foreground"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -287,7 +287,7 @@ export default function LandingPage() {
                 <div className="flex-shrink-0 mt-1">
                   <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
                     <svg
-                      className="w-4 h-4 text-primary"
+                      className="w-4 h-4 text-accent-foreground"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -313,7 +313,7 @@ export default function LandingPage() {
                 <div className="flex-shrink-0 mt-1">
                   <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
                     <svg
-                      className="w-4 h-4 text-primary"
+                      className="w-4 h-4 text-accent-foreground"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -339,7 +339,7 @@ export default function LandingPage() {
                 <div className="flex-shrink-0 mt-1">
                   <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
                     <svg
-                      className="w-4 h-4 text-primary"
+                      className="w-4 h-4 text-accent-foreground"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -366,7 +366,7 @@ export default function LandingPage() {
                 <div className="flex-shrink-0 mt-1">
                   <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
                     <svg
-                      className="w-4 h-4 text-primary"
+                      className="w-4 h-4 text-accent-foreground"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -419,9 +419,7 @@ export default function LandingPage() {
       {/* CTA Section */}
       <section className="py-20 px-4 text-center bg-primary text-white">
         <div className="max-w-2xl mx-auto">
-          <h2 className="text-3xl font-bold mb-6">
-            Ready to transform your practice?
-          </h2>
+          <h2 className="text-3xl font-bold mb-6">Ready to transform your practice?</h2>
           <p className="text-xl mb-8 opacity-90">
             Join therapists using CogniCare to streamline their work and improve client outcomes.
           </p>
@@ -450,18 +448,12 @@ export default function LandingPage() {
               <h3 className="text-lg font-semibold mb-4 text-foreground">Product</h3>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <Link
-                    href="#features"
-                    className="text-muted-foreground hover:text-primary"
-                  >
+                  <Link href="#features" className="text-muted-foreground hover:text-primary">
                     Features
                   </Link>
                 </li>
                 <li>
-                  <Link
-                    href="#pricing"
-                    className="text-muted-foreground hover:text-primary"
-                  >
+                  <Link href="#pricing" className="text-muted-foreground hover:text-primary">
                     Pricing
                   </Link>
                 </li>
@@ -471,18 +463,12 @@ export default function LandingPage() {
               <h3 className="text-lg font-semibold mb-4 text-foreground">Company</h3>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <Link
-                    href="/about"
-                    className="text-muted-foreground hover:text-primary"
-                  >
+                  <Link href="/about" className="text-muted-foreground hover:text-primary">
                     About
                   </Link>
                 </li>
                 <li>
-                  <Link
-                    href="/contact"
-                    className="text-muted-foreground hover:text-primary"
-                  >
+                  <Link href="/contact" className="text-muted-foreground hover:text-primary">
                     Contact
                   </Link>
                 </li>
