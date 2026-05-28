@@ -152,8 +152,8 @@ export default function Navbar() {
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <Link href="/">
-                <Brand variant="onPrimary" />
+              <Link href="/dashboard" aria-label="CogniCare home">
+                <img src="/logo-nav-white.svg" alt="CogniCare" className="h-8 w-8" />
               </Link>
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">

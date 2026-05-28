@@ -166,7 +166,7 @@ export default function BillingPage() {
         </div>
       ) : (
         <>
-          <div className="mb-8 rounded-lg border border-border bg-accent p-6">
+          <div className="mb-8 rounded-lg border border-border bg-secondary p-6">
             <h2 className="text-lg font-semibold text-gray-900">
               Six AI agents handle the clinical heavy lifting
             </h2>

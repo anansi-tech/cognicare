@@ -1,0 +1,8 @@
+<svg width="520" height="128" viewBox="0 0 520 128" xmlns="http://www.w3.org/2000/svg">
+  <rect x="8" y="8" width="112" height="112" rx="26" fill="#0B2B6B"/>
+  <path d="M96 42c-6-5-14-8-23-8-18 0-32 13-32 30s14 30 32 30c9 0 17-3 23-8"
+        fill="none" stroke="#25B9C8" stroke-width="10" stroke-linecap="round"/>
+  <text x="148" y="80" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="56">
+    <tspan fill="#0B2B6B">Cogni</tspan><tspan fill="#158A98">Care</tspan>
+  </text>
+</svg>

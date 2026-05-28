@@ -57,12 +57,10 @@ export default function LandingPage() {
         <h1 className="mb-4">
           <Brand className="text-6xl font-bold" />
         </h1>
-        <h2 className="text-2xl text-foreground/80 mb-8 font-medium">
-          Your AI clinical team
-        </h2>
+        <h2 className="text-2xl text-foreground/80 mb-8 font-medium">Your AI clinical team</h2>
         <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-8">
-          Specialized agents handle assessment, diagnosis, treatment planning, progress tracking, and
-          documentation — so you focus on the therapy, not the paperwork.
+          Specialized agents handle assessment, diagnosis, treatment planning, progress tracking,
+          and documentation — so you focus on the therapy, not the paperwork.
         </p>
         <div className="flex justify-center gap-4">
           <Link
@@ -80,21 +78,20 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Hero — the canonical agent-pipeline illustration. The image's own
-          light-blue backdrop matches --muted, so we let it blend with the
-          page surround instead of framing it in a hard white card. */}
-      <section className="py-8 px-4">
-        <div className="max-w-screen-xl mx-auto">
-          <div className="rounded-3xl shadow-sm overflow-hidden">
-            <Image
-              src="/hero2.png"
-              alt="How CogniCare works — five specialists, one workflow: Assessment → Diagnostic → Treatment → Progress → Documentation, with LIAM as the in-session copilot."
-              width={1600}
-              height={900}
-              className="w-full h-auto block"
-              priority
-            />
-          </div>
+      {/* Hero — the canonical agent-pipeline illustration. PNG is transparent
+          so the page surround shows through; a faint top border separates it
+          from the hero text section above. No card framing — the diagram
+          stands on its own. */}
+      <section className="border-t border-border py-16 px-4">
+        <div className="max-w-5xl mx-auto">
+          <Image
+            src="/hero.png"
+            alt="How CogniCare works — five specialists, one workflow: Assessment → Diagnostic → Treatment → Progress → Documentation, with LIAM as the in-session copilot."
+            width={1600}
+            height={900}
+            className="w-full h-auto block"
+            priority
+          />
         </div>
       </section>
 
@@ -106,18 +103,20 @@ export default function LandingPage() {
           </h2>
           <div className="grid md:grid-cols-2 gap-x-12 gap-y-8">
             <ValueItem title="LIAM, your in-session copilot">
-              Ask anything mid-session — LIAM answers from this client&apos;s full record, not a generic chatbot.
+              Ask anything mid-session — LIAM answers from this client&apos;s full record, not a
+              generic chatbot.
             </ValueItem>
             <ValueItem title="Solo or group practice">
-              Invite colleagues, share a roster with assignment-based confidentiality, manage seats from
-              one place.
+              Invite colleagues, share a roster with assignment-based confidentiality, manage seats
+              from one place.
             </ValueItem>
             <ValueItem title="Scheduling that runs itself">
-              Recurring appointments, automatic client reminders, no-show tracking — without leaving the
-              chart.
+              Recurring appointments, automatic client reminders, no-show tracking — without leaving
+              the chart.
             </ValueItem>
             <ValueItem title="Billing and consent in one place">
-              E-signature consent forms, invoices, and Stripe payment links — built into the client record.
+              E-signature consent forms, invoices, and Stripe payment links — built into the client
+              record.
             </ValueItem>
           </div>
         </div>
@@ -148,7 +147,7 @@ export default function LandingPage() {
       </div>
 
       {/* Footer */}
-      <footer className="bg-muted border-t border-border">
+      <footer className="bg-secondary border-t border-border">
         <div className="max-w-screen-xl mx-auto px-4 pt-12 pb-8">
           <div className="grid md:grid-cols-3 gap-8">
             <div>

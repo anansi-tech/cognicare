@@ -4,39 +4,32 @@ import Link from "next/link";
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-secondary">
-      {/* Hero — quiet header, page-body tint provides the calm color, border-b
-          separates from the body. No heavy blue band. */}
-      <div className="bg-secondary border-b border-border">
-        <div className="max-w-7xl mx-auto py-12 px-4 sm:py-16 sm:px-6 lg:px-8">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            About CogniCare
-          </h1>
-          <p className="mt-3 text-lg text-muted-foreground max-w-3xl">
-            The Cognitive Care Collective. A team of 6 AI agents empowering mental-health
-            professionals with AI-driven insights and tools to deliver better care.
+    <div className="min-h-screen bg-background font-sans text-foreground">
+      {/* Hero & Mission Section — Combined for immediate impact */}
+      <section className="bg-secondary/50 border-b border-border">
+        <div className="max-w-4xl mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:px-8 text-center">
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">About CogniCare</h1>
+          <p className="mt-6 text-lg text-muted-foreground sm:text-xl max-w-2xl mx-auto leading-relaxed">
+            We are the <strong>Cognitive Care Collective</strong>. Our mission is to revolutionize
+            mental health care by empowering professionals with a specialized team of AI agents. We
+            build advanced, secure tools that enhance your ability to understand, diagnose, and
+            treat clients effectively.
           </p>
         </div>
-      </div>
+      </section>
 
-      {/* Mission Section */}
-      <div className="max-w-7xl mx-auto py-16 px-4 sm:py-20 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-foreground sm:text-3xl">Our Mission</h2>
-          <p className="mt-3 text-base text-muted-foreground max-w-2xl mx-auto">
-            To revolutionize mental-health care by giving professionals advanced AI tools that
-            enhance their ability to understand, diagnose, and treat their clients effectively.
-          </p>
-        </div>
-      </div>
+      <main>
+        {/* Core Features Section */}
+        <section className="max-w-5xl mx-auto py-16 px-4 sm:py-20 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-2xl font-bold sm:text-3xl">How We Help</h2>
+          </div>
 
-      {/* Features Section — white cards on the page tint */}
-      <div className="bg-white border-y border-border">
-        <div className="max-w-7xl mx-auto py-16 px-4 sm:py-20 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            <div className="rounded-lg border border-border bg-white p-6">
-              <div className="text-primary mb-4">
-                <svg className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            {/* Feature 1 */}
+            <div className="group rounded-xl border border-border bg-card p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md hover:border-primary/40">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary mb-5 group-hover:bg-primary/20 transition-colors">
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -45,16 +38,17 @@ export default function AboutPage() {
                   />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-foreground">AI-Powered Analysis</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Advanced AI algorithms analyze session data to provide insights and identify
-                patterns in client behavior and progress.
+              <h3 className="text-lg font-semibold">AI-Powered Analysis</h3>
+              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                Advanced algorithms analyze session data to provide immediate insights and identify
+                crucial patterns in client behavior and progress.
               </p>
             </div>
 
-            <div className="rounded-lg border border-border bg-white p-6">
-              <div className="text-primary mb-4">
-                <svg className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            {/* Feature 2 */}
+            <div className="group rounded-xl border border-border bg-card p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md hover:border-primary/40">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary mb-5 group-hover:bg-primary/20 transition-colors">
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -63,16 +57,17 @@ export default function AboutPage() {
                   />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-foreground">Comprehensive Reports</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Generate detailed assessment, diagnostic, treatment, progress, and documentation
-                reports with AI assistance.
+              <h3 className="text-lg font-semibold">Comprehensive Reports</h3>
+              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                Generate detailed assessment, diagnostic, treatment, and progress documentation
+                effortlessly with AI assistance.
               </p>
             </div>
 
-            <div className="rounded-lg border border-border bg-white p-6">
-              <div className="text-primary mb-4">
-                <svg className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            {/* Feature 3 */}
+            <div className="group rounded-xl border border-border bg-card p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md hover:border-primary/40">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary mb-5 group-hover:bg-primary/20 transition-colors">
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -81,74 +76,80 @@ export default function AboutPage() {
                   />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-foreground">Secure by design</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
+              <h3 className="text-lg font-semibold">Secure by Design</h3>
+              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
                 Practice-scoped access controls, encryption-ready storage, and full audit logs.
-                HIPAA / BAA coverage rolling out before clinical use.
+                HIPAA & BAA coverage rolling out prior to clinical use.
               </p>
             </div>
           </div>
-        </div>
-      </div>
+        </section>
 
-      {/* Benefits Section */}
-      <div className="max-w-7xl mx-auto py-16 px-4 sm:py-20 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-foreground sm:text-3xl">
-            Benefits for Professionals
-          </h2>
-        </div>
-        <div className="mt-10 grid grid-cols-1 gap-x-12 gap-y-3 md:grid-cols-2 max-w-4xl mx-auto">
-          {[
-            "Save time with automated report generation",
-            "Streamline documentation and record-keeping",
-            "Gain deeper insights into client progress",
-            "Improve client outcomes through better tracking",
-            "Enhance treatment planning with data-driven insights",
-            "Practice-scoped access and audit logs out of the box",
-          ].map((text) => (
-            <div key={text} className="flex items-start">
-              <svg
-                className="h-5 w-5 text-primary mt-0.5 flex-shrink-0"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-              <p className="ml-3 text-sm text-muted-foreground">{text}</p>
+        {/* Benefits Section */}
+        <section className="bg-secondary/30 border-y border-border">
+          <div className="max-w-4xl mx-auto py-16 px-4 sm:py-20 sm:px-6 lg:px-8">
+            <div className="text-center mb-10">
+              <h2 className="text-2xl font-bold sm:text-3xl">Benefits for Professionals</h2>
+              <p className="mt-3 text-muted-foreground">
+                Designed to let you focus on what matters most: your clients.
+              </p>
             </div>
-          ))}
-        </div>
-      </div>
 
-      {/* CTA — neutral surface, primary button carries the blue */}
-      <div className="bg-muted border-t border-border">
-        <div className="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8 lg:flex lg:items-center lg:justify-between">
-          <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-            Ready to get started?
-          </h2>
-          <div className="mt-6 flex gap-3 lg:mt-0 lg:flex-shrink-0">
-            <Link
-              href="/signup"
-              className="inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium rounded-md text-primary-foreground bg-primary hover:bg-primary/90"
-            >
-              Get started
-            </Link>
-            <Link
-              href="/contact"
-              className="inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium rounded-md text-foreground bg-white border border-border hover:bg-accent/30"
-            >
-              Contact us
-            </Link>
+            <div className="grid grid-cols-1 gap-x-8 gap-y-4 md:grid-cols-2 bg-card rounded-xl border border-border p-8 shadow-sm">
+              {[
+                "Save hours with automated report generation",
+                "Streamline documentation & record-keeping",
+                "Gain deeper insights into client progress",
+                "Improve client outcomes through better tracking",
+                "Enhance treatment planning with data-driven insights",
+                "Practice-scoped access & audit logs out of the box",
+              ].map((text) => (
+                <div key={text} className="flex items-start">
+                  <div className="flex-shrink-0 flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary mt-0.5">
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2.5}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </div>
+                  <p className="ml-3 text-sm text-foreground font-medium">{text}</p>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      </div>
+        </section>
+
+        {/* Call to Action Section */}
+        <section className="bg-background">
+          <div className="max-w-5xl mx-auto py-12 px-4 sm:py-16 sm:px-6 lg:px-8 lg:flex lg:items-center lg:justify-between">
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+                Ready to transform your practice?
+              </h2>
+              <p className="mt-2 text-muted-foreground">
+                Join the Cognitive Care Collective today.
+              </p>
+            </div>
+            <div className="mt-6 flex flex-col sm:flex-row gap-3 lg:mt-0 lg:flex-shrink-0">
+              <Link
+                href="/signup"
+                className="inline-flex items-center justify-center px-6 py-3 text-sm font-semibold rounded-lg text-primary-foreground bg-primary hover:bg-primary/90 transition-colors shadow-sm"
+              >
+                Get started
+              </Link>
+              <Link
+                href="/contact"
+                className="inline-flex items-center justify-center px-6 py-3 text-sm font-medium rounded-lg text-foreground bg-card border border-border hover:bg-secondary/50 transition-colors shadow-sm"
+              >
+                Contact us
+              </Link>
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
   );
 }
