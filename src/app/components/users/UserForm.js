@@ -66,31 +66,31 @@ export default function UserForm({ user, onSuccess, onCancel }) {
       {error && <div className="bg-red-50 text-red-500 p-4 rounded mb-4">{error}</div>}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">Name</label>
+        <label className="block text-sm font-medium text-foreground">Name</label>
         <input
           type="text"
           name="name"
           value={formData.name}
           onChange={handleChange}
           required
-          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+          className="mt-1 block w-full border border-input rounded-md shadow-sm p-2"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">Email</label>
+        <label className="block text-sm font-medium text-foreground">Email</label>
         <input
           type="email"
           name="email"
           value={formData.email}
           onChange={handleChange}
           required
-          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+          className="mt-1 block w-full border border-input rounded-md shadow-sm p-2"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-foreground">
           Password (leave blank to keep current)
         </label>
         <input
@@ -98,29 +98,29 @@ export default function UserForm({ user, onSuccess, onCancel }) {
           name="password"
           value={formData.password}
           onChange={handleChange}
-          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+          className="mt-1 block w-full border border-input rounded-md shadow-sm p-2"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">License Number</label>
+        <label className="block text-sm font-medium text-foreground">License Number</label>
         <input
           type="text"
           name="licenseNumber"
           value={formData.licenseNumber}
           onChange={handleChange}
-          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+          className="mt-1 block w-full border border-input rounded-md shadow-sm p-2"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">Specialization</label>
+        <label className="block text-sm font-medium text-foreground">Specialization</label>
         <input
           type="text"
           name="specialization"
           value={formData.specialization}
           onChange={handleChange}
-          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+          className="mt-1 block w-full border border-input rounded-md shadow-sm p-2"
         />
       </div>
 
@@ -128,7 +128,7 @@ export default function UserForm({ user, onSuccess, onCancel }) {
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+          className="px-4 py-2 border border-input rounded-md text-foreground hover:bg-muted"
         >
           Cancel
         </button>

@@ -28,7 +28,7 @@ export default function SettingsPage() {
       <div className="space-y-8">
         <div className="bg-white shadow overflow-hidden sm:rounded-lg">
           <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900">Data Management</h3>
+            <h3 className="text-lg leading-6 font-medium text-foreground">Data Management</h3>
             <div className="mt-5">
               <button
                 onClick={async () => {
@@ -55,7 +55,7 @@ export default function SettingsPage() {
               >
                 Export All Data
               </button>
-              <p className="mt-2 text-sm text-gray-500">
+              <p className="mt-2 text-sm text-muted-foreground">
                 Download all your data in JSON format. This includes clients, sessions, reports, and
                 AI analyses.
               </p>
