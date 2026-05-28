@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { signOut } from "next-auth/react";
 import { useLiam } from "@/components/liam/LiamProvider";
+import { Brand } from "@/components/Brand";
 
 export default function Navbar() {
   const { data: session } = useSession();
@@ -43,8 +44,8 @@ export default function Navbar() {
       <nav className="bg-background border-b border-border">
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
-            <Link href="/" className="text-xl font-bold text-primary">
-              CogniCare
+            <Link href="/">
+              <Brand />
             </Link>
             <button
               type="button"
@@ -129,8 +130,8 @@ export default function Navbar() {
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <Link href="/" className="text-xl font-bold text-white">
-                CogniCare
+              <Link href="/">
+                <Brand variant="onPrimary" />
               </Link>
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">

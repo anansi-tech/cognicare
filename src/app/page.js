@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import PricingPlans from "@/app/components/PricingPlans";
+import { Brand } from "@/components/Brand";
 
 export default function LandingPage() {
   const { data: session, status } = useSession();
@@ -44,7 +45,9 @@ export default function LandingPage() {
     <div className="min-h-screen bg-secondary">
       {/* Hero Section */}
       <section className="py-16 sm:py-20 px-4 text-center">
-        <h1 className="text-6xl font-bold text-foreground mb-4">CogniCare</h1>
+        <h1 className="mb-4">
+          <Brand className="text-6xl font-bold" />
+        </h1>
         <h2 className="text-2xl text-foreground/80 mb-8 font-medium">
           6 AI Agents. One Powerful Team.
         </h2>

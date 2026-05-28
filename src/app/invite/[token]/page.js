@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { Brand } from "@/components/Brand";
 
 export default function InviteAcceptPage() {
   const params = useParams();
@@ -101,7 +102,7 @@ export default function InviteAcceptPage() {
     <div className="min-h-screen flex items-center justify-center p-8">
       <div className="max-w-md w-full space-y-6">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-primary">CogniCare</h1>
+          <Brand className="text-3xl font-bold" />
           <h2 className="mt-4 text-xl font-bold text-gray-900">Join {info.practiceName}</h2>
           <p className="mt-2 text-sm text-gray-600">
             You&apos;ve been invited as <span className="font-medium">{info.email}</span>.

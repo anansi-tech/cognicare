@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
+import { Brand } from "@/components/Brand";
 
 function LoginContent() {
   const router = useRouter();
@@ -75,7 +76,7 @@ function LoginContent() {
         <div className="max-w-md w-full space-y-7">
           <div className="text-center">
             <Link href="/" className="inline-block">
-              <h1 className="text-3xl font-bold text-primary">CogniCare</h1>
+              <Brand className="text-3xl font-bold" />
             </Link>
             <h2 className="mt-6 text-2xl font-bold text-foreground">Sign in to your account</h2>
             <p className="mt-2 text-sm text-muted-foreground">
