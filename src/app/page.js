@@ -8,6 +8,15 @@ import Image from "next/image";
 import PricingPlans from "@/app/components/PricingPlans";
 import { Brand } from "@/components/Brand";
 
+function ValueItem({ title, children }) {
+  return (
+    <div>
+      <h3 className="text-lg font-semibold text-foreground mb-1">{title}</h3>
+      <p className="text-muted-foreground">{children}</p>
+    </div>
+  );
+}
+
 export default function LandingPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -89,305 +98,27 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Key Benefits */}
-      <section className="py-16 px-4">
-        <div className="max-w-6xl mx-auto">
+      {/* What you also get — practice features beyond the agent pipeline */}
+      <section className="py-16 px-4 bg-white">
+        <div className="max-w-5xl mx-auto">
           <h2 className="text-3xl font-bold text-center text-foreground mb-12">
-            Why therapists love it
+            Built for how your practice actually runs
           </h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="p-6 rounded-2xl bg-white shadow-lg hover:shadow-xl transition-shadow">
-              <div className="w-12 h-12 bg-accent rounded-full flex items-center justify-center mb-4">
-                <svg
-                  className="w-6 h-6 text-accent-foreground"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-xl font-semibold mb-2 text-primary">Smart Documentation</h3>
-              <p className="text-muted-foreground">
-                Save 5+ hours per week on paperwork. Our AI handles the boring stuff so you can
-                focus on your clients.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-white shadow-lg hover:shadow-xl transition-shadow">
-              <div className="w-12 h-12 bg-accent rounded-full flex items-center justify-center mb-4">
-                <svg
-                  className="w-6 h-6 text-accent-foreground"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-xl font-semibold mb-2 text-primary">Progress Tracking</h3>
-              <p className="text-muted-foreground">
-                Beautiful charts and insights help you track client progress and celebrate their
-                wins.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-white shadow-lg hover:shadow-xl transition-shadow">
-              <div className="w-12 h-12 bg-accent rounded-full flex items-center justify-center mb-4">
-                <svg
-                  className="w-6 h-6 text-accent-foreground"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-xl font-semibold mb-2 text-primary">Treatment Planning</h3>
-              <p className="text-muted-foreground">
-                Get AI-powered treatment suggestions and goal tracking to help your clients succeed.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section id="features" className="py-16 px-4 bg-white">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-foreground mb-12">
-            Everything you need in one place
-          </h2>
-          <div className="grid md:grid-cols-2 gap-12">
-            <div className="space-y-6">
-              <div className="flex items-start">
-                <div className="flex-shrink-0 mt-1">
-                  <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
-                    <svg
-                      className="w-4 h-4 text-accent-foreground"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <h3 className="text-lg font-semibold text-primary">AI Session Notes</h3>
-                  <p className="text-muted-foreground">
-                    No more late nights writing notes. Our AI captures everything important from
-                    your sessions.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start">
-                <div className="flex-shrink-0 mt-1">
-                  <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
-                    <svg
-                      className="w-4 h-4 text-accent-foreground"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <h3 className="text-lg font-semibold text-primary">Treatment Planning</h3>
-                  <p className="text-muted-foreground">
-                    Get personalized treatment suggestions based on evidence-based practices.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start">
-                <div className="flex-shrink-0 mt-1">
-                  <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
-                    <svg
-                      className="w-4 h-4 text-accent-foreground"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <h3 className="text-lg font-semibold text-primary">Progress Analytics</h3>
-                  <p className="text-muted-foreground">
-                    Beautiful charts and insights to track client progress and celebrate their wins.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start">
-                <div className="flex-shrink-0 mt-1">
-                  <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
-                    <svg
-                      className="w-4 h-4 text-accent-foreground"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <h3 className="text-lg font-semibold text-primary">Comprehensive Reporting</h3>
-                  <p className="text-muted-foreground">
-                    Generate detailed reports for insurance, supervision, and client progress
-                    tracking. Export in multiple formats with custom branding.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <div className="flex items-start">
-                <div className="flex-shrink-0 mt-1">
-                  <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
-                    <svg
-                      className="w-4 h-4 text-accent-foreground"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <h3 className="text-lg font-semibold text-primary">Risk Assessment</h3>
-                  <p className="text-muted-foreground">
-                    AI-powered tools to help you identify and monitor client risk factors.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start">
-                <div className="flex-shrink-0 mt-1">
-                  <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
-                    <svg
-                      className="w-4 h-4 text-accent-foreground"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <h3 className="text-lg font-semibold text-primary">Session Prep</h3>
-                  <p className="text-muted-foreground">
-                    Get personalized recommendations and focus areas for each session.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start">
-                <div className="flex-shrink-0 mt-1">
-                  <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
-                    <svg
-                      className="w-4 h-4 text-accent-foreground"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <h3 className="text-lg font-semibold text-primary">Secure by design</h3>
-                  <p className="text-muted-foreground">
-                    Practice-scoped access controls, encryption-ready storage, and full audit logs.
-                    (Full HIPAA / BAA coverage rolling out before clinical use.)
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start">
-                <div className="flex-shrink-0 mt-1">
-                  <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
-                    <svg
-                      className="w-4 h-4 text-accent-foreground"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <h3 className="text-lg font-semibold text-primary">Diagnostic Insights</h3>
-                  <p className="text-muted-foreground">
-                    Get diagnostic insights to help you understand your clients needs better.
-                  </p>
-                </div>
-              </div>
-            </div>
+          <div className="grid md:grid-cols-2 gap-x-12 gap-y-8">
+            <ValueItem title="LIAM, your in-session copilot">
+              Ask anything mid-session — LIAM answers from this client&apos;s full record, not a generic chatbot.
+            </ValueItem>
+            <ValueItem title="Solo or group practice">
+              Invite colleagues, share a roster with assignment-based confidentiality, manage seats from
+              one place.
+            </ValueItem>
+            <ValueItem title="Scheduling that runs itself">
+              Recurring appointments, automatic client reminders, no-show tracking — without leaving the
+              chart.
+            </ValueItem>
+            <ValueItem title="Billing and consent in one place">
+              E-signature consent forms, invoices, and Stripe payment links — built into the client record.
+            </ValueItem>
           </div>
         </div>
       </section>
@@ -447,11 +178,6 @@ export default function LandingPage() {
             <div>
               <h3 className="text-lg font-semibold mb-4 text-foreground">Product</h3>
               <ul className="space-y-2 text-sm">
-                <li>
-                  <Link href="#features" className="text-muted-foreground hover:text-primary">
-                    Features
-                  </Link>
-                </li>
                 <li>
                   <Link href="#pricing" className="text-muted-foreground hover:text-primary">
                     Pricing
