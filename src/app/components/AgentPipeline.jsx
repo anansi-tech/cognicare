@@ -5,31 +5,39 @@
 // styling so it inherits the Option C palette.
 import { Fragment } from "react";
 
+// Per-stage chip color cycles through the chart ramp (green / teal / bright
+// blue / cyan / green) matching the hero illustration. Token-driven so the
+// chips re-theme automatically if --chart-* values change.
 const STAGES = [
   {
     key: "assessment",
     name: "Assessment",
     caption: "Structured intake & risk",
+    chip: "var(--chart-1)", // green
   },
   {
     key: "diagnostic",
     name: "Diagnostic",
     caption: "DSM-5 differential",
+    chip: "var(--chart-2)", // teal
   },
   {
     key: "treatment",
     name: "Treatment",
     caption: "Evidence-based plan",
+    chip: "var(--chart-3)", // bright blue
   },
   {
     key: "progress",
     name: "Progress",
     caption: "Measurement-based tracking",
+    chip: "var(--chart-4)", // cyan
   },
   {
     key: "documentation",
     name: "Documentation",
     caption: "SOAP notes you approve",
+    chip: "var(--chart-1)", // green (matches hero's closing chip)
   },
 ];
 
@@ -58,9 +66,12 @@ export default function AgentPipeline() {
       >
         {STAGES.map((stage, i) => (
           <Fragment key={stage.key}>
-            <li className="flex-1 rounded-xl border border-border bg-secondary px-4 py-3 hover:border-primary/40 transition-colors min-h-[88px] md:min-h-[110px] flex flex-col justify-center">
+            <li className="flex-1 rounded-xl border border-border bg-white px-4 py-3 hover:border-primary/40 transition-colors min-h-[88px] md:min-h-[110px] flex flex-col justify-center">
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-primary text-primary-foreground text-xs font-semibold">
+                <span
+                  className="inline-flex items-center justify-center h-7 w-7 rounded-full text-white text-xs font-bold"
+                  style={{ backgroundColor: stage.chip }}
+                >
                   {i + 1}
                 </span>
                 <p className="text-sm font-semibold text-foreground">{stage.name}</p>
@@ -81,22 +92,19 @@ export default function AgentPipeline() {
         ))}
       </ol>
 
-      {/* LIAM — distinct teal node connected to the whole pipeline */}
-      <div className="mt-8 grid md:grid-cols-[1fr_auto_1fr] items-center gap-3">
-        <div className="hidden md:block h-px bg-border" />
-        <div className="rounded-xl border border-accent/60 bg-accent/15 px-5 py-4 text-center md:text-left flex items-start gap-3">
-          <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-accent text-accent-foreground text-xs font-bold flex-shrink-0">
-            L
-          </span>
-          <div>
-            <p className="text-sm font-semibold text-foreground">LIAM</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              In-session copilot — answers from this client&apos;s entire record,
-              alongside the pipeline.
-            </p>
-          </div>
+      {/* LIAM — solid accent strip alongside the pipeline, matching the hero
+          treatment. White text on the teal accent reads as a distinct lane. */}
+      <div className="mt-8 rounded-xl bg-accent text-accent-foreground px-5 py-4 flex items-start gap-3">
+        <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-white/20 text-accent-foreground text-sm font-bold flex-shrink-0">
+          L
+        </span>
+        <div>
+          <p className="text-sm font-bold uppercase tracking-wide">LIAM</p>
+          <p className="text-xs text-accent-foreground/85 mt-0.5">
+            In-session copilot — answers from this client&apos;s entire record,
+            alongside the pipeline.
+          </p>
         </div>
-        <div className="hidden md:block h-px bg-border" />
       </div>
     </div>
   );
