@@ -101,75 +101,82 @@
 }
 
 :root {
-  /* Trusted Blue palette — trusted-blue primary, teal action accent, cool
-     light-gray neutrals, red destructive (safety alerts must stay alarming). */
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.20 0.02 245);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.20 0.02 245);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.20 0.02 245);
-  --primary: oklch(0.50 0.13 245);            /* trusted blue */
-  --primary-foreground: oklch(0.985 0.01 245);
-  --secondary: oklch(0.96 0.02 235);          /* very light blue surface */
-  --secondary-foreground: oklch(0.32 0.10 245);
-  --muted: oklch(0.97 0.005 235);             /* cool light gray */
-  --muted-foreground: oklch(0.50 0.02 235);
-  --accent: oklch(0.70 0.13 235);             /* light blue accent */
-  --accent-foreground: oklch(0.985 0.01 235);
+  /* CogniCare Sky palette — bright-blue primary action, navy text base, teal
+     secondary accent, soft sky surfaces. Multi-hue chart ramp for the agent
+     pipeline (green/teal/blue/cyan/navy). Destructive red unchanged. Hex
+     references in comments map directly to the chosen palette. */
+  --background: oklch(0.99 0.002 230);          /* #FCFEFF — near-white root */
+  --foreground: oklch(0.25 0.13 265);            /* #0B2B6B — navy text base */
+  --card: oklch(0.99 0.002 230);
+  --card-foreground: oklch(0.25 0.13 265);
+  --popover: oklch(0.99 0.002 230);
+  --popover-foreground: oklch(0.25 0.13 265);
+  --primary: oklch(0.62 0.20 258);               /* #2F80FF — bright blue action */
+  --primary-foreground: oklch(0.99 0.005 240);
+  --secondary: oklch(0.97 0.008 240);            /* #F2F7FD — soft panel surface */
+  --secondary-foreground: oklch(0.25 0.13 265);
+  --muted: oklch(0.92 0.025 240);                /* #D9E7F5 — light blue quiet panels */
+  --muted-foreground: oklch(0.42 0.06 250);
+  --accent: oklch(0.55 0.09 205);                /* #158A98 — teal */
+  --accent-foreground: oklch(0.99 0.005 200);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.90 0.008 235);
-  --input: oklch(0.90 0.008 235);
-  --ring: oklch(0.50 0.13 245);
-  /* Chart ramp: blues + indigo plus a single amber for warm contrast. */
-  --chart-1: oklch(0.50 0.13 245);
-  --chart-2: oklch(0.65 0.13 215);            /* cyan-blue */
-  --chart-3: oklch(0.65 0.13 215);
-  --chart-4: oklch(0.70 0.13 50);
-  --chart-5: oklch(0.60 0.11 260);            /* indigo-blue */
+  --border: oklch(0.90 0.015 240);
+  --input: oklch(0.90 0.015 240);
+  --ring: oklch(0.62 0.20 258);
+  /* Pipeline chart ramp — matches hero vignette: bright blue / teal / cyan
+     / green / navy. Distinct hues for multi-series legibility. */
+  --chart-1: oklch(0.72 0.17 145);               /* #4DBB6A — green */
+  --chart-2: oklch(0.55 0.09 205);               /* #158A98 — teal */
+  --chart-3: oklch(0.62 0.20 258);               /* #2F80FF — bright blue */
+  --chart-4: oklch(0.72 0.10 200);               /* #25B9C8 — cyan */
+  --chart-5: oklch(0.25 0.13 265);               /* #0B2B6B — navy */
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0.006 235);
-  --sidebar-foreground: oklch(0.20 0.02 245);
-  --sidebar-primary: oklch(0.50 0.13 245);
-  --sidebar-primary-foreground: oklch(0.985 0.01 245);
-  --sidebar-accent: oklch(0.70 0.13 235);
-  --sidebar-accent-foreground: oklch(0.985 0.01 235);
-  --sidebar-border: oklch(0.90 0.008 235);
-  --sidebar-ring: oklch(0.50 0.13 245);
+  --sidebar: oklch(0.97 0.008 240);
+  --sidebar-foreground: oklch(0.25 0.13 265);
+  --sidebar-primary: oklch(0.62 0.20 258);
+  --sidebar-primary-foreground: oklch(0.99 0.005 240);
+  --sidebar-accent: oklch(0.55 0.09 205);
+  --sidebar-accent-foreground: oklch(0.99 0.005 200);
+  --sidebar-border: oklch(0.90 0.015 240);
+  --sidebar-ring: oklch(0.62 0.20 258);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.68 0.12 245);            /* lighter blue on dark */
-  --primary-foreground: oklch(0.18 0.03 245);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.72 0.11 235);             /* light blue (dark mode) */
-  --accent-foreground: oklch(0.16 0.03 235);
+  /* Dark mode — same hue family, lightened so primary action stays vibrant
+     and navy becomes the deep surface instead of the text. Pre-emptive:
+     dark mode isn't yet shipped but the tokens are kept coherent so it
+     won't break if turned on later. */
+  --background: oklch(0.20 0.06 265);            /* deep navy surface */
+  --foreground: oklch(0.95 0.01 240);
+  --card: oklch(0.24 0.06 265);
+  --card-foreground: oklch(0.95 0.01 240);
+  --popover: oklch(0.24 0.06 265);
+  --popover-foreground: oklch(0.95 0.01 240);
+  --primary: oklch(0.72 0.18 258);               /* lifted bright blue */
+  --primary-foreground: oklch(0.18 0.06 265);
+  --secondary: oklch(0.28 0.05 265);
+  --secondary-foreground: oklch(0.95 0.01 240);
+  --muted: oklch(0.28 0.05 265);
+  --muted-foreground: oklch(0.75 0.02 240);
+  --accent: oklch(0.65 0.10 205);                /* lifted teal */
+  --accent-foreground: oklch(0.16 0.05 200);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
+  --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.68 0.12 245);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.68 0.12 245);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.72 0.11 235);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --ring: oklch(0.72 0.18 258);
+  --chart-1: oklch(0.78 0.16 145);
+  --chart-2: oklch(0.65 0.10 205);
+  --chart-3: oklch(0.72 0.18 258);
+  --chart-4: oklch(0.78 0.10 200);
+  --chart-5: oklch(0.55 0.13 265);
+  --sidebar: oklch(0.24 0.06 265);
+  --sidebar-foreground: oklch(0.95 0.01 240);
+  --sidebar-primary: oklch(0.72 0.18 258);
+  --sidebar-primary-foreground: oklch(0.18 0.06 265);
+  --sidebar-accent: oklch(0.65 0.10 205);
+  --sidebar-accent-foreground: oklch(0.16 0.05 200);
+  --sidebar-border: oklch(1 0 0 / 12%);
+  --sidebar-ring: oklch(0.72 0.18 258);
 }
 
 @layer base {
