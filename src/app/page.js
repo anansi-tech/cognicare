@@ -71,18 +71,18 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Hero — the canonical agent-pipeline illustration (drives the brand
-          palette; lives in /public/hero.png). Same rounded-3xl + shadow
-          treatment as the previous component version. */}
-      <section className="py-12 px-4">
+      {/* Hero — the canonical agent-pipeline illustration. The image's own
+          light-blue backdrop matches --muted, so we let it blend with the
+          page surround instead of framing it in a hard white card. */}
+      <section className="py-8 px-4">
         <div className="max-w-screen-xl mx-auto">
-          <div className="rounded-3xl border border-border bg-white shadow-sm overflow-hidden">
+          <div className="rounded-3xl shadow-sm overflow-hidden">
             <Image
               src="/hero.png"
               alt="How CogniCare works — five specialists, one workflow: Assessment → Diagnostic → Treatment → Progress → Documentation, with LIAM as the in-session copilot."
               width={1600}
               height={900}
-              className="w-full h-auto"
+              className="w-full h-auto block"
               priority
             />
           </div>
