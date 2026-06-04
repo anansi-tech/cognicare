@@ -3,7 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import Practice from "@/models/practice";
 import { isPracticeOwner } from "@/lib/practice";
-import { logAuditEvent } from "@/lib/audit";
+import { logAuditEvent, auditMetaFromRequest } from "@/lib/audit";
 
 // Practice record: read for any member, update (name only, for now) for the
 // owner. Subscription + seat plumbing lives in /api/billing and /api/practice/seats.
@@ -44,6 +44,7 @@ export async function PATCH(req) {
     entityType: "practice",
     entityId: user.practiceId,
     details: { field: "name", name: trimmed },
+    ...auditMetaFromRequest(req),
   });
   return NextResponse.json({ ok: true, name: trimmed });
 }

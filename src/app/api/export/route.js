@@ -5,7 +5,7 @@ import Client from "@/models/client";
 import Session from "@/models/session";
 import AIReport from "@/models/aiReport";
 import Report from "@/models/report";
-import { logAuditEvent, AuditActions } from "@/lib/audit";
+import { logAuditEvent, auditMetaFromRequest, AuditActions } from "@/lib/audit";
 
 export async function GET(request) {
   try {
@@ -59,8 +59,7 @@ export async function GET(request) {
         sessionCount: sessions.length,
         reportCount: reports.length,
       },
-      ipAddress: request.headers.get("x-forwarded-for") || "unknown",
-      userAgent: request.headers.get("user-agent") || "unknown",
+      ...auditMetaFromRequest(request),
     });
 
     // Return the data as JSON
