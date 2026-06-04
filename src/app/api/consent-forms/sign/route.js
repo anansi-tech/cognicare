@@ -4,6 +4,7 @@ import ConsentForm from "@/models/consentForm";
 import { uploadFile, generateFileKey } from "@/lib/storage";
 import { getConsentFormTemplate } from "@/lib/templates/consentFormTemplate";
 import { buildSignedConsentPdf } from "@/lib/consent-pdf";
+import { auditMetaFromRequest } from "@/lib/audit";
 
 // Type-to-sign endpoint. Token from the emailed portal link is the only
 // authorization required (no user session — the client doesn't have an
@@ -31,11 +32,7 @@ export async function POST(request) {
       );
     }
 
-    const ip =
-      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-      request.headers.get("x-real-ip") ||
-      "unknown";
-    const ua = request.headers.get("user-agent") || "unknown";
+    const { ipAddress: ip, userAgent: ua } = auditMetaFromRequest(request);
     const agreedAt = new Date();
 
     const template = getConsentFormTemplate(form.type);
