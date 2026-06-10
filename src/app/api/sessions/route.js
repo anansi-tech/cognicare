@@ -4,6 +4,7 @@ import { connectDB } from "@/lib/mongodb";
 import Session from "@/models/session";
 import { requireAuth, getCurrentUser } from "@/lib/auth";
 import { visibleClientIds } from "@/lib/practice";
+import { generateSeriesDates } from "@/lib/recurrence";
 import {
   logAuditEvent,
   auditMetaFromRequest,
@@ -76,19 +77,10 @@ export const POST = requireAuth(async (req) => {
     // Recurring path: pre-generate the whole series up front. Each session is
     // its own independent doc; the seriesId is the only thing linking them.
     if (recurrence?.frequency && recurrence.frequency !== "none") {
-      const stepDays = recurrence.frequency === "biweekly" ? 14 : 7;
-      const count = Math.min(
-        Math.max(parseInt(recurrence.occurrences, 10) || 1, 1),
-        26
-      );
       const seriesId = new mongoose.Types.ObjectId();
-      const docs = [];
-      const startDate = new Date(base.date);
-      for (let i = 0; i < count; i++) {
-        const date = new Date(startDate);
-        date.setDate(date.getDate() + i * stepDays);
-        docs.push({ ...base, date, seriesId });
-      }
+      const dates = generateSeriesDates(base.date, recurrence.frequency, recurrence.occurrences);
+      const count = dates.length;
+      const docs = dates.map((date) => ({ ...base, date, seriesId }));
       const created = await Session.insertMany(docs);
       await logAuditEvent({
         userId: user.id,
