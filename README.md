@@ -1,244 +1,174 @@
-# CogniCare - AI-Powered Mental Health Practice Management System
+# CogniCare
 
-CogniCare is a comprehensive practice management system designed for mental health professionals, integrating AI capabilities to enhance clinical workflows and patient care.
+**AI-powered clinical practice management for mental health therapists.**
 
-## Features
+CogniCare gives a therapist an AI clinical team: specialized agents handle assessment, diagnosis,
+treatment planning, progress tracking, and documentation, with an in-session copilot (LIAM) that
+answers from the client's own record. The clinician brings the observations and clinical judgment;
+CogniCare handles the paperwork. Built for solo practitioners and group practices alike.
 
-### Core Features
+> **Status:** Functionally complete and in pre-launch hardening. HIPAA compliance is **in progress**
+> (OpenAI API BAA + field-level PHI encryption pending) — see [Compliance](#compliance). Do **not**
+> process real client PHI until that work lands.
 
-- **Client Management**: Comprehensive client profiles with demographic, clinical, and billing information
-- **Session Documentation**: AI-assisted session notes and progress tracking
-- **Billing & Invoicing**: Automated invoice generation and payment tracking
-- **Document Management**: Secure storage and organization of clinical documents
-- **AI Integration**: Multiple AI agents for different aspects of mental health practice
-- **Audit Logging**: Comprehensive activity tracking for security and compliance
+---
 
-### AI Agents
+## What it does
 
-1. **Assessment Agent**: Evaluates client needs and recommends appropriate interventions
-2. **Diagnostic Agent**: Assists in clinical diagnosis and treatment planning
-3. **Treatment Agent**: Provides evidence-based treatment recommendations
-4. **Progress Agent**: Tracks and analyzes client progress over time
-5. **Documentation Agent**: Assists with clinical documentation and note-taking
-6. **Conversational Agent**: Provides general support and information
+- **Your AI clinical team** — five specialized agents run automatically across the clinical workflow,
+  plus LIAM as an in-session copilot.
+- **Measurement-based care** — administer PHQ-9 / GAD-7, track scored trends over time, surface
+  reliable-change and reassessment signals.
+- **Self-driving workflows** — intake assessment, session prep, and post-session notes generate on
+  their own when the relevant event happens (no buttons to push).
+- **Practice & team** — solo or multi-clinician. Invite colleagues, assignment-based client
+  confidentiality (a clinician sees only their own clients; the owner sees all), transfer cases
+  between clinicians.
+- **Scheduling** — recurring appointments, automatic client email reminders, no-show tracking.
+- **Billing & consent** — invoices with Stripe payment links, e-signature consent forms (type-to-sign
+  with a generated signed PDF).
+- **Reports** — compile a date-ranged narrative clinical report and export it as a PDF.
+- **Subscription billing** — Solo and per-seat Practice plans via Stripe, with a 14-day trial.
+- **Audit trail** — every PHI access/change is logged for compliance.
 
-### Security Features
+## The AI agents
 
-- **Role-Based Access Control**: Different access levels for counselors and admins
-- **Audit Logging**: Tracks all system activities including:
-  - User logins/logouts
-  - Client data access and modifications
-  - Session documentation changes
-  - Invoice generation and updates
-  - Document uploads and downloads
-- **Data Encryption**: Secure storage of sensitive information
-- **HIPAA Compliance**:
-  - End-to-end encryption for all data
-  - Secure authentication and authorization
-  - Comprehensive audit trails
-  - Automatic session timeouts
-  - Secure data backup and recovery
-  - Business Associate Agreement (BAA) support
-  - Minimum Necessary Rule implementation
-  - Data access controls and restrictions
-  - Secure messaging and file sharing
-  - Regular security assessments and updates
+Five specialists run as a pipeline — each feeds the next — and store their output as `AIReport`
+documents:
 
-## Technical Stack
+1. **Assessment** — structured intake & risk evaluation
+2. **Diagnostic** — DSM-5-TR / ICD-10 differential with criteria
+3. **Treatment** — evidence-based plan with measurable goals
+4. **Progress** — measurement-based progress evaluation
+5. **Documentation** — drafts SOAP notes the clinician reviews and approves
 
-### Frontend
+A sixth **report** agent synthesizes these into compiled narrative reports.
 
-- Next.js 14 with App Router
-- React 18
-- Tailwind CSS for styling
-- NextAuth.js for authentication
+**LIAM** (Listening Intelligent Assistant for Mental health) is a separate in-session copilot with
+per-(clinician, client) rolling memory — it answers questions grounded in that client's full record,
+not a generic chatbot.
 
-### Backend
+> All AI output is clinical decision *support*. The licensed clinician reviews and approves
+> everything; nothing is final without their sign-off.
 
-- Next.js API Routes
-- MongoDB with Mongoose ODM
-- Google Cloud Storage for document storage
+## Tech stack
 
-### AI Integration
+- **Framework:** Next.js 15 (App Router, Turbopack) · React 18
+- **Styling:** Tailwind CSS v4 · shadcn/ui
+- **Database:** MongoDB (Mongoose)
+- **Auth:** Auth.js v5 (NextAuth) — JWT sessions, credentials provider
+- **AI:** OpenAI via the Vercel AI SDK v5
+- **Payments:** Stripe (subscriptions + client payment links)
+- **Email:** Resend
+- **Storage:** Google Cloud Storage (signed consent/report PDFs)
+- **Hosting:** Vercel (daily cron for appointment reminders)
 
-- OpenAI GPT-4 for AI agents
-- Custom prompt engineering for mental health context
-- Vector embeddings for semantic search
+## Architecture notes
 
-### Security
+**Multi-tenancy:** every record is scoped by `practiceId`. A practice is created automatically at
+signup; a solo practitioner is a practice of one. Visibility is assignment-based — clinicians see
+their own clients (`counselorId`), owners see the whole practice.
 
-- JWT-based authentication
-- Role-based access control
-- Comprehensive audit logging
-- Secure file storage
-- HIPAA-compliant data handling
+**Self-driving agents:** the UI fires workflows on events (new client → intake; open scheduled
+session → prep; complete session → notes) via `useEnsureWorkflow`; the orchestrator
+(`src/lib/ai/orchestrator.js`) runs the agents and persists `AIReport`s.
 
-## Getting Started
+See `CLAUDE.md` for the detailed architecture reference (models, routes, utility patterns).
+
+## Getting started
 
 ### Prerequisites
 
 - Node.js 18+
-- MongoDB
-- Google Cloud Storage account
+- MongoDB (Atlas or local)
 - OpenAI API key
+- Stripe account (test mode for local dev)
+- Resend account
+- Google Cloud Storage bucket + service account
 
-### Environment Variables
+### Setup
 
-Create a `.env.local` file with the following variables:
-
-```env
-# MongoDB
-MONGODB_URI=your_mongodb_uri
-
-# NextAuth
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=your_nextauth_secret
-
-# OpenAI
-OPENAI_API_KEY=your_openai_api_key
-
-# Google Cloud Storage
-GOOGLE_CLOUD_PROJECT_ID=your_project_id
-GOOGLE_CLOUD_CLIENT_EMAIL=your_client_email
-GOOGLE_CLOUD_PRIVATE_KEY=your_private_key
-GOOGLE_CLOUD_BUCKET_NAME=your_bucket_name
+```bash
+npm install
+cp .env.example .env.local   # then fill in the values below
+npm run dev                  # http://localhost:3000
 ```
 
-### Installation
+### Environment variables
 
-1. Clone the repository
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Run the development server:
-   ```bash
-   npm run dev
-   ```
+```env
+# Database
+MONGODB_URI=
 
-## Usage
+# Auth.js v5
+AUTH_SECRET=                 # openssl rand -base64 32
+AUTH_TRUST_HOST=true
 
-### Client Management
+# App
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 
-- Create and manage client profiles
-- Track client progress and treatment plans
-- Generate and manage invoices
-- Store and organize clinical documents
+# OpenAI
+OPENAI_API_KEY=
 
-### Session Documentation
+# Stripe (test keys for local)
+STRIPE_SECRET_KEY=
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
+STRIPE_WEBHOOK_SECRET=
+NEXT_PUBLIC_STRIPE_PRICE_SOLO=      # price_... for the Solo plan
+NEXT_PUBLIC_STRIPE_PRICE_PRACTICE=  # price_... for the per-seat Practice plan
 
-- Create session notes with AI assistance
-- Track client progress over time
-- Generate treatment plans and recommendations
+# Resend
+RESEND_API_KEY=
+RESEND_FROM=CogniCare <noreply@yourdomain>
 
-### Billing & Invoicing
+# Google Cloud Storage
+GOOGLE_CLOUD_PROJECT_ID=
+GOOGLE_CLOUD_BUCKET_NAME=
+GOOGLE_CLOUD_CLIENT_EMAIL=
+GOOGLE_CLOUD_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
 
-- Set up billing rates for different session types
-- Generate professional invoices
-- Track payment status
-- Export billing reports
+# Vercel Cron (appointment reminders)
+CRON_SECRET=
+```
 
-### Document Management
+### Stripe setup
 
-- Upload and organize clinical documents
-- Secure document storage
-- Document version control
-- Easy document retrieval
+Create two recurring prices (Solo, Practice per-seat) with a 14-day trial via
+`subscription_data.trial_period_days` in the checkout code. Enable the Customer Portal (allow cancel,
+plan switch, payment-method + quantity updates). Point a webhook at `/api/webhooks/stripe` for
+`customer.subscription.created/updated/deleted`. Put the `price_...` IDs (not `prod_...`) in the env
+vars above.
 
-### Audit Logging
+### Scripts
 
-- View comprehensive activity logs in the Admin section
-- Filter logs by:
-  - User ID
-  - Entity type (client, session, invoice, document)
-  - Action type (create, read, update, delete)
-  - Date range
-- Track IP addresses and user agents
-- Monitor system access and changes
+```bash
+npm run dev     # dev server (Turbopack)
+npm run build   # production build
+npm run lint    # ESLint
+```
 
-## Contributing
+No test framework is configured.
 
-1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+## Documentation
+
+- **`README.md`** — this file (overview + setup)
+- **`docs/USER_GUIDE.md`** — how a therapist uses the app
+- **`CLAUDE.md`** — architecture reference for working in the codebase
+- **`docs/ROUND_*.md`** — historical build specs (changelog of how the app was built)
+
+## Compliance
+
+CogniCare is designed as a HIPAA-aligned product, but it is **not yet HIPAA-ready**. Before any real
+client PHI is processed:
+
+1. **OpenAI API BAA** — a Business Associate Agreement with OpenAI (via `baa@openai.com`) with
+   Zero-Data-Retention enabled, must be signed.
+2. **Field-level PHI encryption** — encryption at rest for `client.initialAssessment`,
+   `session.notes`, `aiReport.payload`/`summary`, and `liamThread.turns`.
+
+The app already implements audit logging, assignment-based access control, session timeouts, and
+transport encryption (TLS via Vercel/Atlas). Until items 1–2 land, use **synthetic test data only**.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Acknowledgments
-
-- OpenAI for GPT-4 integration
-- Next.js team for the amazing framework
-- MongoDB for the database solution
-- Google Cloud for storage services
-
-## What's New
-
-### Enhanced Security
-
-- Session timeout for inactivity
-- Improved audit logging
-- Role-based access control
-
-### Billing Improvements
-
-- Multiple rate types (standard, initial, group)
-- Automated invoice generation
-- Payment status tracking
-- Payment reminder system
-- Detailed invoice PDFs
-
-### Document Management
-
-- Secure document storage
-- Consent form management
-- Document versioning
-- Electronic signatures
-
-### Client Management
-
-- Comprehensive client profiles
-- Session tracking
-- Billing history
-- Document management
-
-### Admin Features
-
-- Audit logging system
-- User management
-- Role-based permissions
-- Activity monitoring
-
-### Technical Improvements
-
-- PDF generation
-- Email notifications
-- Secure file storage
-- Real-time updates
-
-# Test credit card numbers
-
-Visa 4242424242424242 Any 3 digits Any future date
-Visa (debit) 4000056655665556 Any 3 digits Any future date
-
-# AI Pricing Strategy (internal)
-
-OpenAI API Costs
-
-- GPT-4: ~$0.03/1K tokens input, ~$0.06/1K tokens output
-- Average therapy session note: ~500-1000 tokens
-- 6 AI agents per session = ~3000-6000 tokens
-- Per session cost: ~$0.18-$0.36
-- 20 sessions/month = ~$3.60-$7.20
-- 100 sessions/month = ~$18-$36
-
-TEST ACCOUNTS
-OWNER
-sharit73@gmail.com (Kaiba0306$)
-CLINICIANS
-david.noel.0306@gmail.com (David)
-david.noel.0306+rosy@gmail.com (Rosy)
-Same password as owner
+Proprietary — © Anansi Technology LLC. All rights reserved.
