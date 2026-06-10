@@ -8,9 +8,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 npm run dev        # Next.js 15 + Turbopack dev server
 npm run build      # Production build
 npm run lint       # ESLint (next lint)
+npm test           # Vitest (run once)
+npm run test:watch # Vitest (watch mode)
 ```
 
-No test framework is configured.
+Tests: Vitest, `npm test`. Cover clinical scoring (PHQ-9/GAD-7 bands + safety flags), age helpers, billing status, recurrence date math, and practice scoping. Run before any PHI-touching change.
 
 ## Architecture
 
