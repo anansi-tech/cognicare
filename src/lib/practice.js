@@ -18,14 +18,17 @@ export async function isPracticeOwner(user) {
   return p?.ownerId?.toString() === String(user.id);
 }
 
+// Pure: the visibility filter for a given user. Owner sees all of practice; clinician sees own.
+export function scopeQuery({ isOwner, practiceId, userId }) {
+  return isOwner ? { practiceId } : { practiceId, counselorId: userId };
+}
+
 // Filter fragment for Client.find / findOne. Caller spreads it into their query
 // alongside any other constraints (status, _id, etc.).
 export async function clientScope(user) {
   if (!user?.practiceId) return { practiceId: null }; // no practice → no clients
-  const owner = await isPracticeOwner(user);
-  return owner
-    ? { practiceId: user.practiceId }
-    : { practiceId: user.practiceId, counselorId: user.id };
+  const isOwner = await isPracticeOwner(user);
+  return scopeQuery({ isOwner, practiceId: user.practiceId, userId: user.id });
 }
 
 // Resolves the ids of every client the user may see. Sessions/Reports queries
