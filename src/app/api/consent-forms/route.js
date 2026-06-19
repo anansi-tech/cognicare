@@ -1,14 +1,9 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { clientScope, visibleClientIds } from "@/lib/practice";
-import { getConsentFormTemplate } from "@/lib/templates/consentFormTemplate";
 import { connectDB } from "@/lib/mongodb";
 import Client from "@/models/client";
-import ConsentForm from "@/models/consentForm";
-import { sendEmail } from "@/lib/email";
-import crypto from "crypto";
-
-const generateToken = () => crypto.randomBytes(32).toString("hex");
+import { createAndSendConsent } from "@/lib/consent";
 
 // Create a consent request for a client. Scope-checked: clinicians may only
 // request on their own assigned clients; owner on any practice client.
@@ -20,9 +15,7 @@ export async function POST(request) {
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await request.json();
-    const clientId = body.clientId;
-    const type = body.type;
-    const notes = body.notes;
+    const { clientId, type, notes } = body;
 
     if (!clientId || !type) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -35,50 +28,12 @@ export async function POST(request) {
       return NextResponse.json({ error: "Client not found" }, { status: 404 });
     }
 
-    const template = getConsentFormTemplate(type);
-
-    const token = generateToken();
-    const tokenExpires = new Date();
-    tokenExpires.setDate(tokenExpires.getDate() + 7);
-
-    const consentForm = await ConsentForm.create({
-      practiceId: client.practiceId,
-      clientId: client._id,
-      requestedBy: user.id,
+    const consentForm = await createAndSendConsent({
+      client,
+      counselorId: user.id,
       type,
-      version: template.version,
-      status: "pending",
-      token,
-      tokenExpires,
       notes: notes || "",
     });
-
-    // Send the client a portal link to sign.
-    const clientEmail = client.contactInfo?.email;
-    const shareableLink = `${process.env.NEXT_PUBLIC_APP_URL}/client-portal/consent/${token}`;
-    if (clientEmail) {
-      try {
-        await sendEmail({
-          to: clientEmail,
-          subject: `Action Required: Please Sign Consent Form - ${template.title}`,
-          html: `
-            <p>Dear ${client.name},</p>
-            <p>Your counselor, ${user.name || "Your Counselor"}, has requested that you review and sign a consent form. Please click the secure link below to access the form:</p>
-            <p><a href="${shareableLink}" target="_blank">Access Consent Form</a></p>
-            <p>This link will expire in 7 days.</p>
-            <p>If you have any questions, please contact your counselor.</p>
-            <p>Thank you,</p>
-            <p>CogniCare Platform</p>
-          `,
-        });
-      } catch (emailError) {
-        console.error("Error sending consent email:", emailError);
-      }
-    } else {
-      console.warn(
-        `Client ${clientId} does not have an email address. Cannot send consent form link via email.`
-      );
-    }
 
     return NextResponse.json({
       message: "Consent request created successfully.",
