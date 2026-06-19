@@ -11,6 +11,7 @@ const measureAdministrationSchema = new mongoose.Schema(
     total: { type: Number, required: true },
     severityBand: { type: String, required: true },
     flags: [{ flag: String, itemId: String, note: String }],
+    isBaseline: { type: Boolean, default: false },
     administeredAt: { type: Date, default: Date.now },
   },
   { timestamps: true }

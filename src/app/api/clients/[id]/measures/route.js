@@ -23,6 +23,7 @@ export async function POST(req, { params }) {
   if (!allowed.some((id) => id.toString() === clientId)) {
     return NextResponse.json({ error: "Client not found" }, { status: 404 });
   }
+  const priorCount = await MeasureAdministration.countDocuments({ clientId, instrumentId });
   const doc = await MeasureAdministration.create({
     userId: user.id,
     practiceId: user.practiceId,
@@ -33,6 +34,7 @@ export async function POST(req, { params }) {
     total,
     severityBand,
     flags,
+    isBaseline: priorCount === 0,
   });
   return NextResponse.json({ id: doc._id, total, severityBand, flags });
 }
