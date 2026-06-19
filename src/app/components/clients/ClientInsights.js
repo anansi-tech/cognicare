@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useLiam } from "@/components/liam/LiamProvider";
-import { AgentReportBody } from "@/components/ai/AgentReportBody";
+import { AgentReportBody, TreatmentBody } from "@/components/ai/AgentReportBody";
 import { Section, Empty } from "@/components/ai/Section";
 
 // Client-scoped agent insights. Renders the latest envelope of each agent type
@@ -19,6 +19,7 @@ export default function ClientInsights({ clientId, refreshKey = 0 }) {
   const [assessment, setAssessment] = useState(null);
   const [diagnostic, setDiagnostic] = useState(null);
   const [treatment, setTreatment] = useState(null);
+  const [editedPayload, setEditedPayload] = useState(null);
   const [progress, setProgress] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -38,7 +39,9 @@ export default function ClientInsights({ clientId, refreshKey = 0 }) {
         if (cancelled) return;
         setAssessment(pickLatest(reports, "assessment") ?? null);
         setDiagnostic(pickLatest(reports, "diagnostic") ?? null);
-        setTreatment(pickLatest(reports, "treatment") ?? null);
+        const t = pickLatest(reports, "treatment") ?? null;
+        setTreatment(t);
+        setEditedPayload(t?.payload ?? null);
         setProgress(pickLatest(reports, "progress") ?? null);
       } catch (e) {
         if (!cancelled) setError(e.message ?? "Failed to fetch");
@@ -52,14 +55,27 @@ export default function ClientInsights({ clientId, refreshKey = 0 }) {
     };
   }, [clientId, refreshKey]);
 
-  async function approveTreatment(reportId) {
-    const res = await fetch(`/api/clients/${clientId}/ai-reports/${reportId}`, {
+  async function saveTreatment() {
+    const res = await fetch(`/api/clients/${clientId}/ai-reports/${treatment._id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: "approved" }),
+      body: JSON.stringify({ payload: editedPayload }),
     });
     if (res.ok) {
-      setTreatment((prev) => ({ ...prev, status: "approved" }));
+      const data = await res.json();
+      setTreatment((prev) => ({ ...prev, payload: data.payload }));
+    }
+  }
+
+  async function approveTreatment() {
+    const res = await fetch(`/api/clients/${clientId}/ai-reports/${treatment._id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ payload: editedPayload, status: "approved" }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setTreatment((prev) => ({ ...prev, payload: data.payload, status: "approved" }));
     }
   }
 
@@ -136,15 +152,31 @@ export default function ClientInsights({ clientId, refreshKey = 0 }) {
                 <span className="text-xs font-medium text-amber-800">
                   Draft v{treatment.version ?? 1} — review &amp; approve
                 </span>
-                <button
-                  onClick={() => approveTreatment(treatment._id)}
-                  className="rounded-md bg-amber-600 px-2 py-1 text-xs font-medium text-white hover:bg-amber-700"
-                >
-                  Approve
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={saveTreatment}
+                    className="rounded-md border border-amber-400 bg-white px-2 py-1 text-xs font-medium text-amber-800 hover:bg-amber-50"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={approveTreatment}
+                    className="rounded-md bg-amber-600 px-2 py-1 text-xs font-medium text-white hover:bg-amber-700"
+                  >
+                    Approve
+                  </button>
+                </div>
               </div>
             )}
-            <AgentReportBody agentType="treatment" payload={treatment.payload} />
+            {treatment.status === "draft" ? (
+              <TreatmentBody
+                payload={editedPayload}
+                editable={true}
+                onChange={setEditedPayload}
+              />
+            ) : (
+              <AgentReportBody agentType="treatment" payload={treatment.payload} />
+            )}
           </>
         ) : (
           <Empty>Generated automatically at intake or when you open a scheduled session.</Empty>

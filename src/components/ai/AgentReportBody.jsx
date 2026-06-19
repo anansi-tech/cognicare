@@ -1,5 +1,6 @@
 // Presentational renderers for each agent's report payload. Single source of truth —
 // when an envelope payload shape changes in schemas.js, edit ONLY this file.
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 
 // Small shared helpers so the bodies stay terse.
@@ -140,8 +141,35 @@ export function DiagnosticBody({ payload: p }) {
   );
 }
 
-export function TreatmentBody({ payload: p }) {
+// Tracks its own display text so trailing newlines survive re-renders while
+// propagating a parsed array to the parent on each change.
+function EditableList({ value = [], onChange, placeholder }) {
+  const [text, setText] = useState(() => value.join("\n"));
+  function handleChange(e) {
+    setText(e.target.value);
+    onChange(e.target.value.split("\n").map((s) => s.trim()).filter(Boolean));
+  }
+  return (
+    <textarea
+      value={text}
+      onChange={handleChange}
+      rows={Math.max(3, value.length + 1)}
+      placeholder={placeholder}
+      className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm resize-none"
+    />
+  );
+}
+
+const INPUT_CLS = "w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm";
+const INPUT_SM  = "rounded-md border border-input bg-background px-2 py-1 text-sm";
+
+export function TreatmentBody({ payload: p, editable = false, onChange }) {
   if (!p) return null;
+
+  function set(key, value) {
+    onChange({ ...p, [key]: value });
+  }
+
   return (
     <div className="space-y-3">
       {p.changeSummary && (
@@ -150,33 +178,106 @@ export function TreatmentBody({ payload: p }) {
         </div>
       )}
       <Field label="Approach">
-        <p className="text-sm">{p.approach}</p>
+        {editable ? (
+          <input
+            type="text"
+            value={p.approach ?? ""}
+            onChange={(e) => set("approach", e.target.value)}
+            className={INPUT_CLS}
+          />
+        ) : (
+          <p className="text-sm">{p.approach}</p>
+        )}
       </Field>
       <Field label="Goals">
-        {p.goals?.length ? (
-          <ul className="space-y-1 text-sm">
-            {p.goals.map((g, i) => (
-              <li key={i}>
-                <span className="font-medium">{g.goal}</span> — {g.measurable}{" "}
-                <span className="text-muted-foreground">({g.targetTimeframe})</span>
-              </li>
+        {editable ? (
+          <div className="space-y-2">
+            {(p.goals ?? []).map((g, i) => (
+              <div key={i} className="flex gap-1.5 items-start">
+                <div className="grid grid-cols-3 gap-1.5 flex-1">
+                  <input
+                    value={g.goal ?? ""}
+                    placeholder="Goal"
+                    onChange={(e) => set("goals", p.goals.map((x, j) => j === i ? { ...x, goal: e.target.value } : x))}
+                    className={INPUT_SM}
+                  />
+                  <input
+                    value={g.measurable ?? ""}
+                    placeholder="How measured"
+                    onChange={(e) => set("goals", p.goals.map((x, j) => j === i ? { ...x, measurable: e.target.value } : x))}
+                    className={INPUT_SM}
+                  />
+                  <input
+                    value={g.targetTimeframe ?? ""}
+                    placeholder="Timeframe"
+                    onChange={(e) => set("goals", p.goals.map((x, j) => j === i ? { ...x, targetTimeframe: e.target.value } : x))}
+                    className={INPUT_SM}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => set("goals", p.goals.filter((_, j) => j !== i))}
+                  className="mt-1.5 text-muted-foreground hover:text-destructive text-xs leading-none"
+                >
+                  ✕
+                </button>
+              </div>
             ))}
-          </ul>
+            <button
+              type="button"
+              onClick={() => set("goals", [...(p.goals ?? []), { goal: "", measurable: "", targetTimeframe: "" }])}
+              className="text-xs text-primary hover:text-primary/80"
+            >
+              + Add goal
+            </button>
+          </div>
         ) : (
-          <p className="text-sm text-muted-foreground">None noted.</p>
+          p.goals?.length ? (
+            <ul className="list-disc pl-5 space-y-1 text-sm">
+              {p.goals.map((g, i) => (
+                <li key={i}>
+                  {g.goal} — {g.measurable}{" "}
+                  <span className="text-muted-foreground">({g.targetTimeframe})</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">None noted.</p>
+          )
         )}
       </Field>
       <Field label="Interventions">
-        <List items={p.interventions} />
+        {editable ? (
+          <EditableList value={p.interventions ?? []} onChange={(v) => set("interventions", v)} placeholder="One intervention per line" />
+        ) : (
+          <List items={p.interventions} />
+        )}
       </Field>
       <Field label="Homework">
-        <List items={p.homework} />
+        {editable ? (
+          <EditableList value={p.homework ?? []} onChange={(v) => set("homework", v)} placeholder="One item per line" />
+        ) : (
+          <List items={p.homework} />
+        )}
       </Field>
       <Field label="Referrals">
-        <List items={p.referrals} />
+        {editable ? (
+          <EditableList value={p.referrals ?? []} onChange={(v) => set("referrals", v)} placeholder="One referral per line" />
+        ) : (
+          <List items={p.referrals} />
+        )}
       </Field>
       <Field label="Review cadence">
-        <p className="text-sm">{p.reviewCadence}</p>
+        {editable ? (
+          <input
+            type="text"
+            value={p.reviewCadence ?? ""}
+            onChange={(e) => set("reviewCadence", e.target.value)}
+            className={INPUT_CLS}
+          />
+        ) : (
+          <p className="text-sm">{p.reviewCadence}</p>
+        )}
       </Field>
     </div>
   );
