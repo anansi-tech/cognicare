@@ -8,7 +8,7 @@ import ClientForm from "./ClientForm";
 import ClientInsights from "./ClientInsights";
 import ClientAnalytics from "./ClientAnalytics";
 import ReassignControl from "./ReassignControl";
-import { ageFromDob, genderLabel } from "@/lib/age";
+import { ageFromDob, formatDob, genderLabel } from "@/lib/age";
 import { MeasuresPanel } from "@/components/measures/MeasuresPanel";
 import { useLiam } from "@/components/liam/LiamProvider";
 import { AutoIntake } from "@/components/ai/AutoIntake";
@@ -635,7 +635,7 @@ export default function ClientDetail({ clientId }) {
                       {ageFromDob(client.dateOfBirth) ?? "—"}
                       {client.dateOfBirth && (
                         <span className="ml-2 text-xs text-gray-500">
-                          (DOB {new Date(client.dateOfBirth).toLocaleDateString()})
+                          (DOB {formatDob(client.dateOfBirth)})
                         </span>
                       )}
                     </dd>

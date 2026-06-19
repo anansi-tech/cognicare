@@ -4,7 +4,7 @@ import { ageFromDob, genderLabel } from "./age.js";
 describe("ageFromDob", () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date("2024-06-15"));
+    vi.setSystemTime(new Date(2024, 5, 15)); // local June 15 — avoids UTC-to-local day shift
   });
   afterEach(() => {
     vi.useRealTimers();
