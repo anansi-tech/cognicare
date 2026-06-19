@@ -60,15 +60,29 @@ export async function buildSignedConsentPdf({
       const trimmed = raw.replace(/^\s+/, "");
       if (!trimmed) continue;
 
-      if (trimmed.startsWith("# ")) {
-        drawLine(trimmed.slice(2), { f: bold, size: HEADING_SIZE });
+      // Strip inline emphasis markers (**bold**, *italic*) — pdf-lib draws plain
+      // text, so we remove the markup rather than print it literally.
+      const stripInline = (s) => s.replace(/\*\*(.+?)\*\*/g, "$1").replace(/\*(.+?)\*/g, "$1");
+
+      // Headings: support #, ##, ### (template sections use ##). The document
+      // title is rendered separately above, so a leading "# Title" line that
+      // duplicates the title is skipped.
+      const headingMatch = trimmed.match(/^(#{1,6})\s+(.*)$/);
+      if (headingMatch) {
+        const level = headingMatch[1].length;
+        const text = stripInline(headingMatch[2]);
+        if (level === 1 && text.trim() === title.trim()) continue; // skip duplicate title
+        const size = level === 1 ? HEADING_SIZE + 1 : HEADING_SIZE;
+        y -= 2; // a little breathing room before a heading
+        const wrapped = wrap(text, bold, size, MAX_W);
+        for (const w of wrapped) drawLine(w, { f: bold, size });
       } else if (trimmed.startsWith("- ")) {
-        const wrapped = wrap(`• ${trimmed.slice(2)}`, font, BODY_SIZE, MAX_W - 12);
+        const wrapped = wrap(`• ${stripInline(trimmed.slice(2))}`, font, BODY_SIZE, MAX_W - 12);
         for (let i = 0; i < wrapped.length; i++) {
           drawLine((i === 0 ? "" : "  ") + wrapped[i]);
         }
       } else {
-        const wrapped = wrap(trimmed, font, BODY_SIZE, MAX_W);
+        const wrapped = wrap(stripInline(trimmed), font, BODY_SIZE, MAX_W);
         for (const w of wrapped) drawLine(w);
       }
     }

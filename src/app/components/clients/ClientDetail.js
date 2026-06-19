@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { ConsentMarkdown } from "@/components/ai/ConsentMarkdown";
 import toast from "react-hot-toast";
 import ClientForm from "./ClientForm";
 import ClientInsights from "./ClientInsights";
@@ -1126,7 +1127,7 @@ export default function ClientDetail({ clientId }) {
                   <div className="mt-4">
                     <label className="block text-sm font-medium text-gray-700">Form Preview</label>
                     <div className="mt-1 p-4 bg-gray-50 rounded-md max-h-60 overflow-y-auto">
-                      <pre className="whitespace-pre-wrap text-sm">{consentFormContent}</pre>
+                      <ConsentMarkdown content={consentFormContent} />
                     </div>
                   </div>
                 )}

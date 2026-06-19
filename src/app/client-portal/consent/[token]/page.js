@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
+import { ConsentMarkdown } from "@/components/ai/ConsentMarkdown";
 
 // Public consent portal — opened from the link sent to the client. Token in
 // the URL is the only authorization (no account / no session). Mobile-first:
@@ -118,8 +119,8 @@ export default function ConsentPortalPage() {
         </div>
 
         {form.body && (
-          <div className="mb-6 max-h-[55vh] overflow-y-auto rounded border border-gray-200 bg-gray-50 p-4 text-sm leading-relaxed text-gray-800 whitespace-pre-wrap">
-            {form.body}
+          <div className="mb-6 max-h-[55vh] overflow-y-auto rounded border border-gray-200 bg-gray-50 p-4 text-gray-800">
+            <ConsentMarkdown content={form.body} />
           </div>
         )}
 
