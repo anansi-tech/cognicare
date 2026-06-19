@@ -81,7 +81,10 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
       });
       setIntake(parseInitialAssessment(client.initialAssessment));
     }
-  }, [client]);
+    // Depend only on the client id — a background refetch returning the same
+    // client with a new object reference must not clobber in-progress edits.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [client?._id]);
 
   const clearError = (field) => {
     if (validationErrors[field]) {

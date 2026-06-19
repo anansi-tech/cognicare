@@ -125,12 +125,15 @@ export default function ClientDetail({ clientId }) {
   }, [activeTab]);
 
   // Refetch consent on window focus — catches the "signed in another tab, came back" case.
+  // Don't attach while the edit form is open: the refetch isn't useful there and
+  // a stale background refresh could (in a future refactor) replace the client object.
   useEffect(() => {
+    if (isEditing) return;
     const handleFocus = () => refreshConsentForms();
     window.addEventListener("focus", handleFocus);
     return () => window.removeEventListener("focus", handleFocus);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clientId]);
+  }, [clientId, isEditing]);
 
   // Auto-dismiss the new-client banner once consent is resolved.
   useEffect(() => {
