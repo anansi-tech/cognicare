@@ -4,45 +4,71 @@ import { useEnsureWorkflow } from "@/hooks/useEnsureWorkflow";
 import { GeneratingState } from "./GeneratingState";
 import { Button } from "@/components/ui/button";
 
-// Fires intake (assessment -> diagnostic) the first time a client is viewed
-// without an assessment report. Calls onDone after the workflow completes so
-// the page can refetch its data.
+// Fires intake (assessment -> diagnostic -> treatment plan) the first time a
+// client is viewed without an assessment report, AND only after consent is
+// signed or the therapist has recorded an in-person override.
 export function AutoIntake({ clientId, onDone }) {
   const [loaded, setLoaded] = useState(false);
   const [hasAssessment, setHasAssessment] = useState(false);
+  const [consent, setConsent] = useState(null); // { signed, overridden, latest }
 
   useEffect(() => {
     if (!clientId) return;
     let cancelled = false;
-    fetch(`/api/clients/${clientId}/ai-reports?agentType=assessment&limit=1`)
-      .then((r) => (r.ok ? r.json() : { reports: [] }))
-      .then((data) => {
-        if (cancelled) return;
-        setHasAssessment((data.reports?.length ?? 0) > 0);
-        setLoaded(true);
-      })
-      .catch(() => !cancelled && setLoaded(true));
-    return () => {
-      cancelled = true;
-    };
+
+    Promise.all([
+      fetch(`/api/clients/${clientId}/ai-reports?agentType=assessment&limit=1`)
+        .then((r) => (r.ok ? r.json() : { reports: [] }))
+        .then((data) => (data.reports?.length ?? 0) > 0),
+      fetch(`/api/clients/${clientId}/consent-status`)
+        .then((r) => (r.ok ? r.json() : null)),
+    ]).then(([hasA, consentData]) => {
+      if (cancelled) return;
+      setHasAssessment(hasA);
+      setConsent(consentData);
+      setLoaded(true);
+    }).catch(() => {
+      if (!cancelled) setLoaded(true);
+    });
+
+    return () => { cancelled = true; };
   }, [clientId]);
 
+  const canProcess = consent?.signed || consent?.overridden;
+
   const { generating, error, retry } = useEnsureWorkflow({
-    shouldRun: loaded && !hasAssessment,
+    shouldRun: loaded && !hasAssessment && canProcess,
     type: "intake",
     clientId,
     onDone,
   });
 
-  if (!generating && !error) return null;
+  if (!loaded || hasAssessment) return null;
+
+  if (!canProcess) {
+    return (
+      <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 space-y-2">
+        <p className="text-sm text-amber-800 font-medium">Waiting for informed consent</p>
+        <p className="text-sm text-amber-700">
+          The AI clinical pipeline will begin once the client signs the consent form, or you can
+          record consent obtained in person to proceed immediately.
+        </p>
+      </div>
+    );
+  }
+
   if (error)
     return (
       <div className="space-y-2">
-        <p className="text-sm text-destructive">Couldn't generate the assessment: {error}</p>
+        <p className="text-sm text-destructive">Couldn&apos;t generate the assessment: {error}</p>
         <Button variant="outline" size="sm" onClick={retry}>
           Try again
         </Button>
       </div>
     );
-  return <GeneratingState label="Analyzing intake — building assessment, diagnosis, and initial treatment plan…" />;
+
+  if (generating)
+    return <GeneratingState label="Analyzing intake — building assessment, diagnosis, and initial treatment plan…" />;
+
+  return null;
 }

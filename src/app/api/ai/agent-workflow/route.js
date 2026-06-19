@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { visibleClientIds } from "@/lib/practice";
 import { runWorkflow } from "@/lib/ai/orchestrator";
+import { connectDB } from "@/lib/mongodb";
+import Client from "@/models/client";
+import ConsentForm from "@/models/consentForm";
 
 export const runtime = "nodejs";
 // Two sequential gpt-5.5 reasoning calls; needs > Vercel Hobby's 60s cap (Fluid/Pro allow up to 300s).
@@ -19,6 +22,22 @@ export async function POST(req) {
   const allowed = await visibleClientIds(user);
   if (!allowed.some((id) => id.toString() === String(clientId))) {
     return NextResponse.json({ error: "Client not found" }, { status: 404 });
+  }
+
+  // Intake must not process PHI before informed consent is obtained.
+  if (type === "intake") {
+    await connectDB();
+    const [client, signed] = await Promise.all([
+      Client.findById(clientId).select("consentOverride").lean(),
+      ConsentForm.exists({ clientId, practiceId: user.practiceId, status: "signed" }),
+    ]);
+    const overridden = !!(client?.consentOverride?.by);
+    if (!signed && !overridden) {
+      return NextResponse.json(
+        { error: "Informed consent required before processing" },
+        { status: 409 }
+      );
+    }
   }
 
   try {
