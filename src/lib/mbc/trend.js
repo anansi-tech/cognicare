@@ -13,6 +13,7 @@ export async function getTrend(clientId, instrumentId, limit = 6) {
   const inst = getInstrument(instrumentId);
   const points = docs.map((d) => ({
     date: d.administeredAt, total: d.total, band: d.severityBand, flags: d.flags ?? [],
+    isBaseline: d.isBaseline ?? false,
   }));
   const latest = points.at(-1).total;
   const prev = points.length > 1 ? points.at(-2).total : null;

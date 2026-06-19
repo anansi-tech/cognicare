@@ -26,6 +26,9 @@ export function MeasureTrend({ clientId, instrumentId, refreshKey }) {
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-semibold">{only.total}</span>
             <span className="text-sm text-muted-foreground">· {only.band}</span>
+            {only.isBaseline && (
+              <span className="text-xs font-medium text-amber-600">Baseline</span>
+            )}
           </div>
           <p className="text-xs text-muted-foreground">
             Insufficient data for a trend — administer the measure again to see change over time.
@@ -39,6 +42,7 @@ export function MeasureTrend({ clientId, instrumentId, refreshKey }) {
     date: new Date(p.date).toLocaleDateString(),
     score: p.total,
     flagged: (p.flags ?? []).length > 0,
+    isBaseline: p.isBaseline ?? false,
   }));
 
   return (
@@ -63,8 +67,9 @@ export function MeasureTrend({ clientId, instrumentId, refreshKey }) {
               type="monotone" dataKey="score" strokeWidth={2}
               dot={(props) => {
                 const { cx, cy, payload, index } = props;
-                return <Dot key={index} cx={cx} cy={cy} r={payload.flagged ? 5 : 3}
-                  fill={payload.flagged ? "var(--destructive)" : "var(--primary)"} />;
+                const r = payload.flagged ? 5 : payload.isBaseline ? 5 : 3;
+                const fill = payload.flagged ? "var(--destructive)" : payload.isBaseline ? "#d97706" : "var(--primary)";
+                return <Dot key={index} cx={cx} cy={cy} r={r} fill={fill} />;
               }}
             />
           </LineChart>
