@@ -44,5 +44,5 @@ export function AutoIntake({ clientId, onDone }) {
         </Button>
       </div>
     );
-  return <GeneratingState label="Analyzing intake — building assessment and diagnosis…" />;
+  return <GeneratingState label="Analyzing intake — building assessment, diagnosis, and initial treatment plan…" />;
 }

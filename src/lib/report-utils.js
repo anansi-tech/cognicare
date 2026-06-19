@@ -16,6 +16,9 @@ export async function persistReport({
   sessionId,
   userId,
   practiceId,
+  version,
+  supersedes,
+  status,
 }) {
   await connectDB();
   // Derive practiceId from the Client if the caller didn't pass one (defensive).
@@ -34,9 +37,10 @@ export async function persistReport({
     payload,
     source: "agent-v2",
     modelVersion: MODELS.clinical,
-    // Documentation notes ship as drafts so the therapist edits + approves before
-    // they go into the official record. Other agent outputs leave status unset.
-    status: agentType === "documentation" ? "draft" : undefined,
+    // Caller may pass explicit status; fallback: documentation drafts automatically.
+    status: status ?? (agentType === "documentation" ? "draft" : undefined),
+    ...(version !== undefined && { version }),
+    ...(supersedes !== undefined && { supersedes }),
   });
   await doc.save();
   return doc;

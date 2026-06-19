@@ -49,6 +49,7 @@ export const treatmentPayload = z.object({
   homework: z.array(z.string()),
   referrals: z.array(z.string()),
   reviewCadence: z.string().describe("When to re-administer measures / reassess"),
+  changeSummary: z.string().describe("What changed from the prior plan and why; empty for the initial plan"),
 });
 
 export const progressPayload = z.object({

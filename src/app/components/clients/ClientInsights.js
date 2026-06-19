@@ -52,6 +52,17 @@ export default function ClientInsights({ clientId, refreshKey = 0 }) {
     };
   }, [clientId, refreshKey]);
 
+  async function approveTreatment(reportId) {
+    const res = await fetch(`/api/clients/${clientId}/ai-reports/${reportId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "approved" }),
+    });
+    if (res.ok) {
+      setTreatment((prev) => ({ ...prev, status: "approved" }));
+    }
+  }
+
   if (loading) {
     return (
       <div className="rounded-lg border border-border bg-background p-4 text-sm text-muted-foreground">
@@ -88,6 +99,9 @@ export default function ClientInsights({ clientId, refreshKey = 0 }) {
     );
   }
 
+  const treatmentVersion = treatment?.version;
+  const treatmentTitle = `Treatment Plan${treatmentVersion ? ` v${treatmentVersion}` : ""}`;
+
   return (
     <div className="space-y-6">
       <Section title="Assessment" summary={assessment?.summary} collapsible defaultOpen>
@@ -110,15 +124,30 @@ export default function ClientInsights({ clientId, refreshKey = 0 }) {
         )}
       </Section>
       <Section
-        title="Treatment Plan"
+        title={treatmentTitle}
         summary={treatment?.summary}
         collapsible
         defaultOpen={false}
       >
         {treatment ? (
-          <AgentReportBody agentType="treatment" payload={treatment.payload} />
+          <>
+            {treatment.status === "draft" && (
+              <div className="flex items-center justify-between mb-3 rounded-md bg-amber-50 border border-amber-200 px-3 py-2">
+                <span className="text-xs font-medium text-amber-800">
+                  Draft v{treatment.version ?? 1} — review &amp; approve
+                </span>
+                <button
+                  onClick={() => approveTreatment(treatment._id)}
+                  className="rounded-md bg-amber-600 px-2 py-1 text-xs font-medium text-white hover:bg-amber-700"
+                >
+                  Approve
+                </button>
+              </div>
+            )}
+            <AgentReportBody agentType="treatment" payload={treatment.payload} />
+          </>
         ) : (
-          <Empty>Generated automatically when you open a scheduled session.</Empty>
+          <Empty>Generated automatically at intake or when you open a scheduled session.</Empty>
         )}
       </Section>
       <Section

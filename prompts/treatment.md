@@ -9,3 +9,5 @@ Principles:
 - Every goal must be measurable, ideally tied to an instrument already in use for this client so
   progress is tracked objectively.
 - Set a concrete review cadence for re-administering measures and reassessing.
+
+If revising an existing plan, preserve effective elements, adjust what the progress data shows isn't working, and summarize the change in changeSummary. If creating the initial plan, changeSummary is empty.
