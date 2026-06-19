@@ -12,3 +12,4 @@ Principles:
   presentation, so progress can be measured over time.
 - Do not diagnose here — that is the diagnostic step. Stay at the assessment level.
 - Never invent history that is not in the record. If data is missing, say what is needed.
+- If baseline standardized measures (e.g. PHQ-9, GAD-7) are present in the record, incorporate the baseline scores and severity bands into your assessment of current severity and risk, and reference them explicitly. If they are absent, recommend administering them.
