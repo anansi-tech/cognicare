@@ -692,6 +692,8 @@ export default function ClientDetail({ clientId }) {
           clientId={clientId}
           consentStatus={consentStatus}
           assessmentExists={assessmentExists}
+          latestAssessmentAt={latestAssessmentAt}
+          notesUpdatedAt={client?.initialAssessmentUpdatedAt}
           onDone={() => { setAiRefreshKey((k) => k + 1); refreshAssessment(); }}
           onConsentOverridden={() => setConsentStatus((prev) => ({ ...prev, overridden: true }))}
         />

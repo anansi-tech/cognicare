@@ -9,6 +9,8 @@ export function IntakeAssessment({
   clientId,
   consentStatus,
   assessmentExists,
+  latestAssessmentAt,
+  notesUpdatedAt,
   onDone,
   onConsentOverridden,
 }) {
@@ -69,7 +71,25 @@ export function IntakeAssessment({
     );
   }
 
-  // Assessment exists (or still loading) — nothing to show here
+  // Notes edited after the last assessment — prompt a re-run (never auto-regenerate).
+  const notesStale =
+    assessmentExists &&
+    notesUpdatedAt &&
+    latestAssessmentAt &&
+    new Date(notesUpdatedAt) > new Date(latestAssessmentAt);
+
+  if (notesStale) {
+    return (
+      <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 space-y-2">
+        <p className="text-sm font-medium text-amber-900">
+          Intake notes changed since the last assessment.
+        </p>
+        <Button size="sm" variant="outline" onClick={run}>Re-run assessment</Button>
+      </div>
+    );
+  }
+
+  // Assessment exists and notes are current — nothing to show here
   if (assessmentExists !== false) return null;
 
   return (
