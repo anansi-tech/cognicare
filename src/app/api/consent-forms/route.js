@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { clientScope, visibleClientIds } from "@/lib/practice";
 import { connectDB } from "@/lib/mongodb";
 import Client from "@/models/client";
+import ConsentForm from "@/models/consentForm";
 import { createAndSendConsent } from "@/lib/consent";
 
 // Create a consent request for a client. Scope-checked: clinicians may only
