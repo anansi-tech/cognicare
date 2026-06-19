@@ -102,6 +102,8 @@ const clientSchema = new mongoose.Schema({
     },
     notes: String,
   },
+  // Updated whenever initialAssessment text changes; used to detect stale assessment reports.
+  initialAssessmentUpdatedAt: { type: Date },
   // Set by a therapist who obtained consent in person (override for the AI gate).
   consentOverride: {
     by: { type: mongoose.Schema.Types.ObjectId, ref: "User" },

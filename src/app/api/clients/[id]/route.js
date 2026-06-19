@@ -180,6 +180,9 @@ export async function PATCH(req, context) {
         existingClient[field] = body[field];
       }
     });
+    if (body.initialAssessment !== undefined) {
+      existingClient.initialAssessmentUpdatedAt = new Date();
+    }
 
     // Consent forms moved to the ConsentForm model (Round 12); manage via
     // `/api/consent-forms/*` instead of through this PATCH.
