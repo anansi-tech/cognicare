@@ -16,7 +16,6 @@ import { ReassessmentBanner } from "@/components/ai/ReassessmentBanner";
 import {
   getConsentFormTemplate,
   getAvailableTemplates,
-  generateConsentFormPDF,
 } from "@/lib/templates/consentFormTemplate";
 import BillingInfo from "./BillingInfo";
 import InsuranceInfo from "./InsuranceInfo";
@@ -326,7 +325,7 @@ export default function ClientDetail({ clientId }) {
       toast.success(
         (t) => (
           <span className="flex flex-col items-start">
-            <span>Consent requested successfully! Email sent to client.</span>
+            <span>{client?.contactInfo?.email ? "Consent form created and emailed to the client." : "Consent form created. No email on file — use the share/copy link to send it."}</span>
             <span className="text-xs mt-1">Shareable Link:</span>
             <div className="flex items-center space-x-2 mt-1 w-full">
               <input
@@ -467,7 +466,9 @@ export default function ClientDetail({ clientId }) {
       {showNewClientReminder && (
         <div className="mb-4 p-3 bg-accent text-accent-foreground rounded-lg flex justify-between items-center">
           <span>
-            ✨ Client created. A consent form has been sent — the AI pipeline will begin once it&apos;s signed.
+            {client?.contactInfo?.email
+              ? "✨ Client created. A consent form has been emailed to the client — the AI pipeline will begin once it’s signed, or you can record consent obtained."
+              : "✨ Client created. No email on file, so no consent form was sent — share the consent link from the Consent tab, or record consent obtained to begin."}
           </span>
           <button
             onClick={dismissNewClientReminder}
