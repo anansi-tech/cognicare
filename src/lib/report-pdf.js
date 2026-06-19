@@ -1,5 +1,35 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
+// pdf-lib's standard fonts only encode WinAnsi (Latin-1). LLM-generated
+// narratives routinely contain smart quotes, em/en dashes, ellipses, bullets,
+// and other Unicode that would throw on drawText. Transliterate those to safe
+// equivalents and strip anything else outside the printable WinAnsi range.
+function sanitizeWinAnsi(input) {
+  if (!input) return "";
+  const map = {
+    "\u2018": "'", "\u2019": "'", "\u201A": "'", "\u201B": "'",
+    "\u201C": '"', "\u201D": '"', "\u201E": '"', "\u201F": '"',
+    "\u2013": "-", "\u2014": "-", "\u2015": "-", "\u2212": "-",
+    "\u2026": "...", "\u2022": "-", "\u00B7": "-", "\u25CF": "-", "\u25AA": "-",
+    "\u00A0": " ", "\u2009": " ", "\u200A": " ", "\u202F": " ",
+    "\u2122": "(TM)", "\u00AE": "(R)", "\u00A9": "(C)",
+    "\u2192": "->", "\u2190": "<-", "\u2264": "<=", "\u2265": ">=",
+    "\uFB01": "fi", "\uFB02": "fl",
+  };
+  let out = "";
+  for (const ch of input.replace(/\r\n/g, "\n")) {
+    if (map[ch] !== undefined) { out += map[ch]; continue; }
+    const code = ch.codePointAt(0);
+    // keep tab/newline + printable Latin-1; drop the rest (emoji, CJK, etc.)
+    if (ch === "\n" || ch === "\t" || (code >= 0x20 && code <= 0x7e) || (code >= 0xa0 && code <= 0xff)) {
+      out += ch;
+    } else {
+      out += " ";
+    }
+  }
+  return out;
+}
+
 // Render a compiled clinical report as a PDF deliverable. Header, client
 // + period block, narrative body (paginated), watermark for drafts, footer
 // with AI-assisted disclosure + generated-on timestamp. Returns Uint8Array.
@@ -36,7 +66,7 @@ export async function buildReportPdf({
   let pageNo = 1;
 
   const drawFooter = () => {
-    const text = `Generated ${formatStamp(generatedAt)} · ${practiceName} · Page ${pageNo}`;
+    const text = sanitizeWinAnsi(`Generated ${formatStamp(generatedAt)} - ${practiceName} - Page ${pageNo}`);
     page.drawText(text, {
       x: MARGIN,
       y: MARGIN - 18,
@@ -66,7 +96,7 @@ export async function buildReportPdf({
 
   const drawLine = (text, { f = font, size = BODY_SIZE, color = rgb(0, 0, 0) } = {}) => {
     if (y - size < MARGIN + FOOTER_RESERVE) newPage();
-    page.drawText(text, { x: MARGIN, y: y - size, size, font: f, color });
+    page.drawText(sanitizeWinAnsi(text), { x: MARGIN, y: y - size, size, font: f, color });
     y -= size + LINE_GAP;
   };
 
@@ -91,7 +121,7 @@ export async function buildReportPdf({
   y -= PARA_GAP;
 
   // Body — split on blank lines into paragraphs, wrap by pixel width.
-  const text = (narrative || "").replace(/\r\n/g, "\n");
+  const text = sanitizeWinAnsi(narrative || "");
   const paragraphs = text.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
   if (paragraphs.length === 0) {
     drawLine("(No narrative content)", { color: rgb(0.5, 0.5, 0.5) });
