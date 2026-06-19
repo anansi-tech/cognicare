@@ -21,11 +21,13 @@ export async function GET() {
     .lean();
 
   // Annotate each with their assigned client count + owner flag.
+  // $toString normalises ObjectId vs string storage so both map to the same key.
+  // Exclude null counselorId (stale pre-backfill rows) to prevent a phantom null bucket.
   const counts = await Client.aggregate([
-    { $match: { practiceId: user.practiceId } },
-    { $group: { _id: "$counselorId", n: { $sum: 1 } } },
+    { $match: { practiceId: user.practiceId, counselorId: { $ne: null } } },
+    { $group: { _id: { $toString: "$counselorId" }, n: { $sum: 1 } } },
   ]);
-  const countMap = new Map(counts.map((c) => [String(c._id), c.n]));
+  const countMap = new Map(counts.map((c) => [c._id, c.n]));
 
   return NextResponse.json(
     members.map((m) => ({
