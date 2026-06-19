@@ -4,6 +4,24 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { toDateInputValue } from "@/lib/age";
 
+// Inverse of composeInitialAssessment — splits the stored text back into fields.
+function parseInitialAssessment(text = "") {
+  const labelMap = {
+    "Presenting Concerns": "presentingConcerns",
+    "Relevant History": "relevantHistory",
+    "Risk Indicators": "riskIndicators",
+    "Current Stressors": "currentStressors",
+  };
+  const parts = text.split(/(Presenting Concerns|Relevant History|Risk Indicators|Current Stressors):\n/);
+  const result = { presentingConcerns: "", relevantHistory: "", riskIndicators: "", currentStressors: "" };
+  for (let i = 1; i < parts.length; i += 2) {
+    const key = labelMap[parts[i]];
+    if (key) result[key] = (parts[i + 1] ?? "").trim();
+  }
+  if (!result.presentingConcerns && text.trim()) result.presentingConcerns = text.trim();
+  return result;
+}
+
 export default function ClientForm({ client, onSuccess, onCancel }) {
   const [formData, setFormData] = useState({
     name: client ? client.name || "" : "",
@@ -61,12 +79,7 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
         },
         status: client.status || "active",
       });
-      setIntake({
-        presentingConcerns: client.initialAssessment || "",
-        relevantHistory: "",
-        riskIndicators: "",
-        currentStressors: "",
-      });
+      setIntake(parseInitialAssessment(client.initialAssessment));
     }
   }, [client]);
 
