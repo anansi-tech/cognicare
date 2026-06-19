@@ -73,7 +73,7 @@ export function MeasuresPanel({ clientId, sessionId, onSaved: onSavedProp }) {
                 clientId={clientId}
                 instrumentId={chosenId}
                 sessionId={sessionId}
-                onSaved={() => { setRefreshKey((k) => k + 1); onSavedProp?.(); }}
+                onSaved={() => { setRefreshKey((k) => k + 1); onSavedProp?.(chosenId); }}
               />
             )}
           </div>

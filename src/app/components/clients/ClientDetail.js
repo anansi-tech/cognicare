@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ConsentMarkdown } from "@/components/ai/ConsentMarkdown";
@@ -44,7 +44,9 @@ export default function ClientDetail({ clientId }) {
   const [aiRefreshKey, setAiRefreshKey] = useState(0);
   const [consentForms, setConsentForms] = useState([]);
   const [consentStatus, setConsentStatus] = useState(null);
-  const [hasMeasures, setHasMeasures] = useState(null); // null = loading
+  const [administeredInstruments, setAdministeredInstruments] = useState([]);
+  const [assessmentExists, setAssessmentExists] = useState(null); // null = loading
+  const [latestAssessmentAt, setLatestAssessmentAt] = useState(null);
   const [counselor, setCounselor] = useState(null);
   const [attendance, setAttendance] = useState(null);
   const router = useRouter();
@@ -137,18 +139,35 @@ export default function ClientDetail({ clientId }) {
     }
   }, [consentStatus]);
 
-  // Check whether this client has any PHQ-9 or GAD-7 administrations on file.
-  // Used to show/hide the baseline measures intake card.
-  useEffect(() => {
+  // Track which baseline instruments have been administered (PHQ-9, GAD-7).
+  const refreshAdministeredInstruments = useCallback(async () => {
     if (!clientId) return;
-    setHasMeasures(null);
-    Promise.all([
-      fetch(`/api/clients/${clientId}/measures?instrumentId=phq9`).then((r) => r.ok ? r.json() : { points: [] }),
-      fetch(`/api/clients/${clientId}/measures?instrumentId=gad7`).then((r) => r.ok ? r.json() : { points: [] }),
-    ]).then(([phq, gad]) => {
-      setHasMeasures((phq.points?.length ?? 0) > 0 || (gad.points?.length ?? 0) > 0);
-    }).catch(() => setHasMeasures(true));
+    try {
+      const [phq, gad] = await Promise.all([
+        fetch(`/api/clients/${clientId}/measures?instrumentId=phq9`).then((r) => r.ok ? r.json() : { points: [] }),
+        fetch(`/api/clients/${clientId}/measures?instrumentId=gad7`).then((r) => r.ok ? r.json() : { points: [] }),
+      ]);
+      const ids = [];
+      if ((phq.points?.length ?? 0) > 0) ids.push("phq9");
+      if ((gad.points?.length ?? 0) > 0) ids.push("gad7");
+      setAdministeredInstruments(ids);
+    } catch {}
   }, [clientId]);
+
+  useEffect(() => { refreshAdministeredInstruments(); }, [refreshAdministeredInstruments]);
+
+  // Track whether the intake assessment has been run; used for the baseline card + IntakeAssessment.
+  const refreshAssessment = useCallback(async () => {
+    if (!clientId) return;
+    try {
+      const data = await fetch(`/api/clients/${clientId}/ai-reports?agentType=assessment&limit=1`).then((r) => r.ok ? r.json() : { reports: [] });
+      const latest = data.reports?.[0];
+      setAssessmentExists(!!latest);
+      setLatestAssessmentAt(latest?.createdAt ?? null);
+    } catch {}
+  }, [clientId]);
+
+  useEffect(() => { refreshAssessment(); }, [refreshAssessment]);
 
   const fetchClient = async () => {
     try {
@@ -677,8 +696,9 @@ export default function ClientDetail({ clientId }) {
       <div className="bg-white shadow rounded-lg p-6">
         {activeTab === "overview" && (
           <div className="space-y-6">
-            {/* Baseline measures card — shown at intake until at least one measure is on file. */}
-            {hasMeasures === false && (
+            {/* Baseline measures card — visible during intake phase (before assessment runs).
+                Collapses once the assessment has been generated. */}
+            {assessmentExists === false && (
               <div className="rounded-md border border-blue-200 bg-blue-50 p-4 space-y-3">
                 <div>
                   <h3 className="text-sm font-semibold text-blue-900">Baseline measures</h3>
@@ -686,10 +706,21 @@ export default function ClientDetail({ clientId }) {
                     Administer PHQ-9 and GAD-7 to establish a starting point. These inform the
                     assessment and anchor progress tracking.
                   </p>
+                  {administeredInstruments.length > 0 && (
+                    <p className="text-xs text-blue-600 mt-1">
+                      Administered:{" "}
+                      {[{ id: "phq9", label: "PHQ-9" }, { id: "gad7", label: "GAD-7" }]
+                        .filter((i) => administeredInstruments.includes(i.id))
+                        .map((i) => i.label)
+                        .join(", ")}{" "}✓
+                    </p>
+                  )}
                 </div>
                 <MeasuresPanel
                   clientId={clientId}
-                  onSaved={() => setHasMeasures(true)}
+                  onSaved={(instrumentId) => {
+                    if (instrumentId) setAdministeredInstruments((prev) => prev.includes(instrumentId) ? prev : [...prev, instrumentId]);
+                  }}
                 />
               </div>
             )}
