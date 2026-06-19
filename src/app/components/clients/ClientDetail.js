@@ -43,6 +43,7 @@ export default function ClientDetail({ clientId }) {
   const [showNewClientReminder, setShowNewClientReminder] = useState(false);
   const [aiRefreshKey, setAiRefreshKey] = useState(0);
   const [consentForms, setConsentForms] = useState([]);
+  const [consentStatus, setConsentStatus] = useState(null);
   const [counselor, setCounselor] = useState(null);
   const [attendance, setAttendance] = useState(null);
   const router = useRouter();
@@ -94,10 +95,15 @@ export default function ClientDetail({ clientId }) {
   const refreshConsentForms = async () => {
     if (!clientId) return;
     try {
-      const res = await fetch(`/api/consent-forms?clientId=${clientId}`);
-      if (!res.ok) return;
-      const data = await res.json();
-      setConsentForms(Array.isArray(data) ? data : []);
+      const [formsRes, statusRes] = await Promise.all([
+        fetch(`/api/consent-forms?clientId=${clientId}`),
+        fetch(`/api/clients/${clientId}/consent-status`),
+      ]);
+      if (formsRes.ok) {
+        const data = await formsRes.json();
+        setConsentForms(Array.isArray(data) ? data : []);
+      }
+      if (statusRes.ok) setConsentStatus(await statusRes.json());
     } catch (e) {
       console.error("Failed to load consent forms", e);
     }
@@ -461,8 +467,7 @@ export default function ClientDetail({ clientId }) {
       {showNewClientReminder && (
         <div className="mb-4 p-3 bg-accent text-accent-foreground rounded-lg flex justify-between items-center">
           <span>
-            ✨ Client created. The AI assessment is generating now — it&apos;ll appear on the
-            Overview shortly.
+            ✨ Client created. A consent form has been sent — the AI pipeline will begin once it&apos;s signed.
           </span>
           <button
             onClick={dismissNewClientReminder}
@@ -492,6 +497,23 @@ export default function ClientDetail({ clientId }) {
             >
               {client.status.charAt(0).toUpperCase() + client.status.slice(1)}
             </span>
+            {consentStatus && (
+              <span
+                className={`ml-2 px-2 py-1 text-xs font-semibold rounded-full ${
+                  consentStatus.signed
+                    ? "bg-emerald-100 text-emerald-800"
+                    : consentStatus.overridden
+                      ? "bg-slate-100 text-slate-700"
+                      : "bg-amber-100 text-amber-800"
+                }`}
+              >
+                {consentStatus.signed
+                  ? "Consent: signed"
+                  : consentStatus.overridden
+                    ? "Consent: recorded in person"
+                    : "Consent: pending"}
+              </span>
+            )}
           </h1>
           {counselor?.name && (
             <p className="mt-1 text-sm text-gray-600">
