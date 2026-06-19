@@ -113,6 +113,21 @@ export default function ClientDetail({ clientId }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientId]);
 
+  // Refetch consent when the Consent tab is opened — catches portal-signed forms
+  // without a full page reload.
+  useEffect(() => {
+    if (activeTab === "consent-billing") refreshConsentForms();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
+  // Refetch consent on window focus — catches the "signed in another tab, came back" case.
+  useEffect(() => {
+    const handleFocus = () => refreshConsentForms();
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clientId]);
+
   const fetchClient = async () => {
     try {
       setLoading(true);
