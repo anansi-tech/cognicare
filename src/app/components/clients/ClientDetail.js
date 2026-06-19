@@ -983,13 +983,28 @@ export default function ClientDetail({ clientId }) {
                           {form.status}
                         </span>
                         {form.status !== "signed" && (
-                          <button
-                            onClick={(e) => handleResendConsent(form._id, e)}
-                            className="text-xs text-primary hover:text-primary/80"
-                            title="Email the client a fresh signing link"
-                          >
-                            Resend
-                          </button>
+                          client?.contactInfo?.email ? (
+                            <button
+                              onClick={(e) => handleResendConsent(form._id, e)}
+                              className="text-xs text-primary hover:text-primary/80"
+                              title="Email the client a fresh signing link"
+                            >
+                              Resend
+                            </button>
+                          ) : (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const link = `${window.location.origin}/client-portal/consent/${form.token}`;
+                                navigator.clipboard.writeText(link);
+                                toast.success("Signing link copied — share it with the client.");
+                              }}
+                              className="text-xs text-primary hover:text-primary/80"
+                              title="No email on file — copy the signing link to share manually"
+                            >
+                              Copy link
+                            </button>
+                          )
                         )}
                         <button
                           onClick={(e) => handleDeleteConsent(form._id, e)}
