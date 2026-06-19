@@ -126,23 +126,23 @@ export const POST = requireAuth(async (req) => {
       ...auditMetaFromRequest(req),
     });
 
-    // Auto-send the general consent form if the client has an email.
+    // Always create the general consent form record. If the client has an email,
+    // the helper also sends the sign link; without one, the record still exists so
+    // the therapist can share the portal link manually or use the override button.
     // Best-effort: a failure here must never block client creation.
-    if (client.contactInfo?.email) {
-      try {
-        await createAndSendConsent({ client, counselorId: user.id, type: "general" });
-        await logAuditEvent({
-          userId: user.id,
-          practiceId: user.practiceId,
-          action: AuditActions.CREATE,
-          entityType: EntityTypes.DOCUMENT,
-          entityId: client._id,
-          details: { consentType: "general", autoSent: true },
-          ...auditMetaFromRequest(req),
-        });
-      } catch (consentErr) {
-        console.error("Auto-consent send failed (non-fatal):", consentErr);
-      }
+    try {
+      await createAndSendConsent({ client, counselorId: user.id, type: "general" });
+      await logAuditEvent({
+        userId: user.id,
+        practiceId: user.practiceId,
+        action: AuditActions.CREATE,
+        entityType: EntityTypes.DOCUMENT,
+        entityId: client._id,
+        details: { consentType: "general", autoSent: !!client.contactInfo?.email },
+        ...auditMetaFromRequest(req),
+      });
+    } catch (consentErr) {
+      console.error("Auto-consent create failed (non-fatal):", consentErr);
     }
 
     // Return the complete client object including initialAssessment
