@@ -9,6 +9,7 @@ import {
   AuditActions,
   EntityTypes,
 } from "@/lib/audit";
+import { createAndSendConsent } from "@/lib/consent";
 
 // Get all clients for the authenticated counselor
 export const GET = requireAuth(async (req) => {
@@ -124,6 +125,25 @@ export const POST = requireAuth(async (req) => {
       entityId: client._id,
       ...auditMetaFromRequest(req),
     });
+
+    // Auto-send the general consent form if the client has an email.
+    // Best-effort: a failure here must never block client creation.
+    if (client.contactInfo?.email) {
+      try {
+        await createAndSendConsent({ client, counselorId: user.id, type: "general" });
+        await logAuditEvent({
+          userId: user.id,
+          practiceId: user.practiceId,
+          action: AuditActions.CREATE,
+          entityType: EntityTypes.DOCUMENT,
+          entityId: client._id,
+          details: { consentType: "general", autoSent: true },
+          ...auditMetaFromRequest(req),
+        });
+      } catch (consentErr) {
+        console.error("Auto-consent send failed (non-fatal):", consentErr);
+      }
+    }
 
     // Return the complete client object including initialAssessment
     return NextResponse.json(client.toObject(), { status: 201 });
