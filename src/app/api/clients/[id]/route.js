@@ -3,7 +3,13 @@ import { connectDB } from "@/lib/mongodb";
 import Client from "@/models/client";
 import Session from "@/models/session";
 import Report from "@/models/report";
+import AIReport from "@/models/aiReport";
+import ConsentForm from "@/models/consentForm";
+import Invoice from "@/models/invoice";
+import LiamThread from "@/models/liamThread";
+import MeasureAdministration from "@/models/measureAdministration";
 import User from "@/models/user";
+import { deleteFile } from "@/lib/storage";
 import { getCurrentUser } from "@/lib/auth";
 import { clientScope } from "@/lib/practice";
 import {
@@ -275,11 +281,29 @@ export async function DELETE(req, context) {
       return NextResponse.json({ message: "Client not found" }, { status: 404 });
     }
 
-    // Delete associated sessions sequentially
-    await Session.deleteMany({ clientId: id });
+    // Collect GCS storage keys before deleting DB rows.
+    const [invoices, consents] = await Promise.all([
+      Invoice.find({ clientId: id }).select("documentKey").lean(),
+      ConsentForm.find({ clientId: id }).select("documentKey signedDocumentKey").lean(),
+    ]);
+    const fileKeys = [
+      ...invoices.map((i) => i.documentKey),
+      ...consents.flatMap((c) => [c.documentKey, c.signedDocumentKey]),
+    ].filter(Boolean);
 
-    // Delete associated reports sequentially
-    await Report.deleteMany({ clientId: id });
+    // Cascade-delete all related records.
+    await Promise.all([
+      Session.deleteMany({ clientId: id }),
+      Report.deleteMany({ clientId: id }),
+      AIReport.deleteMany({ clientId: id }),
+      ConsentForm.deleteMany({ clientId: id }),
+      Invoice.deleteMany({ clientId: id }),
+      LiamThread.deleteMany({ clientId: id }),
+      MeasureAdministration.deleteMany({ clientId: id }),
+    ]);
+
+    // Delete associated GCS files best-effort — a storage hiccup doesn't abort the delete.
+    await Promise.allSettled(fileKeys.map((k) => deleteFile(k)));
 
     await logAuditEvent({
       userId: user.id,
@@ -287,6 +311,7 @@ export async function DELETE(req, context) {
       action: AuditActions.DELETE,
       entityType: EntityTypes.CLIENT,
       entityId: id,
+      details: { cascade: true },
       ...auditMetaFromRequest(req),
     });
 
