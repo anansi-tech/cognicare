@@ -44,6 +44,7 @@ export default function ClientDetail({ clientId }) {
   const [aiRefreshKey, setAiRefreshKey] = useState(0);
   const [consentForms, setConsentForms] = useState([]);
   const [consentStatus, setConsentStatus] = useState(null);
+  const [hasMeasures, setHasMeasures] = useState(null); // null = loading
   const [counselor, setCounselor] = useState(null);
   const [attendance, setAttendance] = useState(null);
   const router = useRouter();
@@ -135,6 +136,19 @@ export default function ClientDetail({ clientId }) {
       setShowNewClientReminder(false);
     }
   }, [consentStatus]);
+
+  // Check whether this client has any PHQ-9 or GAD-7 administrations on file.
+  // Used to show/hide the baseline measures intake card.
+  useEffect(() => {
+    if (!clientId) return;
+    setHasMeasures(null);
+    Promise.all([
+      fetch(`/api/clients/${clientId}/measures?instrumentId=phq9`).then((r) => r.ok ? r.json() : { points: [] }),
+      fetch(`/api/clients/${clientId}/measures?instrumentId=gad7`).then((r) => r.ok ? r.json() : { points: [] }),
+    ]).then(([phq, gad]) => {
+      setHasMeasures((phq.points?.length ?? 0) > 0 || (gad.points?.length ?? 0) > 0);
+    }).catch(() => setHasMeasures(true));
+  }, [clientId]);
 
   const fetchClient = async () => {
     try {
@@ -663,6 +677,23 @@ export default function ClientDetail({ clientId }) {
       <div className="bg-white shadow rounded-lg p-6">
         {activeTab === "overview" && (
           <div className="space-y-6">
+            {/* Baseline measures card — shown at intake until at least one measure is on file. */}
+            {hasMeasures === false && (
+              <div className="rounded-md border border-blue-200 bg-blue-50 p-4 space-y-3">
+                <div>
+                  <h3 className="text-sm font-semibold text-blue-900">Baseline measures</h3>
+                  <p className="text-sm text-blue-700 mt-1">
+                    Administer PHQ-9 and GAD-7 to establish a starting point. These inform the
+                    assessment and anchor progress tracking.
+                  </p>
+                </div>
+                <MeasuresPanel
+                  clientId={clientId}
+                  onSaved={() => setHasMeasures(true)}
+                />
+              </div>
+            )}
+
             {/* The AI clinical picture leads the overview — risk, assessment, diagnosis, treatment. */}
             <ClientInsights clientId={client._id} refreshKey={aiRefreshKey} />
 

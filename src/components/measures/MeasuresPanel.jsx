@@ -17,7 +17,7 @@ import {
 import { MeasureForm } from "./MeasureForm";
 import { MeasureTrend } from "./MeasureTrend";
 
-export function MeasuresPanel({ clientId, sessionId }) {
+export function MeasuresPanel({ clientId, sessionId, onSaved: onSavedProp }) {
   const [instruments, setInstruments] = useState([]);
   const [chosenId, setChosenId] = useState("");
   const [formOpen, setFormOpen] = useState(false);
@@ -73,7 +73,7 @@ export function MeasuresPanel({ clientId, sessionId }) {
                 clientId={clientId}
                 instrumentId={chosenId}
                 sessionId={sessionId}
-                onSaved={() => setRefreshKey((k) => k + 1)}
+                onSaved={() => { setRefreshKey((k) => k + 1); onSavedProp?.(); }}
               />
             )}
           </div>
