@@ -12,7 +12,7 @@ import ReassignControl from "./ReassignControl";
 import { ageFromDob, formatDob, genderLabel } from "@/lib/age";
 import { MeasuresPanel } from "@/components/measures/MeasuresPanel";
 import { useLiam } from "@/components/liam/LiamProvider";
-import { AutoIntake } from "@/components/ai/AutoIntake";
+import { IntakeAssessment } from "@/components/ai/IntakeAssessment";
 import { ReassessmentBanner } from "@/components/ai/ReassessmentBanner";
 import {
   getConsentFormTemplate,
@@ -688,7 +688,13 @@ export default function ClientDetail({ clientId }) {
 
       {/* Auto-run intake on first view of a client without an assessment. */}
       <div className="mb-4">
-        <AutoIntake clientId={clientId} consentStatus={consentStatus} onDone={() => setAiRefreshKey((k) => k + 1)} />
+        <IntakeAssessment
+          clientId={clientId}
+          consentStatus={consentStatus}
+          assessmentExists={assessmentExists}
+          onDone={() => { setAiRefreshKey((k) => k + 1); refreshAssessment(); }}
+          onConsentOverridden={() => setConsentStatus((prev) => ({ ...prev, overridden: true }))}
+        />
       </div>
       <ReassessmentBanner clientId={clientId} />
 
