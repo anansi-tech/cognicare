@@ -70,8 +70,15 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
     }
   }, [client]);
 
+  const clearError = (field) => {
+    if (validationErrors[field]) {
+      setValidationErrors((prev) => { const n = { ...prev }; delete n[field]; return n; });
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
+    clearError(name.split(".")[0]);
 
     if (name.includes(".")) {
       // Handle nested properties (e.g., contactInfo.email)
@@ -389,9 +396,10 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
               </label>
               <textarea
                 value={intake.presentingConcerns}
-                onChange={(e) =>
-                  setIntake((s) => ({ ...s, presentingConcerns: e.target.value }))
-                }
+                onChange={(e) => {
+                  clearError("initialAssessment");
+                  setIntake((s) => ({ ...s, presentingConcerns: e.target.value }));
+                }}
                 rows={4}
                 className="w-full p-2 border border-gray-300 rounded"
                 placeholder="What brings them in — current symptoms, the precipitating event, what they're hoping to address."
@@ -403,9 +411,10 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
               </label>
               <textarea
                 value={intake.relevantHistory}
-                onChange={(e) =>
-                  setIntake((s) => ({ ...s, relevantHistory: e.target.value }))
-                }
+                onChange={(e) => {
+                  clearError("initialAssessment");
+                  setIntake((s) => ({ ...s, relevantHistory: e.target.value }));
+                }}
                 rows={3}
                 className="w-full p-2 border border-gray-300 rounded"
                 placeholder="Mental health / treatment / medical history as known — prior diagnoses, medications, prior therapy."
@@ -417,9 +426,10 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
               </label>
               <textarea
                 value={intake.riskIndicators}
-                onChange={(e) =>
-                  setIntake((s) => ({ ...s, riskIndicators: e.target.value }))
-                }
+                onChange={(e) => {
+                  clearError("initialAssessment");
+                  setIntake((s) => ({ ...s, riskIndicators: e.target.value }));
+                }}
                 rows={3}
                 className="w-full p-2 border border-gray-300 rounded"
                 placeholder="Suicidal/homicidal ideation, safety concerns — or 'none noted'."
@@ -431,9 +441,10 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
               </label>
               <textarea
                 value={intake.currentStressors}
-                onChange={(e) =>
-                  setIntake((s) => ({ ...s, currentStressors: e.target.value }))
-                }
+                onChange={(e) => {
+                  clearError("initialAssessment");
+                  setIntake((s) => ({ ...s, currentStressors: e.target.value }));
+                }}
                 rows={3}
                 className="w-full p-2 border border-gray-300 rounded"
                 placeholder="Situational factors — relationships, work, finances, recent changes, supports."
