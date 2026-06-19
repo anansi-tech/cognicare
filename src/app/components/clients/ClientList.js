@@ -15,14 +15,17 @@ export default function ClientList() {
   const [statusFilter, setStatusFilter] = useState("");
   const [showAddClient, setShowAddClient] = useState(false);
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
 
-  // Only fetch all clients once on component mount
+  // Fetch clients once when the session becomes authenticated. Depending on
+  // `status` (a stable string) rather than the `session` object prevents
+  // next-auth's on-focus session refetch from re-triggering this effect and
+  // flipping `loading`, which would remount the Add-Client form and wipe input.
   useEffect(() => {
-    if (session) {
+    if (status === "authenticated") {
       fetchAllClients();
     }
-  }, [session]);
+  }, [status]);
 
   const fetchAllClients = async () => {
     try {
