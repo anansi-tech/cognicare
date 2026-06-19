@@ -129,6 +129,13 @@ export default function ClientDetail({ clientId }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientId]);
 
+  // Auto-dismiss the new-client banner once consent is resolved.
+  useEffect(() => {
+    if (consentStatus?.signed || consentStatus?.overridden) {
+      setShowNewClientReminder(false);
+    }
+  }, [consentStatus]);
+
   const fetchClient = async () => {
     try {
       setLoading(true);
@@ -484,7 +491,7 @@ export default function ClientDetail({ clientId }) {
           <span>
             {client?.contactInfo?.email
               ? "✨ Client created. A consent form has been emailed to the client — the AI pipeline will begin once it’s signed, or you can record consent obtained."
-              : "✨ Client created. No email on file, so no consent form was sent — share the consent link from the Consent tab, or record consent obtained to begin."}
+              : "✨ Client created. No email on file — share the consent link from the Consent tab, or record consent obtained to begin."}
           </span>
           <button
             onClick={dismissNewClientReminder}
@@ -648,7 +655,7 @@ export default function ClientDetail({ clientId }) {
 
       {/* Auto-run intake on first view of a client without an assessment. */}
       <div className="mb-4">
-        <AutoIntake clientId={clientId} onDone={() => setAiRefreshKey((k) => k + 1)} />
+        <AutoIntake clientId={clientId} consentStatus={consentStatus} onDone={() => setAiRefreshKey((k) => k + 1)} />
       </div>
       <ReassessmentBanner clientId={clientId} />
 
