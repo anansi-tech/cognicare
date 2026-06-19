@@ -102,6 +102,11 @@ const clientSchema = new mongoose.Schema({
     },
     notes: String,
   },
+  // Set by a therapist who obtained consent in person (override for the AI gate).
+  consentOverride: {
+    by: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    at: { type: Date },
+  },
   createdAt: {
     type: Date,
     default: Date.now,
