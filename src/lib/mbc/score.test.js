@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { scoreInstrument } from "./score.js";
 import { getInstrument } from "./instruments.js";
+import { computeDirection } from "./trend.js";
 
 /** Build a full response array from a values array aligned to instrument items. */
 function responses(instrumentId, values) {
@@ -90,5 +91,69 @@ describe("scoreInstrument — GAD-7", () => {
     expect(result.total).toBe(21);
     expect(result.severityBand).toBe(expectedBand("gad7", 21));
     expect(result.complete).toBe(true);
+  });
+});
+
+describe("scoreInstrument — WHO-5", () => {
+  it("all 5s → total 25, Good wellbeing, complete", () => {
+    const r = responses("who5", Array(5).fill(5));
+    const result = scoreInstrument("who5", r);
+    expect(result.total).toBe(25);
+    expect(result.severityBand).toBe("Good wellbeing");
+    expect(result.flags).toHaveLength(0);
+    expect(result.complete).toBe(true);
+  });
+
+  it("all 0s → total 0, Poor wellbeing, complete", () => {
+    const r = responses("who5", Array(5).fill(0));
+    const result = scoreInstrument("who5", r);
+    expect(result.total).toBe(0);
+    expect(result.severityBand).toBe("Poor wellbeing (screen for depression)");
+    expect(result.complete).toBe(true);
+  });
+
+  it("score 13 → Poor wellbeing (screening cutoff)", () => {
+    // 13 = 2+3+3+3+2 e.g.
+    const r = responses("who5", [2, 3, 3, 3, 2]);
+    const result = scoreInstrument("who5", r);
+    expect(result.total).toBe(13);
+    expect(result.severityBand).toBe("Poor wellbeing (screen for depression)");
+  });
+
+  it("score 14 → Below average wellbeing", () => {
+    const r = responses("who5", [3, 3, 3, 3, 2]);
+    const result = scoreInstrument("who5", r);
+    expect(result.total).toBe(14);
+    expect(result.severityBand).toBe("Below average wellbeing");
+  });
+});
+
+describe("computeDirection — direction-aware", () => {
+  const who5 = getInstrument("who5");
+  const phq9 = getInstrument("phq9");
+
+  it("WHO-5 score increase → improved (wellbeing direction)", () => {
+    expect(computeDirection(5, who5)).toBe("improved");
+  });
+
+  it("WHO-5 score decrease → worsened", () => {
+    expect(computeDirection(-5, who5)).toBe("worsened");
+  });
+
+  it("PHQ-9 score increase → worsened (distress direction)", () => {
+    expect(computeDirection(5, phq9)).toBe("worsened");
+  });
+
+  it("PHQ-9 score decrease → improved", () => {
+    expect(computeDirection(-5, phq9)).toBe("improved");
+  });
+
+  it("zero delta → unchanged for both", () => {
+    expect(computeDirection(0, who5)).toBe("unchanged");
+    expect(computeDirection(0, phq9)).toBe("unchanged");
+  });
+
+  it("null delta → insufficient-data", () => {
+    expect(computeDirection(null, who5)).toBe("insufficient-data");
   });
 });

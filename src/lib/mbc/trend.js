@@ -2,6 +2,16 @@ import { connectDB } from "@/lib/mongodb";
 import MeasureAdministration from "@/models/measureAdministration";
 import { getInstrument } from "./instruments";
 
+/** Pure direction logic, exported for tests. */
+export function computeDirection(delta, inst) {
+  if (delta == null) return "insufficient-data";
+  if (delta === 0) return "unchanged";
+  const isWellbeing = inst.direction === "wellbeing";
+  return isWellbeing
+    ? (delta > 0 ? "improved" : "worsened")
+    : (delta < 0 ? "improved" : "worsened");
+}
+
 /** Oldest -> newest series for an instrument, plus reliable-change vs the prior point. */
 export async function getTrend(clientId, instrumentId, limit = 6) {
   await connectDB();
@@ -19,8 +29,12 @@ export async function getTrend(clientId, instrumentId, limit = 6) {
   const prev = points.length > 1 ? points.at(-2).total : null;
   const delta = prev == null ? null : latest - prev;
   const reliableChange = delta == null ? false : Math.abs(delta) >= inst.reliableChange;
-  const direction = delta == null ? "insufficient-data"
-    : delta < 0 ? "improved" : delta > 0 ? "worsened" : "unchanged";
+  const direction = computeDirection(delta, inst);
 
-  return { instrumentId, name: inst.name, points, latest, previous: prev, delta, reliableChange, direction };
+  return {
+    instrumentId, name: inst.name,
+    percentageFactor: inst.scoring?.percentageFactor ?? null,
+    scoringMax: inst.scoring.max,
+    points, latest, previous: prev, delta, reliableChange, direction,
+  };
 }

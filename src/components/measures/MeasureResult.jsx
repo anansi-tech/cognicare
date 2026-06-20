@@ -2,11 +2,16 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 
 export function MeasureResult({ instrument, result }) {
+  const pct = instrument.scoring?.percentageFactor
+    ? result.total * instrument.scoring.percentageFactor
+    : null;
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <span className="text-2xl font-semibold">{result.total}</span>
-        <span className="text-sm text-muted-foreground">/ {instrument.scoring.max}</span>
+        <span className="text-sm text-muted-foreground">
+          / {instrument.scoring.max}{pct != null ? ` (${pct}%)` : ""}
+        </span>
         <Badge variant="secondary">{result.severityBand}</Badge>
       </div>
       {result.flags?.some((f) => f.flag === "suicidal-ideation") && (

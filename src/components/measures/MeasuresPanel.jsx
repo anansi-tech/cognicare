@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/sheet";
 import { MeasureForm } from "./MeasureForm";
 import { MeasureTrend } from "./MeasureTrend";
+import { AdministrationHistory } from "./AdministrationHistory";
 
 export function MeasuresPanel({ clientId, sessionId, onSaved: onSavedProp }) {
   const [instruments, setInstruments] = useState([]);
@@ -90,6 +91,8 @@ export function MeasuresPanel({ clientId, sessionId, onSaved: onSavedProp }) {
           />
         ))}
       </div>
+
+      <AdministrationHistory clientId={clientId} refreshKey={refreshKey} />
     </div>
   );
 }

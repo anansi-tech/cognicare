@@ -1,0 +1,31 @@
+{
+  "id": "who5",
+  "name": "WHO-5 Wellbeing Index",
+  "construct": "Wellbeing",
+  "direction": "wellbeing",
+  "recallWindow": "Over the last 2 weeks",
+  "stem": "Please indicate for each statement which is closest to how you have been feeling over the last two weeks.",
+  "responseOptions": [
+    { "label": "At no time", "value": 0 },
+    { "label": "Some of the time", "value": 1 },
+    { "label": "Less than half the time", "value": 2 },
+    { "label": "More than half the time", "value": 3 },
+    { "label": "Most of the time", "value": 4 },
+    { "label": "All of the time", "value": 5 }
+  ],
+  "items": [
+    { "id": "who5_1", "text": "I have felt cheerful and in good spirits" },
+    { "id": "who5_2", "text": "I have felt calm and relaxed" },
+    { "id": "who5_3", "text": "I have felt active and vigorous" },
+    { "id": "who5_4", "text": "I woke up feeling fresh and rested" },
+    { "id": "who5_5", "text": "My daily life has been filled with things that interest me" }
+  ],
+  "scoring": { "method": "sum", "min": 0, "max": 25, "percentageFactor": 4 },
+  "bands": [
+    { "min": 0, "max": 13, "label": "Poor wellbeing (screen for depression)" },
+    { "min": 14, "max": 18, "label": "Below average wellbeing" },
+    { "min": 19, "max": 25, "label": "Good wellbeing" }
+  ],
+  "reliableChange": 10,
+  "criticalItems": []
+}

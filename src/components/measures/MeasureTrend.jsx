@@ -17,6 +17,7 @@ export function MeasureTrend({ clientId, instrumentId, refreshKey }) {
   // landed, plus a note that a trend appears with the next one.
   if (trend.points.length === 1) {
     const only = trend.points[0];
+    const pct = trend.percentageFactor ? only.total * trend.percentageFactor : null;
     return (
       <Card>
         <CardHeader>
@@ -25,7 +26,9 @@ export function MeasureTrend({ clientId, instrumentId, refreshKey }) {
         <CardContent className="space-y-1">
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-semibold">{only.total}</span>
-            <span className="text-sm text-muted-foreground">· {only.band}</span>
+            <span className="text-sm text-muted-foreground">
+              / {trend.scoringMax}{pct != null ? ` (${pct}%)` : ""} · {only.band}
+            </span>
             {only.isBaseline && (
               <span className="text-xs font-medium text-amber-600">Baseline</span>
             )}
@@ -58,6 +61,11 @@ export function MeasureTrend({ clientId, instrumentId, refreshKey }) {
         </CardTitle>
       </CardHeader>
       <CardContent>
+        {trend.percentageFactor && (
+          <p className="mb-2 text-xs text-muted-foreground">
+            Latest: {trend.latest}/{trend.scoringMax} ({trend.latest * trend.percentageFactor}%)
+          </p>
+        )}
         <ResponsiveContainer width="100%" height={220}>
           <LineChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
             <XAxis dataKey="date" fontSize={11} />

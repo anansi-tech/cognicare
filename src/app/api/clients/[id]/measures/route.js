@@ -5,6 +5,7 @@ import { connectDB } from "@/lib/mongodb";
 import MeasureAdministration from "@/models/measureAdministration";
 import { scoreInstrument } from "@/lib/mbc/score";
 import { getTrend } from "@/lib/mbc/trend";
+import { listInstruments } from "@/lib/mbc/instruments";
 
 export async function POST(req, { params }) {
   const user = await getCurrentUser();
@@ -43,12 +44,24 @@ export async function GET(req, { params }) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id: clientId } = await params;
-  const instrumentId = req.nextUrl.searchParams.get("instrumentId");
-  if (!instrumentId) return NextResponse.json({ error: "instrumentId required" }, { status: 400 });
   await connectDB();
   const allowed = await visibleClientIds(user);
   if (!allowed.some((id) => id.toString() === clientId)) {
     return NextResponse.json({ error: "Client not found" }, { status: 404 });
   }
+
+  // ?history=1 returns all administrations (with responses) across all instruments.
+  if (req.nextUrl.searchParams.get("history") === "1") {
+    const instNameMap = new Map(listInstruments().map((i) => [i.id, i.name]));
+    const docs = await MeasureAdministration.find({ clientId })
+      .sort({ administeredAt: -1 })
+      .lean();
+    return NextResponse.json(
+      docs.map((d) => ({ ...d, instrumentName: instNameMap.get(d.instrumentId) ?? d.instrumentId }))
+    );
+  }
+
+  const instrumentId = req.nextUrl.searchParams.get("instrumentId");
+  if (!instrumentId) return NextResponse.json({ error: "instrumentId required" }, { status: 400 });
   return NextResponse.json(await getTrend(clientId, instrumentId, 12));
 }
