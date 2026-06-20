@@ -466,7 +466,7 @@ export default function SessionDetail({ sessionId }) {
           {!isEditing && <SessionNote sessionId={session._id} refreshKey={aiRefreshKey} />}
           {!isEditing && (
             <div className="mt-6">
-              <SessionAIInsights session={session} refreshKey={aiRefreshKey} />
+              <SessionAIInsights session={session} refreshKey={aiRefreshKey} focus="session" />
             </div>
           )}
           {!isEditing && (
@@ -475,6 +475,7 @@ export default function SessionDetail({ sessionId }) {
               <MeasuresPanel
                 clientId={typeof session.clientId === "object" ? session.clientId?._id : session.clientId}
                 sessionId={session._id}
+                compact
               />
             </div>
           )}

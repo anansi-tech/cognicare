@@ -13,7 +13,7 @@ function pickLatest(reports, agentType) {
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
 }
 
-export default function SessionAIInsights({ session, refreshKey = 0 }) {
+export default function SessionAIInsights({ session, refreshKey = 0, focus }) {
   const [assessment, setAssessment] = useState(null);
   const [diagnostic, setDiagnostic] = useState(null);
   const [treatment, setTreatment] = useState(null);
@@ -77,7 +77,9 @@ export default function SessionAIInsights({ session, refreshKey = 0 }) {
     );
   }
 
-  if (!assessment && !diagnostic && !treatment && !progress) {
+  const sessionOnly = focus === "session";
+
+  if (sessionOnly ? (!treatment && !progress) : (!assessment && !diagnostic && !treatment && !progress)) {
     return (
       <div className="rounded-lg border border-border bg-accent/30 p-4">
         <p className="text-sm text-muted-foreground">
@@ -89,25 +91,29 @@ export default function SessionAIInsights({ session, refreshKey = 0 }) {
 
   return (
     <div className="space-y-6">
-      <Section title="Assessment" summary={assessment?.summary} collapsible defaultOpen>
-        {assessment ? (
-          <AgentReportBody agentType="assessment" payload={assessment.payload} />
-        ) : (
-          <Empty>Assessment generates automatically when a client is created.</Empty>
-        )}
-      </Section>
-      <Section
-        title="Diagnostic Impression"
-        summary={diagnostic?.summary}
-        collapsible
-        defaultOpen={false}
-      >
-        {diagnostic ? (
-          <AgentReportBody agentType="diagnostic" payload={diagnostic.payload} />
-        ) : (
-          <Empty>Generated automatically after the assessment.</Empty>
-        )}
-      </Section>
+      {!sessionOnly && (
+        <Section title="Assessment" summary={assessment?.summary} collapsible defaultOpen>
+          {assessment ? (
+            <AgentReportBody agentType="assessment" payload={assessment.payload} />
+          ) : (
+            <Empty>Assessment generates automatically when a client is created.</Empty>
+          )}
+        </Section>
+      )}
+      {!sessionOnly && (
+        <Section
+          title="Diagnostic Impression"
+          summary={diagnostic?.summary}
+          collapsible
+          defaultOpen={false}
+        >
+          {diagnostic ? (
+            <AgentReportBody agentType="diagnostic" payload={diagnostic.payload} />
+          ) : (
+            <Empty>Generated automatically after the assessment.</Empty>
+          )}
+        </Section>
+      )}
       <Section
         title="Treatment Plan"
         summary={treatment?.summary}
