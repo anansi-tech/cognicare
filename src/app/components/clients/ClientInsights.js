@@ -20,6 +20,7 @@ export default function ClientInsights({ clientId, refreshKey = 0 }) {
   const [diagnostic, setDiagnostic] = useState(null);
   const [treatment, setTreatment] = useState(null);
   const [editedPayload, setEditedPayload] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
   const [progress, setProgress] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -76,6 +77,7 @@ export default function ClientInsights({ clientId, refreshKey = 0 }) {
     if (res.ok) {
       const data = await res.json();
       setTreatment((prev) => ({ ...prev, payload: data.payload, status: "approved" }));
+      setIsEditing(false);
     }
   }
 
@@ -168,14 +170,41 @@ export default function ClientInsights({ clientId, refreshKey = 0 }) {
                 </div>
               </div>
             )}
-            {treatment.status === "draft" ? (
+            {treatment.status === "approved" && isEditing && (
+              <div className="flex items-center justify-between mb-3 rounded-md bg-gray-50 border border-gray-200 px-3 py-2">
+                <span className="text-xs font-medium text-gray-700">Editing — Save or Approve</span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={saveTreatment}
+                    className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={approveTreatment}
+                    className="rounded-md bg-primary px-2 py-1 text-xs font-medium text-white hover:bg-primary/90"
+                  >
+                    Approve
+                  </button>
+                </div>
+              </div>
+            )}
+            {(treatment.status === "draft" || isEditing) ? (
               <TreatmentBody
                 payload={editedPayload}
                 editable={true}
                 onChange={setEditedPayload}
               />
             ) : (
-              <AgentReportBody agentType="treatment" payload={treatment.payload} />
+              <>
+                <AgentReportBody agentType="treatment" payload={treatment.payload} />
+                <button
+                  onClick={() => { setIsEditing(true); setEditedPayload(treatment.payload); }}
+                  className="mt-2 text-xs text-primary hover:text-primary/80"
+                >
+                  Edit plan
+                </button>
+              </>
             )}
           </>
         ) : (
