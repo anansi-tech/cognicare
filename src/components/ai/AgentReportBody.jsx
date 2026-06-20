@@ -1,6 +1,6 @@
 // Presentational renderers for each agent's report payload. Single source of truth —
 // when an envelope payload shape changes in schemas.js, edit ONLY this file.
-import { useState } from "react";
+
 import { Badge } from "@/components/ui/badge";
 
 // Small shared helpers so the bodies stay terse.
@@ -25,25 +25,25 @@ const Field = ({ label, children }) => (
 // Ordinal status chips — semantic colors only (red/amber/yellow/green/slate),
 // distinct from the brand blue. Lets a clinician scan severity at a glance.
 const RISK_BADGE = {
-  none: "bg-emerald-100 text-emerald-800 border-emerald-200",
-  low: "bg-green-100 text-green-800 border-green-200",
-  moderate: "bg-amber-100 text-amber-800 border-amber-200",
-  high: "bg-orange-100 text-orange-800 border-orange-200",
-  imminent: "bg-red-100 text-red-800 border-red-200",
+  none: "bg-emerald-100 text-emerald-800 border-emerald-400",
+  low: "bg-green-100 text-green-800 border-green-400",
+  moderate: "bg-amber-200 text-amber-900 border-amber-400",
+  high: "bg-orange-100 text-orange-800 border-orange-400",
+  imminent: "bg-red-100 text-red-800 border-red-400",
 };
 const CONFIDENCE_BADGE = {
-  low: "bg-amber-100 text-amber-800 border-amber-200",
-  moderate: "bg-slate-100 text-slate-700 border-slate-200",
-  high: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  low: "bg-amber-100 text-amber-800 border-amber-400",
+  moderate: "bg-slate-200 text-slate-800 border-slate-400",
+  high: "bg-emerald-100 text-emerald-800 border-emerald-400",
 };
 const GOAL_BADGE = {
   "not-started": "bg-slate-100 text-slate-600 border-slate-200",
-  emerging: "bg-amber-100 text-amber-800 border-amber-200",
-  progressing: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  met: "bg-green-100 text-green-800 border-green-200",
-  regressed: "bg-red-100 text-red-800 border-red-200",
+  emerging: "bg-amber-100 text-amber-800 border-amber-400",
+  progressing: "bg-yellow-100 text-yellow-800 border-yellow-400",
+  met: "bg-green-100 text-green-800 border-green-400",
+  regressed: "bg-red-100 text-red-800 border-red-400",
 };
-const NEUTRAL_BADGE = "bg-slate-100 text-slate-700 border-slate-200";
+const NEUTRAL_BADGE = "bg-slate-100 text-slate-700 border-slate-400";
 
 const StatusBadge = ({ map, value, label }) => {
   const cls = map[value] || NEUTRAL_BADGE;
@@ -141,22 +141,39 @@ export function DiagnosticBody({ payload: p }) {
   );
 }
 
-// Tracks its own display text so trailing newlines survive re-renders while
-// propagating a parsed array to the parent on each change.
+// Per-row editable list: each item is its own bordered input with a remove
+// button, so boundaries between items are clear (vs. one ambiguous textarea).
 function EditableList({ value = [], onChange, placeholder }) {
-  const [text, setText] = useState(() => value.join("\n"));
-  function handleChange(e) {
-    setText(e.target.value);
-    onChange(e.target.value.split("\n").map((s) => s.trim()).filter(Boolean));
-  }
+  const items = value.length ? value : [""];
+  const update = (i, v) => onChange(items.map((x, j) => (j === i ? v : x)).filter((s, j) => s.trim() || j === i));
+  const removeAt = (i) => onChange(items.filter((_, j) => j !== i).filter((s) => s.trim()));
+  const add = () => onChange([...items.filter((s) => s.trim()), ""]);
   return (
-    <textarea
-      value={text}
-      onChange={handleChange}
-      rows={Math.max(3, value.length + 1)}
-      placeholder={placeholder}
-      className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm resize-none"
-    />
+    <div className="space-y-1.5">
+      {items.map((item, i) => (
+        <div key={i} className="flex items-center gap-1.5">
+          <span className="text-muted-foreground text-sm select-none">•</span>
+          <input
+            type="text"
+            value={item}
+            onChange={(e) => update(i, e.target.value)}
+            placeholder={placeholder}
+            className="flex-1 rounded-md border border-input bg-background px-2.5 py-1.5 text-sm"
+          />
+          <button
+            type="button"
+            onClick={() => removeAt(i)}
+            className="text-muted-foreground hover:text-red-600 text-sm px-1"
+            aria-label="Remove item"
+          >
+            ✕
+          </button>
+        </div>
+      ))}
+      <button type="button" onClick={add} className="text-xs text-primary hover:text-primary/80">
+        + Add item
+      </button>
+    </div>
   );
 }
 
@@ -179,11 +196,11 @@ export function TreatmentBody({ payload: p, editable = false, onChange }) {
       )}
       <Field label="Approach">
         {editable ? (
-          <input
-            type="text"
+          <textarea
+            rows={2}
             value={p.approach ?? ""}
             onChange={(e) => set("approach", e.target.value)}
-            className={INPUT_CLS}
+            className={`${INPUT_CLS} resize-none`}
           />
         ) : (
           <p className="text-sm">{p.approach}</p>
@@ -238,11 +255,22 @@ export function TreatmentBody({ payload: p, editable = false, onChange }) {
           </div>
         ) : (
           p.goals?.length ? (
-            <ul className="list-disc pl-5 space-y-1 text-sm">
+            <ul className="space-y-2">
               {p.goals.map((g, i) => (
-                <li key={i}>
-                  {g.goal} — {g.measurable}{" "}
-                  <span className="text-muted-foreground">({g.targetTimeframe})</span>
+                <li key={i} className="rounded-md border border-gray-200 bg-gray-50/50 px-3 py-2 text-sm">
+                  <div className="font-medium text-gray-900">{g.goal}</div>
+                  {g.measurable && (
+                    <div className="mt-0.5 text-gray-600">
+                      <span className="text-xs uppercase tracking-wide text-gray-400">Measure</span>{" "}
+                      {g.measurable}
+                    </div>
+                  )}
+                  {g.targetTimeframe && (
+                    <div className="mt-0.5 text-gray-600">
+                      <span className="text-xs uppercase tracking-wide text-gray-400">Timeframe</span>{" "}
+                      {g.targetTimeframe}
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>
@@ -253,32 +281,32 @@ export function TreatmentBody({ payload: p, editable = false, onChange }) {
       </Field>
       <Field label="Interventions">
         {editable ? (
-          <EditableList value={p.interventions ?? []} onChange={(v) => set("interventions", v)} placeholder="One intervention per line" />
+          <EditableList value={p.interventions ?? []} onChange={(v) => set("interventions", v)} placeholder="Add an intervention" />
         ) : (
           <List items={p.interventions} />
         )}
       </Field>
       <Field label="Homework">
         {editable ? (
-          <EditableList value={p.homework ?? []} onChange={(v) => set("homework", v)} placeholder="One item per line" />
+          <EditableList value={p.homework ?? []} onChange={(v) => set("homework", v)} placeholder="Add a homework item" />
         ) : (
           <List items={p.homework} />
         )}
       </Field>
       <Field label="Referrals">
         {editable ? (
-          <EditableList value={p.referrals ?? []} onChange={(v) => set("referrals", v)} placeholder="One referral per line" />
+          <EditableList value={p.referrals ?? []} onChange={(v) => set("referrals", v)} placeholder="Add a referral" />
         ) : (
           <List items={p.referrals} />
         )}
       </Field>
       <Field label="Review cadence">
         {editable ? (
-          <input
-            type="text"
+          <textarea
+            rows={2}
             value={p.reviewCadence ?? ""}
             onChange={(e) => set("reviewCadence", e.target.value)}
-            className={INPUT_CLS}
+            className={`${INPUT_CLS} resize-none`}
           />
         ) : (
           <p className="text-sm">{p.reviewCadence}</p>
