@@ -61,6 +61,7 @@ export default function BillingPage() {
   const router = useRouter();
   const [busy, setBusy] = useState(null); // priceId currently checking out / "portal"
   const [seats, setSeats] = useState(2); // Practice plan implies 2+; default 2
+  const [selectedPlan, setSelectedPlan] = useState("solo");
 
   // Unauthed users get bounced to the marketing landing (pricing already
   // lives there). Done in an effect — never call router.replace during render.
@@ -195,8 +196,9 @@ export default function BillingPage() {
             {PLANS.map((plan) => (
               <div
                 key={plan.id}
-                className={`relative rounded-lg bg-white p-6 shadow-sm flex flex-col ${
-                  plan.highlight
+                onClick={() => setSelectedPlan(plan.id)}
+                className={`relative rounded-lg bg-white p-6 shadow-sm flex flex-col cursor-pointer ${
+                  selectedPlan === plan.id
                     ? "border border-primary ring-1 ring-primary/20"
                     : "border border-gray-200"
                 }`}
