@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -10,10 +10,11 @@ export default function SignupPage() {
   const router = useRouter();
   const { status } = useSession();
 
-  if (status === "authenticated") {
-    router.replace("/dashboard");
-    return null;
-  }
+  useEffect(() => {
+    if (status === "authenticated") router.replace("/dashboard");
+  }, [status, router]);
+
+  if (status === "authenticated") return null;
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
