@@ -194,14 +194,16 @@ export default function ClientDetail({ clientId }) {
   const refreshAdministeredInstruments = useCallback(async () => {
     if (!clientId) return;
     try {
-      const [phq, gad] = await Promise.all([
-        fetch(`/api/clients/${clientId}/measures?instrumentId=phq9`).then((r) => r.ok ? r.json() : { points: [] }),
-        fetch(`/api/clients/${clientId}/measures?instrumentId=gad7`).then((r) => r.ok ? r.json() : { points: [] }),
-      ]);
-      const ids = [];
-      if ((phq.points?.length ?? 0) > 0) ids.push("phq9");
-      if ((gad.points?.length ?? 0) > 0) ids.push("gad7");
-      setAdministeredInstruments(ids);
+      const all = listInstruments();
+      const trends = await Promise.all(
+        all.map((i) =>
+          fetch(`/api/clients/${clientId}/measures?instrumentId=${i.id}`)
+            .then((r) => r.ok ? r.json() : { points: [] })
+        )
+      );
+      setAdministeredInstruments(
+        all.map((i) => i.id).filter((_, idx) => (trends[idx].points?.length ?? 0) > 0)
+      );
     } catch {}
   }, [clientId]);
 
