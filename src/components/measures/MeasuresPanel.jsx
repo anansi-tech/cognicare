@@ -18,7 +18,7 @@ import { MeasureForm } from "./MeasureForm";
 import { MeasureTrend } from "./MeasureTrend";
 import { AdministrationHistory } from "./AdministrationHistory";
 
-export function MeasuresPanel({ clientId, sessionId, onSaved: onSavedProp }) {
+export function MeasuresPanel({ clientId, sessionId, onSaved: onSavedProp, sections = false }) {
   const [instruments, setInstruments] = useState([]);
   const [chosenId, setChosenId] = useState("");
   const [formOpen, setFormOpen] = useState(false);
@@ -33,8 +33,8 @@ export function MeasuresPanel({ clientId, sessionId, onSaved: onSavedProp }) {
       });
   }, []);
 
-  return (
-    <div className="space-y-4">
+  const administerBlock = (
+    <>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
         <div className="flex flex-col gap-1 sm:flex-1">
           <span className="text-sm font-medium text-gray-700">Administer measure</span>
@@ -60,7 +60,6 @@ export function MeasuresPanel({ clientId, sessionId, onSaved: onSavedProp }) {
           Start
         </Button>
       </div>
-
       <Sheet open={formOpen} onOpenChange={setFormOpen}>
         <SheetContent side="right" className="flex w-full flex-col sm:w-[28rem]">
           <SheetHeader>
@@ -80,18 +79,45 @@ export function MeasuresPanel({ clientId, sessionId, onSaved: onSavedProp }) {
           </div>
         </SheetContent>
       </Sheet>
+    </>
+  );
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {instruments.map((i) => (
-          <MeasureTrend
-            key={i.id}
-            clientId={clientId}
-            instrumentId={i.id}
-            refreshKey={refreshKey}
-          />
-        ))}
+  const trendsBlock = (
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      {instruments.map((i) => (
+        <MeasureTrend
+          key={i.id}
+          clientId={clientId}
+          instrumentId={i.id}
+          refreshKey={refreshKey}
+        />
+      ))}
+    </div>
+  );
+
+  if (sections) {
+    return (
+      <div className="space-y-8">
+        <div className="space-y-3">
+          <h2 className="text-xl font-semibold text-gray-900">Administer</h2>
+          {administerBlock}
+        </div>
+        <div className="space-y-3">
+          <h2 className="text-xl font-semibold text-gray-900">Trends</h2>
+          {trendsBlock}
+        </div>
+        <div className="space-y-3">
+          <h2 className="text-xl font-semibold text-gray-900">History</h2>
+          <AdministrationHistory clientId={clientId} refreshKey={refreshKey} />
+        </div>
       </div>
+    );
+  }
 
+  return (
+    <div className="space-y-4">
+      {administerBlock}
+      {trendsBlock}
       <AdministrationHistory clientId={clientId} refreshKey={refreshKey} />
     </div>
   );

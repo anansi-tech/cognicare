@@ -32,7 +32,6 @@ export function AdministrationHistory({ clientId, refreshKey }) {
 
   return (
     <div className="space-y-2">
-      <h3 className="text-sm font-semibold text-gray-900">Administration History</h3>
       <ul className="divide-y divide-gray-100 rounded-md border border-gray-200 bg-white">
         {history.map((adm) => {
           const id = adm._id?.toString() ?? adm.id;

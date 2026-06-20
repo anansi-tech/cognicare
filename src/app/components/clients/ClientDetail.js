@@ -26,6 +26,53 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 
+/** Compact one-line score summary per instrument, shown on Overview post-intake. */
+function MeasureGlance({ clientId, onViewAssessments }) {
+  const [scores, setScores] = useState([]);
+
+  useEffect(() => {
+    fetch("/api/instruments")
+      .then((r) => r.json())
+      .then((list) =>
+        Promise.all(
+          list.map((i) =>
+            fetch(`/api/clients/${clientId}/measures?instrumentId=${i.id}`)
+              .then((r) => r.json())
+          )
+        )
+      )
+      .then((trends) => setScores(trends.filter((t) => t.points?.length > 0)));
+  }, [clientId]);
+
+  if (scores.length === 0) return null;
+
+  return (
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+      {scores.map((t) => {
+        const arrow = t.delta == null ? null : t.delta > 0 ? "↑" : t.delta < 0 ? "↓" : "→";
+        const arrowColor =
+          t.direction === "improved" ? "text-green-600"
+          : t.direction === "worsened" ? "text-red-600"
+          : "text-gray-400";
+        const pct = t.percentageFactor ? `/${t.scoringMax} (${t.latest * t.percentageFactor}%)` : "";
+        return (
+          <span key={t.instrumentId} className="text-sm text-gray-700">
+            <span className="font-medium">{t.name}</span>:{" "}
+            {t.latest}{pct} · {t.points.at(-1)?.band}
+            {arrow && <span className={`ml-1 font-medium ${arrowColor}`}>{arrow}</span>}
+          </span>
+        );
+      })}
+      <button
+        onClick={onViewAssessments}
+        className="text-xs text-primary hover:text-primary/80"
+      >
+        View assessments →
+      </button>
+    </div>
+  );
+}
+
 export default function ClientDetail({ clientId }) {
   const [client, setClient] = useState(null);
   const [recentSessions, setRecentSessions] = useState([]);
@@ -80,7 +127,7 @@ export default function ClientDetail({ clientId }) {
     const tabParam = searchParams.get("tab");
     if (!tabParam) return;
     // Map removed tabs to their new homes.
-    const TAB_ALIAS = { insights: "overview", analytics: "progress", measures: "progress" };
+    const TAB_ALIAS = { insights: "overview", analytics: "progress", measures: "progress", assessments: "progress" };
     const resolved = TAB_ALIAS[tabParam] ?? tabParam;
     if (
       ["overview", "sessions", "reports", "progress", "consent-billing"].includes(resolved)
@@ -664,7 +711,7 @@ export default function ClientDetail({ clientId }) {
                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
             }`}
           >
-            Progress
+            Assessments
           </button>
           <button
             onClick={() => setActiveTab("reports")}
@@ -738,6 +785,14 @@ export default function ClientDetail({ clientId }) {
 
             {/* The AI clinical picture leads the overview — risk, assessment, diagnosis, treatment. */}
             <ClientInsights clientId={client._id} refreshKey={aiRefreshKey} />
+
+            {/* Compact score glance — only once the assessment has been run (post-intake). */}
+            {assessmentExists === true && (
+              <MeasureGlance
+                clientId={clientId}
+                onViewAssessments={() => setActiveTab("progress")}
+              />
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Basic Info */}
@@ -1008,14 +1063,7 @@ export default function ClientDetail({ clientId }) {
 
         {activeTab === "progress" && (
           <div className="space-y-8">
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-gray-900">Measure Trends</h2>
-              <p className="text-sm text-gray-500">
-                Administer PHQ-9 / GAD-7 here; trends update with each new administration. The
-                AI narrative — Progress Report — lives on the Overview.
-              </p>
-              <MeasuresPanel clientId={client._id} />
-            </div>
+            <MeasuresPanel clientId={client._id} sections />
             <div className="space-y-4">
               <h2 className="text-xl font-semibold text-gray-900">Risk Over Time</h2>
               <ClientAnalytics clientId={client._id} />
