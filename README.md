@@ -145,6 +145,7 @@ vars above.
 npm run dev     # dev server (Turbopack)
 npm run build   # production build
 npm run lint    # ESLint
+stripe listen --forward-to localhost:3000/api/webhooks/stripe   # Stripe webhook on dev
 ```
 
 No test framework is configured.
