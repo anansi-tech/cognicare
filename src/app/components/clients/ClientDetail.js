@@ -300,7 +300,7 @@ export default function ClientDetail({ clientId }) {
   };
 
   const handleViewReport = (report) => {
-    window.open(`/clients/${clientId}/reports/${report._id}/view`, "_blank");
+    router.push(`/clients/${clientId}/reports/${report._id}/view`);
   };
 
   const handleDeleteReport = async (reportId) => {
