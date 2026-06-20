@@ -74,9 +74,21 @@ function MeasureGlance({ clientId, onViewAssessments }) {
   );
 }
 
+function sortSessionsForDisplay(list) {
+  const now = Date.now();
+  const upcoming = list
+    .filter((s) => new Date(s.date).getTime() >= now)
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+  const past = list
+    .filter((s) => new Date(s.date).getTime() < now)
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
+  return [...upcoming, ...past];
+}
+
 export default function ClientDetail({ clientId }) {
   const [client, setClient] = useState(null);
   const [recentSessions, setRecentSessions] = useState([]);
+  const [sessions, setSessions] = useState([]);
   const [recentReports, setRecentReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -136,6 +148,10 @@ export default function ClientDetail({ clientId }) {
       setActiveTab(resolved);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    if (activeTab === "sessions" && clientId) fetchClientSessions();
+  }, [activeTab, clientId]);
 
   useEffect(() => {
     setAvailableTemplates(getAvailableTemplates());
@@ -260,6 +276,17 @@ export default function ClientDetail({ clientId }) {
       setRecentReports(data.reports);
     } catch (error) {
       console.error("Error fetching reports:", error);
+    }
+  };
+
+  const fetchClientSessions = async () => {
+    try {
+      const r = await fetch(`/api/sessions?clientId=${clientId}`);
+      if (!r.ok) return;
+      const data = await r.json();
+      setSessions(sortSessionsForDisplay(data));
+    } catch {
+      // non-critical — tab will show empty
     }
   };
 
@@ -941,7 +968,7 @@ export default function ClientDetail({ clientId }) {
                 New Session
               </button>
             </div>
-            {recentSessions.length > 0 ? (
+            {sessions.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
@@ -961,7 +988,7 @@ export default function ClientDetail({ clientId }) {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {recentSessions.map((session) => (
+                    {sessions.map((session) => (
                       <tr key={session._id}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           {formatDate(session.date)}
