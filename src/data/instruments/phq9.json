@@ -1,6 +1,7 @@
 {
   "id": "phq9",
   "name": "Patient Health Questionnaire-9",
+  "shortName": "PHQ-9",
   "construct": "Depression",
   "recallWindow": "Over the last 2 weeks",
   "stem": "Over the last 2 weeks, how often have you been bothered by any of the following problems?",

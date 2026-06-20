@@ -1,6 +1,7 @@
 {
   "id": "gad7",
   "name": "Generalized Anxiety Disorder-7",
+  "shortName": "GAD-7",
   "construct": "Anxiety",
   "recallWindow": "Over the last 2 weeks",
   "stem": "Over the last 2 weeks, how often have you been bothered by the following problems?",

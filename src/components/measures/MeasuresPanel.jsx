@@ -18,7 +18,7 @@ import { MeasureForm } from "./MeasureForm";
 import { MeasureTrend } from "./MeasureTrend";
 import { AdministrationHistory } from "./AdministrationHistory";
 
-export function MeasuresPanel({ clientId, sessionId, onSaved: onSavedProp, sections = false }) {
+export function MeasuresPanel({ clientId, sessionId, onSaved: onSavedProp, sections = false, compact = false }) {
   const [instruments, setInstruments] = useState([]);
   const [chosenId, setChosenId] = useState("");
   const [formOpen, setFormOpen] = useState(false);
@@ -94,6 +94,16 @@ export function MeasuresPanel({ clientId, sessionId, onSaved: onSavedProp, secti
       ))}
     </div>
   );
+
+  // compact: administer picker + form only — no trend cards, no history.
+  // Used inside the intake baseline card where results live on the Assessments tab.
+  if (compact) {
+    return (
+      <div className="space-y-3">
+        {administerBlock}
+      </div>
+    );
+  }
 
   if (sections) {
     return (

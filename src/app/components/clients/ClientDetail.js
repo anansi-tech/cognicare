@@ -11,6 +11,7 @@ import ClientAnalytics from "./ClientAnalytics";
 import ReassignControl from "./ReassignControl";
 import { ageFromDob, formatDob, genderLabel } from "@/lib/age";
 import { MeasuresPanel } from "@/components/measures/MeasuresPanel";
+import { listInstruments } from "@/lib/mbc/instruments";
 import { useLiam } from "@/components/liam/LiamProvider";
 import { IntakeAssessment } from "@/components/ai/IntakeAssessment";
 import { ReassessmentBanner } from "@/components/ai/ReassessmentBanner";
@@ -761,21 +762,27 @@ export default function ClientDetail({ clientId }) {
                 <div>
                   <h3 className="text-sm font-semibold text-blue-900">Baseline measures</h3>
                   <p className="text-sm text-blue-700 mt-1">
-                    Administer PHQ-9 and GAD-7 to establish a starting point. These inform the
+                    Administer baseline measures to establish a starting point. These inform the
                     assessment and anchor progress tracking.
                   </p>
                   {administeredInstruments.length > 0 && (
-                    <p className="text-xs text-blue-600 mt-1">
-                      Administered:{" "}
-                      {[{ id: "phq9", label: "PHQ-9" }, { id: "gad7", label: "GAD-7" }]
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {listInstruments()
                         .filter((i) => administeredInstruments.includes(i.id))
-                        .map((i) => i.label)
-                        .join(", ")}{" "}✓
-                    </p>
+                        .map((i) => (
+                          <span
+                            key={i.id}
+                            className="inline-flex items-center gap-1 rounded-full bg-green-100 text-green-800 text-xs font-medium px-2 py-0.5"
+                          >
+                            {i.shortName ?? i.id.toUpperCase()} <span aria-hidden>✓</span>
+                          </span>
+                        ))}
+                    </div>
                   )}
                 </div>
                 <MeasuresPanel
                   clientId={clientId}
+                  compact
                   onSaved={(instrumentId) => {
                     if (instrumentId) setAdministeredInstruments((prev) => prev.includes(instrumentId) ? prev : [...prev, instrumentId]);
                   }}

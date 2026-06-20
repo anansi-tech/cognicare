@@ -1,6 +1,7 @@
 {
   "id": "who5",
   "name": "WHO-5 Wellbeing Index",
+  "shortName": "WHO-5",
   "construct": "Wellbeing",
   "direction": "wellbeing",
   "recallWindow": "Over the last 2 weeks",
