@@ -3,12 +3,18 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { Brand } from "@/components/Brand";
 
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { status } = useSession();
+
+  if (status === "authenticated") {
+    router.replace("/dashboard");
+    return null;
+  }
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);

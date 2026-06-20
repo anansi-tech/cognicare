@@ -37,8 +37,10 @@ export default function Navbar() {
     };
   }, []);
 
+  if (isAuthRoute) return null;
+
   if (!session) {
-    if (!isPublicRoute || isAuthRoute) return null;
+    if (!isPublicRoute) return null;
 
     return (
       <nav className="bg-background border-b border-border">

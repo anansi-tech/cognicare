@@ -3,10 +3,17 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { Brand } from "@/components/Brand";
 
 export default function SignupPage() {
   const router = useRouter();
+  const { status } = useSession();
+
+  if (status === "authenticated") {
+    router.replace("/dashboard");
+    return null;
+  }
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
