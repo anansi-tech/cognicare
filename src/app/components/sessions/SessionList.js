@@ -67,9 +67,9 @@ export default function SessionList({ initialStatusFilter = "" }) {
     }
   };
 
-  // Filter sessions client-side
+  // Filter sessions client-side, then sort: upcoming first (asc), past next (desc)
   const filteredSessions = useMemo(() => {
-    return allSessions.filter((session) => {
+    const filtered = allSessions.filter((session) => {
       // Apply search filter (case-insensitive)
       const matchesSearch =
         searchTerm === "" ||
@@ -87,6 +87,14 @@ export default function SessionList({ initialStatusFilter = "" }) {
 
       return matchesSearch && matchesStatus && matchesType;
     });
+    const now = Date.now();
+    const upcoming = filtered
+      .filter((s) => new Date(s.date).getTime() >= now)
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+    const past = filtered
+      .filter((s) => new Date(s.date).getTime() < now)
+      .sort((a, b) => new Date(b.date) - new Date(a.date));
+    return [...upcoming, ...past];
   }, [allSessions, searchTerm, statusFilter, typeFilter]);
 
   const handleSessionAdded = (newSession) => {
