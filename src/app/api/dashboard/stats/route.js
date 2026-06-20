@@ -95,6 +95,7 @@ export const GET = requireAuth(async (req) => {
         date: report.createdAt,
         clientName: report.clientId?.name || "Unknown Client",
         status: report.status,
+        reportType: report.type,
         id: report._id.toString(),
         // Needed to deep-link to the real viewer at /clients/:cid/reports/:rid/view.
         clientId: report.clientId?._id?.toString() ?? null,

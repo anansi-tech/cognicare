@@ -320,21 +320,29 @@ export default function DashboardPage() {
                     <span className="text-xl mr-3">{getActivityIcon(activity.type)}</span>
                     <div>
                       <p className="text-sm font-medium text-gray-900">
-                        Session with {activity.clientName}
+                        {activity.type === "report"
+                          ? `${activity.reportType ? activity.reportType.charAt(0).toUpperCase() + activity.reportType.slice(1) + " report" : "Report"} for ${activity.clientName}`
+                          : `Session with ${activity.clientName}`}
                       </p>
                       <p className="text-sm text-gray-500">
-                        {activity.duration ? `Duration: ${activity.duration} minutes` : "Session"}
+                        {activity.type === "report"
+                          ? "Generated report"
+                          : activity.duration
+                            ? `Duration: ${activity.duration} minutes`
+                            : "Session"}
                       </p>
                     </div>
                   </div>
                   <div className="ml-2 flex-shrink-0 flex">
-                    <p
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
-                        activity.status
-                      )}`}
-                    >
-                      {activity.status || "N/A"}
-                    </p>
+                    {activity.status && (
+                      <p
+                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
+                          activity.status
+                        )}`}
+                      >
+                        {activity.status}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="mt-2 flex items-center text-sm text-gray-500">
