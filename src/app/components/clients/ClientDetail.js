@@ -39,6 +39,7 @@ function MeasureGlance({ clientId, onViewAssessments }) {
           list.map((i) =>
             fetch(`/api/clients/${clientId}/measures?instrumentId=${i.id}`)
               .then((r) => r.json())
+              .then((t) => ({ ...t, shortName: i.shortName ?? i.id.toUpperCase() }))
           )
         )
       )
@@ -48,25 +49,29 @@ function MeasureGlance({ clientId, onViewAssessments }) {
   if (scores.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+    <div className="flex flex-wrap items-center gap-3">
       {scores.map((t) => {
         const arrow = t.delta == null ? null : t.delta > 0 ? "↑" : t.delta < 0 ? "↓" : "→";
         const arrowColor =
           t.direction === "improved" ? "text-green-600"
           : t.direction === "worsened" ? "text-red-600"
           : "text-gray-400";
-        const pct = t.percentageFactor ? `/${t.scoringMax} (${t.latest * t.percentageFactor}%)` : "";
+        const pct = t.percentageFactor ? ` (${t.latest * t.percentageFactor}%)` : "";
+        const band = t.points.at(-1)?.band ?? "";
         return (
-          <span key={t.instrumentId} className="text-sm text-gray-700">
-            <span className="font-medium">{t.name}</span>:{" "}
-            {t.latest}{pct} · {t.points.at(-1)?.band}
-            {arrow && <span className={`ml-1 font-medium ${arrowColor}`}>{arrow}</span>}
-          </span>
+          <div key={t.instrumentId} className="rounded-lg border border-gray-200 bg-white px-3 py-2 min-w-[140px]">
+            <div className="text-xs text-gray-500">{t.shortName}</div>
+            <div className="text-sm font-semibold text-gray-900">
+              {t.latest}{pct}{" "}
+              <span className="font-normal text-gray-600">· {band}</span>
+              {arrow && <span className={`ml-1 ${arrowColor}`}>{arrow}</span>}
+            </div>
+          </div>
         );
       })}
       <button
         onClick={onViewAssessments}
-        className="text-xs text-primary hover:text-primary/80"
+        className="self-center text-xs text-primary hover:text-primary/80"
       >
         View assessments →
       </button>
@@ -819,16 +824,16 @@ export default function ClientDetail({ clientId }) {
               </div>
             )}
 
-            {/* The AI clinical picture leads the overview — risk, assessment, diagnosis, treatment. */}
-            <ClientInsights clientId={client._id} refreshKey={aiRefreshKey} />
-
-            {/* Compact score glance — only once the assessment has been run (post-intake). */}
+            {/* Score chips — glanceable summary at the top of Overview, post-intake. */}
             {assessmentExists === true && (
               <MeasureGlance
                 clientId={clientId}
                 onViewAssessments={() => setActiveTab("progress")}
               />
             )}
+
+            {/* The AI clinical picture — risk, assessment, diagnosis, treatment. */}
+            <ClientInsights clientId={client._id} refreshKey={aiRefreshKey} />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Basic Info */}
