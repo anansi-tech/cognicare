@@ -191,33 +191,38 @@ export function TreatmentBody({ payload: p, editable = false, onChange }) {
       </Field>
       <Field label="Goals">
         {editable ? (
-          <div className="space-y-2">
+          <div className="space-y-3">
             {(p.goals ?? []).map((g, i) => (
-              <div key={i} className="flex gap-1.5 items-start">
-                <div className="grid grid-cols-3 gap-1.5 flex-1">
-                  <input
+              <div key={i} className="flex gap-2 items-start">
+                <div className="flex-1 space-y-1.5">
+                  <label className="text-xs text-muted-foreground">Goal</label>
+                  <textarea
+                    rows={2}
                     value={g.goal ?? ""}
                     placeholder="Goal"
                     onChange={(e) => set("goals", p.goals.map((x, j) => j === i ? { ...x, goal: e.target.value } : x))}
-                    className={INPUT_SM}
+                    className={`${INPUT_SM} w-full resize-none`}
                   />
-                  <input
+                  <label className="text-xs text-muted-foreground">How measured</label>
+                  <textarea
+                    rows={2}
                     value={g.measurable ?? ""}
                     placeholder="How measured"
                     onChange={(e) => set("goals", p.goals.map((x, j) => j === i ? { ...x, measurable: e.target.value } : x))}
-                    className={INPUT_SM}
+                    className={`${INPUT_SM} w-full resize-none`}
                   />
+                  <label className="text-xs text-muted-foreground">Timeframe</label>
                   <input
                     value={g.targetTimeframe ?? ""}
-                    placeholder="Timeframe"
+                    placeholder="e.g. 8 weeks"
                     onChange={(e) => set("goals", p.goals.map((x, j) => j === i ? { ...x, targetTimeframe: e.target.value } : x))}
-                    className={INPUT_SM}
+                    className={`${INPUT_SM} w-40`}
                   />
                 </div>
                 <button
                   type="button"
                   onClick={() => set("goals", p.goals.filter((_, j) => j !== i))}
-                  className="mt-1.5 text-muted-foreground hover:text-destructive text-xs leading-none"
+                  className="mt-1 text-muted-foreground hover:text-destructive text-xs leading-none"
                 >
                   ✕
                 </button>
