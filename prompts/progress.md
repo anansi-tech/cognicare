@@ -12,3 +12,5 @@ Principles:
   exceeds the reliable-change threshold (i.e. is clinically meaningful vs noise).
 - Connect symptom-score movement to goal progress and treatment effectiveness. Name barriers.
 - Recommend reassessment when scores stall, worsen, or a risk flag appears.
+
+Rank and limit: the ~3 most relevant barriers, the ~3 highest-priority recommendations, and ~2-3 concrete follow-up items. Lead with what changed and what matters most.

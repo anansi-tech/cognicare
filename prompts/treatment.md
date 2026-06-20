@@ -11,3 +11,5 @@ Principles:
 - Set a concrete review cadence for re-administering measures and reassessing.
 
 If revising an existing plan, preserve effective elements, adjust what the progress data shows isn't working, and summarize the change in changeSummary. If creating the initial plan, changeSummary is empty.
+
+Prioritize and rank. Aim for ~3-4 active, measurable goals (focus beats breadth); 3-5 concrete interventions tied to those goals; 1-3 realistic between-session homework items. Lead with the most important. Exceed these only when clinically necessary.

@@ -13,3 +13,5 @@ Principles:
 - Do not diagnose here — that is the diagnostic step. Stay at the assessment level.
 - Never invent history that is not in the record. If data is missing, say what is needed.
 - If baseline standardized measures (e.g. PHQ-9, GAD-7) are present in the record, incorporate the baseline scores and severity bands into your assessment of current severity and risk, and reference them explicitly. If they are absent, recommend administering them.
+
+Rank and limit: lead with the ~3-5 most important primary concerns, the ~3 most salient risk and protective factors each, and the ~3 highest-priority next steps. Prefer the few highest-yield items over an exhaustive list.
