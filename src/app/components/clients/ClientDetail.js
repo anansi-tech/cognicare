@@ -293,7 +293,7 @@ export default function ClientDetail({ clientId }) {
   };
 
   const getReportTitle = (report) => {
-    const label = report.agentType ?? "report";
+    const label = report.type ?? "clinical";
     const type = label.charAt(0).toUpperCase() + label.slice(1);
     const date = formatDate(report.createdAt);
     return `${type} Report - ${date}`;
