@@ -139,23 +139,13 @@ export default function DashboardPage() {
               href="/sessions/calendar"
               className="text-sm font-medium text-primary hover:text-primary/80"
             >
-              {stats.upcomingThisWeek} more this week →
+              {stats.upcomingThisWeek} more in the next 7 days →
             </Link>
           )}
         </div>
         {stats.todaysAppointments.length === 0 ? (
           <div className="px-4 py-8 sm:px-6 text-center text-sm text-gray-500">
             No appointments today.
-            {stats.upcomingThisWeek > 0 && (
-              <span className="ml-1">
-                <Link
-                  href="/sessions/calendar"
-                  className="text-primary hover:text-primary/80"
-                >
-                  {stats.upcomingThisWeek} scheduled later this week.
-                </Link>
-              </span>
-            )}
           </div>
         ) : (
           <ul className="divide-y divide-gray-100">
