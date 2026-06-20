@@ -11,15 +11,16 @@ function LoginContent() {
   const searchParams = useSearchParams();
   const { status } = useSession();
 
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+
   useEffect(() => {
     if (status === "authenticated") router.replace("/dashboard");
   }, [status, router]);
 
   if (status === "authenticated") return null;
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
   const registered = searchParams.get("registered") === "true";
 
   const handleSubmit = async (e) => {

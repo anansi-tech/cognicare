@@ -10,15 +10,16 @@ export default function SignupPage() {
   const router = useRouter();
   const { status } = useSession();
 
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   useEffect(() => {
     if (status === "authenticated") router.replace("/dashboard");
   }, [status, router]);
 
   if (status === "authenticated") return null;
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
