@@ -44,7 +44,7 @@ export function LiamSheet() {
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetContent side="right" className="flex w-full flex-col sm:w-[480px] sm:max-w-[480px]">
+      <SheetContent side="right" className="flex w-full flex-col sm:w-[480px] sm:!max-w-[480px]">
         <SheetHeader>
           <SheetTitle>Ask LIAM{clientName ? ` · ${clientName}` : ""}</SheetTitle>
         </SheetHeader>
