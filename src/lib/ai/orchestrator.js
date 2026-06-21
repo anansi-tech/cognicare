@@ -20,8 +20,8 @@ export async function runWorkflow({ type, clientId, sessionId, userId, practiceI
     persistReport({ ...env, clientId, sessionId, userId, practiceId, ...extra });
 
   if (type === "intake") {
-    const a = await assess({ clientId, sessionData }); await save(a);
-    const d = await diagnose({ clientId, assessment: a }); await save(d);
+    const a = await assess({ clientId, sessionData }); await save(a, { status: "draft" });
+    const d = await diagnose({ clientId, assessment: a }); await save(d, { status: "draft" });
     const t = await plan({ clientId });
     await save(t, { status: "draft", version: 1 });
     return { assessment: a, diagnostic: d, treatment: t };
@@ -37,7 +37,7 @@ export async function runWorkflow({ type, clientId, sessionId, userId, practiceI
     return { treatment: t };
   }
   if (type === "post-session") {
-    const p = await evaluateProgress({ clientId, sessionData }); await save(p);
+    const p = await evaluateProgress({ clientId, sessionData }); await save(p, { status: "draft" });
     const doc = await documentSession({ clientId, progress: p, sessionData }); await save(doc);
     return { progress: p, documentation: doc };
   }

@@ -13,8 +13,10 @@ export function SaveIndicator({ state }) {
 // Shows when report is draft OR when an approved report is being re-edited.
 export function EditApproveBar({ tx, report, draftLabel }) {
   const isDraft = report?.status === "draft";
-  const isEditingApproved = report?.status === "approved" && tx.isEditing;
-  if (!isDraft && !isEditingApproved) return null;
+  // Show the editing bar whenever in edit mode — covers re-editing an approved
+  // report AND older reports saved before draft-status existed (status unset).
+  const isEditingNonDraft = !isDraft && tx.isEditing;
+  if (!isDraft && !isEditingNonDraft) return null;
   if (isDraft) {
     return (
       <div className="flex items-center justify-between mb-3 rounded-md bg-amber-50 border border-amber-200 px-3 py-2">
