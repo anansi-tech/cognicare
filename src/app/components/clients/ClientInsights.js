@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useLiam } from "@/components/liam/LiamProvider";
-import { AgentReportBody, TreatmentBody } from "@/components/ai/AgentReportBody";
+import { AgentReportBody, TreatmentBody, AssessmentBody } from "@/components/ai/AgentReportBody";
 import { Section, Empty } from "@/components/ai/Section";
-import { SaveIndicator } from "@/components/ai/editable";
+import { EditApproveBar } from "@/components/ai/editable";
 import { useEditableReport } from "@/components/ai/useEditableReport";
 
 // Client-scoped agent insights. Renders the latest envelope of each agent type
@@ -52,6 +52,7 @@ export default function ClientInsights({ clientId, refreshKey = 0 }) {
     return () => { cancelled = true; };
   }, [clientId, refreshKey]);
 
+  const ax = useEditableReport({ clientId, report: assessment, onUpdated: setAssessment });
   const tx = useEditableReport({ clientId, report: treatment, onUpdated: setTreatment });
 
   if (loading) {
@@ -97,7 +98,22 @@ export default function ClientInsights({ clientId, refreshKey = 0 }) {
     <div className="space-y-6">
       <Section title="Assessment" summary={assessment?.summary} collapsible defaultOpen>
         {assessment ? (
-          <AgentReportBody agentType="assessment" payload={assessment.payload} />
+          <>
+            <EditApproveBar tx={ax} report={assessment} draftLabel={`Draft v${assessment.version ?? 1}`} />
+            {ax.canEdit ? (
+              <AssessmentBody payload={ax.edited} editable onChange={ax.setEdited} />
+            ) : (
+              <>
+                <AssessmentBody payload={assessment.payload} />
+                <button
+                  onClick={ax.startEdit}
+                  className="mt-2 text-xs text-primary hover:text-primary/80"
+                >
+                  Edit assessment
+                </button>
+              </>
+            )}
+          </>
         ) : (
           <Empty>Assessment generates automatically when a client is created.</Empty>
         )}
@@ -122,36 +138,7 @@ export default function ClientInsights({ clientId, refreshKey = 0 }) {
       >
         {treatment ? (
           <>
-            {treatment.status === "draft" && (
-              <div className="flex items-center justify-between mb-3 rounded-md bg-amber-50 border border-amber-200 px-3 py-2">
-                <span className="text-xs font-medium text-amber-800">
-                  Draft v{treatment.version ?? 1} — review &amp; approve
-                </span>
-                <div className="flex items-center gap-3">
-                  <SaveIndicator state={tx.saveState} />
-                  <button
-                    onClick={tx.approve}
-                    className="rounded-md bg-amber-600 px-2 py-1 text-xs font-medium text-white hover:bg-amber-700"
-                  >
-                    Approve
-                  </button>
-                </div>
-              </div>
-            )}
-            {treatment.status === "approved" && tx.isEditing && (
-              <div className="flex items-center justify-between mb-3 rounded-md bg-gray-50 border border-gray-200 px-3 py-2">
-                <span className="text-xs font-medium text-gray-700">Editing — changes save automatically</span>
-                <div className="flex items-center gap-3">
-                  <SaveIndicator state={tx.saveState} />
-                  <button
-                    onClick={tx.approve}
-                    className="rounded-md bg-primary px-2 py-1 text-xs font-medium text-white hover:bg-primary/90"
-                  >
-                    Approve
-                  </button>
-                </div>
-              </div>
-            )}
+            <EditApproveBar tx={tx} report={treatment} draftLabel={`Draft v${treatment.version ?? 1}`} />
             {tx.canEdit ? (
               <TreatmentBody
                 payload={tx.edited}
