@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
 import { ageFromDob, genderLabel } from "@/lib/age";
@@ -124,6 +125,12 @@ export default function ReportViewPage() {
             </p>
           </div>
           <div className="flex gap-2 flex-shrink-0">
+            <Link
+              href={`/clients/${params.id}`}
+              className="px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-md text-sm font-medium"
+            >
+              ← Back to client
+            </Link>
             <a
               href={`${pdfUrl}?download=1`}
               className="px-4 py-2 bg-primary text-white hover:bg-primary/90 rounded-md text-sm font-medium"
