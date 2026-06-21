@@ -2,7 +2,15 @@
 // when an envelope payload shape changes in schemas.js, edit ONLY this file.
 
 import { Badge } from "@/components/ui/badge";
-import { EditText, EditList, EditRows } from "@/components/ai/editable";
+import { EditText, EditList, EditSelect, EditRows } from "@/components/ai/editable";
+
+const RISK_OPTIONS = [
+  { value: "none", label: "None" },
+  { value: "low", label: "Low" },
+  { value: "moderate", label: "Moderate" },
+  { value: "high", label: "High" },
+  { value: "imminent", label: "Imminent" },
+];
 
 // Small shared helpers so the bodies stay terse.
 const List = ({ items }) =>
@@ -55,33 +63,66 @@ const StatusBadge = ({ map, value, label }) => {
   );
 };
 
-export function AssessmentBody({ payload: p }) {
+export function AssessmentBody({ payload: p, editable = false, onChange }) {
   if (!p) return null;
+  const set = (k, v) => onChange?.({ ...p, [k]: v });
   return (
     <div className="space-y-3">
       <Field label="Risk level">
-        <StatusBadge map={RISK_BADGE} value={p.riskLevel} />
+        {editable ? (
+          <EditSelect value={p.riskLevel} onChange={(v) => set("riskLevel", v)} options={RISK_OPTIONS} />
+        ) : (
+          <StatusBadge map={RISK_BADGE} value={p.riskLevel} />
+        )}
       </Field>
       <Field label="Primary concerns">
-        <List items={p.primaryConcerns} />
+        {editable ? (
+          <EditList value={p.primaryConcerns ?? []} onChange={(v) => set("primaryConcerns", v)} placeholder="Add a concern" />
+        ) : (
+          <List items={p.primaryConcerns} />
+        )}
       </Field>
       <Field label="Risk factors">
-        <List items={p.riskFactors} />
+        {editable ? (
+          <EditList value={p.riskFactors ?? []} onChange={(v) => set("riskFactors", v)} placeholder="Add a risk factor" />
+        ) : (
+          <List items={p.riskFactors} />
+        )}
       </Field>
       <Field label="Protective factors">
-        <List items={p.protectiveFactors} />
+        {editable ? (
+          <EditList value={p.protectiveFactors ?? []} onChange={(v) => set("protectiveFactors", v)} placeholder="Add a protective factor" />
+        ) : (
+          <List items={p.protectiveFactors} />
+        )}
       </Field>
       <Field label="Recommended instruments">
-        <List items={p.recommendedInstruments} />
+        {editable ? (
+          <EditList value={p.recommendedInstruments ?? []} onChange={(v) => set("recommendedInstruments", v)} placeholder="Add an instrument" />
+        ) : (
+          <List items={p.recommendedInstruments} />
+        )}
       </Field>
       <Field label="Immediate attention">
-        <List items={p.immediateAttention} />
+        {editable ? (
+          <EditList value={p.immediateAttention ?? []} onChange={(v) => set("immediateAttention", v)} placeholder="Add an item" />
+        ) : (
+          <List items={p.immediateAttention} />
+        )}
       </Field>
       <Field label="Clinical observations">
-        <p className="text-sm">{p.clinicalObservations}</p>
+        {editable ? (
+          <EditText value={p.clinicalObservations ?? ""} onChange={(v) => set("clinicalObservations", v)} rows={4} />
+        ) : (
+          <p className="text-sm">{p.clinicalObservations}</p>
+        )}
       </Field>
       <Field label="Suggested next steps">
-        <List items={p.suggestedNextSteps} />
+        {editable ? (
+          <EditList value={p.suggestedNextSteps ?? []} onChange={(v) => set("suggestedNextSteps", v)} placeholder="Add a next step" />
+        ) : (
+          <List items={p.suggestedNextSteps} />
+        )}
       </Field>
     </div>
   );

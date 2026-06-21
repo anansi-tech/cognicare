@@ -9,6 +9,46 @@ export function SaveIndicator({ state }) {
   return null;
 }
 
+// Draft/approved-editing status bar — shared across all editable report sections.
+// Shows when report is draft OR when an approved report is being re-edited.
+export function EditApproveBar({ tx, report, draftLabel }) {
+  const isDraft = report?.status === "draft";
+  const isEditingApproved = report?.status === "approved" && tx.isEditing;
+  if (!isDraft && !isEditingApproved) return null;
+  if (isDraft) {
+    return (
+      <div className="flex items-center justify-between mb-3 rounded-md bg-amber-50 border border-amber-200 px-3 py-2">
+        <span className="text-xs font-medium text-amber-800">
+          {draftLabel ?? "Draft"} — review &amp; approve
+        </span>
+        <div className="flex items-center gap-3">
+          <SaveIndicator state={tx.saveState} />
+          <button
+            onClick={tx.approve}
+            className="rounded-md bg-amber-600 px-2 py-1 text-xs font-medium text-white hover:bg-amber-700"
+          >
+            Approve
+          </button>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="flex items-center justify-between mb-3 rounded-md bg-gray-50 border border-gray-200 px-3 py-2">
+      <span className="text-xs font-medium text-gray-700">Editing — changes save automatically</span>
+      <div className="flex items-center gap-3">
+        <SaveIndicator state={tx.saveState} />
+        <button
+          onClick={tx.approve}
+          className="rounded-md bg-primary px-2 py-1 text-xs font-medium text-white hover:bg-primary/90"
+        >
+          Approve
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function EditText({ value = "", onChange, placeholder, rows = 2 }) {
   return (
     <textarea
