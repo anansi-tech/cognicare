@@ -15,6 +15,14 @@ function pickLatest(reports, agentType) {
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
 }
 
+// Subtle auto-save status: "Saving…" while a debounced PATCH is in flight,
+// "Saved" once it lands. Nothing when idle.
+function SaveIndicator({ state }) {
+  if (state === "saving") return <span className="text-xs text-muted-foreground">Saving…</span>;
+  if (state === "saved") return <span className="text-xs text-muted-foreground">Saved</span>;
+  return null;
+}
+
 export default function ClientInsights({ clientId, refreshKey = 0 }) {
   const [assessment, setAssessment] = useState(null);
   const [diagnostic, setDiagnostic] = useState(null);
@@ -56,17 +64,36 @@ export default function ClientInsights({ clientId, refreshKey = 0 }) {
     };
   }, [clientId, refreshKey]);
 
-  async function saveTreatment() {
-    const res = await fetch(`/api/clients/${clientId}/ai-reports/${treatment._id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ payload: editedPayload }),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setTreatment((prev) => ({ ...prev, payload: data.payload }));
-    }
-  }
+  const [saveState, setSaveState] = useState("idle"); // idle | saving | saved
+
+  // Auto-save the draft while editing: debounce edits and PATCH quietly. Keeps the
+  // plan a draft — Approve remains the explicit clinical sign-off.
+  useEffect(() => {
+    if (!treatment || editedPayload == null) return;
+    if (!(treatment.status === "draft" || isEditing)) return;
+    // skip the first sync when editedPayload is just seeded from the current payload
+    if (JSON.stringify(editedPayload) === JSON.stringify(treatment.payload)) return;
+    setSaveState("saving");
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/clients/${clientId}/ai-reports/${treatment._id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ payload: editedPayload }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setTreatment((prev) => ({ ...prev, payload: data.payload }));
+          setSaveState("saved");
+        } else {
+          setSaveState("idle");
+        }
+      } catch {
+        setSaveState("idle");
+      }
+    }, 800);
+    return () => clearTimeout(t);
+  }, [editedPayload, treatment, isEditing, clientId]);
 
   async function approveTreatment() {
     const res = await fetch(`/api/clients/${clientId}/ai-reports/${treatment._id}`, {
@@ -78,6 +105,7 @@ export default function ClientInsights({ clientId, refreshKey = 0 }) {
       const data = await res.json();
       setTreatment((prev) => ({ ...prev, payload: data.payload, status: "approved" }));
       setIsEditing(false);
+      setSaveState("idle");
     }
   }
 
@@ -154,13 +182,8 @@ export default function ClientInsights({ clientId, refreshKey = 0 }) {
                 <span className="text-xs font-medium text-amber-800">
                   Draft v{treatment.version ?? 1} — review &amp; approve
                 </span>
-                <div className="flex gap-2">
-                  <button
-                    onClick={saveTreatment}
-                    className="rounded-md border border-amber-400 bg-white px-2 py-1 text-xs font-medium text-amber-800 hover:bg-amber-50"
-                  >
-                    Save
-                  </button>
+                <div className="flex items-center gap-3">
+                  <SaveIndicator state={saveState} />
                   <button
                     onClick={approveTreatment}
                     className="rounded-md bg-amber-600 px-2 py-1 text-xs font-medium text-white hover:bg-amber-700"
@@ -172,14 +195,9 @@ export default function ClientInsights({ clientId, refreshKey = 0 }) {
             )}
             {treatment.status === "approved" && isEditing && (
               <div className="flex items-center justify-between mb-3 rounded-md bg-gray-50 border border-gray-200 px-3 py-2">
-                <span className="text-xs font-medium text-gray-700">Editing — Save or Approve</span>
-                <div className="flex gap-2">
-                  <button
-                    onClick={saveTreatment}
-                    className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
-                  >
-                    Save
-                  </button>
+                <span className="text-xs font-medium text-gray-700">Editing — changes save automatically</span>
+                <div className="flex items-center gap-3">
+                  <SaveIndicator state={saveState} />
                   <button
                     onClick={approveTreatment}
                     className="rounded-md bg-primary px-2 py-1 text-xs font-medium text-white hover:bg-primary/90"
