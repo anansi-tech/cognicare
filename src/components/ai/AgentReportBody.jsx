@@ -322,14 +322,35 @@ export function ProgressBody({ payload: p }) {
     <div className="space-y-3">
       <Field label="Measure interpretation">
         {p.measureInterpretation?.length ? (
-          <ul className="space-y-1 text-sm">
-            {p.measureInterpretation.map((m, i) => (
-              <li key={i}>
-                {m.instrumentId}: {m.latestScore}
-                {m.previousScore != null ? ` (was ${m.previousScore})` : ""} — {m.direction}
-                {m.reliableChange ? ", reliable change" : ""}. {m.interpretation}
-              </li>
-            ))}
+          <ul className="space-y-2">
+            {p.measureInterpretation.map((m, i) => {
+              const arrow =
+                m.direction === "improved" ? "↗" :
+                m.direction === "worsened" ? "↘" :
+                m.direction === "unchanged" ? "→" : null;
+              const arrowColor =
+                m.direction === "improved" ? "text-green-600" :
+                m.direction === "worsened" ? "text-red-600" : "text-gray-400";
+              return (
+                <li key={i} className="rounded-md border border-gray-200 bg-gray-50/50 px-3 py-2 text-sm">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-semibold text-gray-900">{m.instrumentId}</span>
+                    <span className="font-medium text-gray-900">
+                      {m.previousScore != null ? `${m.previousScore} → ` : ""}{m.latestScore}
+                    </span>
+                    {arrow && <span className={`font-semibold ${arrowColor}`}>{arrow} {m.direction}</span>}
+                    {m.reliableChange && (
+                      <span className="rounded-full bg-blue-100 text-blue-800 border border-blue-200 text-xs font-medium px-2 py-0.5">
+                        Reliable change
+                      </span>
+                    )}
+                  </div>
+                  {m.interpretation && (
+                    <p className="mt-1 text-gray-600">{m.interpretation}</p>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         ) : (
           <p className="text-sm text-muted-foreground">
@@ -339,13 +360,14 @@ export function ProgressBody({ payload: p }) {
       </Field>
       <Field label="Goal progress">
         {p.goalProgress?.length ? (
-          <ul className="space-y-1 text-sm">
+          <ul className="space-y-2">
             {p.goalProgress.map((g, i) => (
-              <li key={i}>
-                <span className="mr-1 inline-flex">
+              <li key={i} className="rounded-md border border-gray-200 bg-gray-50/50 px-3 py-2 text-sm">
+                <div className="flex items-center gap-2">
                   <StatusBadge map={GOAL_BADGE} value={g.status} />
-                </span>
-                {g.goal} — <span className="text-muted-foreground">{g.notes}</span>
+                  <span className="font-medium text-gray-900">{g.goal}</span>
+                </div>
+                {g.notes && <p className="mt-1 text-gray-600">{g.notes}</p>}
               </li>
             ))}
           </ul>
