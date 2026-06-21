@@ -988,6 +988,9 @@ export default function ClientDetail({ clientId }) {
                         Type
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
@@ -1003,6 +1006,13 @@ export default function ClientDetail({ clientId }) {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {session.type}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          {{
+                            scheduled: <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">Scheduled</span>,
+                            completed: <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">Completed</span>,
+                            cancelled: <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">Cancelled</span>,
+                          }[session.status] ?? <span className="text-gray-400">{session.status}</span>}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <a
