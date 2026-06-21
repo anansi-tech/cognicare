@@ -11,6 +11,7 @@ import ClientAnalytics from "./ClientAnalytics";
 import ReassignControl from "./ReassignControl";
 import { ageFromDob, formatDob, genderLabel } from "@/lib/age";
 import { MeasuresPanel } from "@/components/measures/MeasuresPanel";
+import { AdministrationHistory } from "@/components/measures/AdministrationHistory";
 import { listInstruments } from "@/lib/mbc/instruments";
 import { useLiam } from "@/components/liam/LiamProvider";
 import { IntakeAssessment } from "@/components/ai/IntakeAssessment";
@@ -1114,10 +1115,14 @@ export default function ClientDetail({ clientId }) {
 
         {activeTab === "progress" && (
           <div className="space-y-8">
-            <MeasuresPanel clientId={client._id} sections />
+            <MeasuresPanel clientId={client._id} sections hideHistory />
             <div className="space-y-4">
               <h2 className="text-xl font-semibold text-gray-900">Risk Over Time</h2>
               <ClientAnalytics clientId={client._id} />
+            </div>
+            <div className="space-y-3">
+              <h2 className="text-xl font-semibold text-gray-900">History</h2>
+              <AdministrationHistory clientId={client._id} />
             </div>
           </div>
         )}
