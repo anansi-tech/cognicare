@@ -17,7 +17,7 @@ const List = ({ items }) =>
 
 const Field = ({ label, children }) => (
   <div className="space-y-1">
-    <p className="text-xs font-medium text-muted-foreground">{label}</p>
+    <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide">{label}</p>
     {children}
   </div>
 );
@@ -381,19 +381,14 @@ export function ProgressBody({ payload: p }) {
       <Field label="Barriers">
         <List items={p.barriers} />
       </Field>
-      {/* Recommendations + Treatment effectiveness — secondary, muted. */}
       {p.recommendations?.length ? (
         <Field label="Recommendations">
-          <ul className="list-disc pl-5 text-xs text-muted-foreground space-y-0.5">
-            {p.recommendations.map((x, i) => (
-              <li key={i}>{x}</li>
-            ))}
-          </ul>
+          <List items={p.recommendations} />
         </Field>
       ) : null}
       {p.treatmentEffectiveness && (
         <Field label="Treatment effectiveness">
-          <p className="text-xs text-muted-foreground">{p.treatmentEffectiveness}</p>
+          <p className="text-sm">{p.treatmentEffectiveness}</p>
         </Field>
       )}
       {/* Reassessment recommendation surfaces once, at the client-page banner. */}
