@@ -36,7 +36,7 @@ export function MeasuresPanel({ clientId, sessionId, onSaved: onSavedProp, secti
   const administerBlock = (
     <>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-        <div className="flex flex-col gap-1 sm:flex-1">
+        <div>
           <span className="text-sm font-medium text-gray-700">Administer measure</span>
           <Select value={chosenId} onValueChange={setChosenId}>
             <SelectTrigger className="w-full sm:max-w-md">

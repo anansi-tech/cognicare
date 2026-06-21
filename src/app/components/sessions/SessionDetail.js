@@ -428,6 +428,16 @@ export default function SessionDetail({ sessionId }) {
             </div>
           </div>
 
+          {/* Measures — clinical data capture, before the AI output */}
+          <div className="mb-6">
+            <h2 className="text-lg font-medium text-gray-900 mb-2">Measures</h2>
+            <MeasuresPanel
+              clientId={typeof session.clientId === "object" ? session.clientId?._id : session.clientId}
+              sessionId={session._id}
+              compact
+            />
+          </div>
+
           {/* Session Notes */}
           <div>
             <h2 className="text-lg font-medium text-gray-900 mb-2">Session Notes</h2>
@@ -467,16 +477,6 @@ export default function SessionDetail({ sessionId }) {
           {!isEditing && (
             <div className="mt-6">
               <SessionAIInsights session={session} refreshKey={aiRefreshKey} focus="session" />
-            </div>
-          )}
-          {!isEditing && (
-            <div className="mt-6 space-y-2">
-              <h3 className="text-lg font-semibold text-gray-900">Measures</h3>
-              <MeasuresPanel
-                clientId={typeof session.clientId === "object" ? session.clientId?._id : session.clientId}
-                sessionId={session._id}
-                compact
-              />
             </div>
           )}
         </div>
