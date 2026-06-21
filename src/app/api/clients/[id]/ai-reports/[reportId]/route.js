@@ -28,7 +28,7 @@ export async function GET(_req, { params }) {
   return NextResponse.json({ report });
 }
 
-// PATCH a treatment AIReport: edit payload fields and/or set status to approved.
+// PATCH any AIReport: edit payload fields and/or set status to draft/approved.
 export async function PATCH(req, { params }) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -45,12 +45,11 @@ export async function PATCH(req, { params }) {
     _id: reportId,
     clientId,
     practiceId: user.practiceId,
-    agentType: "treatment",
   });
   if (!report) return NextResponse.json({ error: "Report not found" }, { status: 404 });
 
   if (payload) report.payload = { ...report.payload, ...payload };
-  if (status === "approved") report.status = "approved";
+  if (status && ["draft", "approved"].includes(status)) report.status = status;
   await report.save();
 
   logAuditEvent({
@@ -59,7 +58,7 @@ export async function PATCH(req, { params }) {
     action: AuditActions.UPDATE,
     entityType: EntityTypes.REPORT,
     entityId: report._id,
-    details: { agentType: "treatment", status: report.status, version: report.version },
+    details: { agentType: report.agentType, status: report.status, version: report.version },
     ...auditMetaFromRequest(req),
   });
 
