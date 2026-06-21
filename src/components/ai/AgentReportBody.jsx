@@ -2,6 +2,7 @@
 // when an envelope payload shape changes in schemas.js, edit ONLY this file.
 
 import { Badge } from "@/components/ui/badge";
+import { EditText, EditList, EditRows } from "@/components/ai/editable";
 
 // Small shared helpers so the bodies stay terse.
 const List = ({ items }) =>
@@ -141,44 +142,11 @@ export function DiagnosticBody({ payload: p }) {
   );
 }
 
-// Per-row editable list: each item is its own bordered input with a remove
-// button, so boundaries between items are clear (vs. one ambiguous textarea).
-function EditableList({ value = [], onChange, placeholder }) {
-  const items = value.length ? value : [""];
-  const update = (i, v) => onChange(items.map((x, j) => (j === i ? v : x)).filter((s, j) => s.trim() || j === i));
-  const removeAt = (i) => onChange(items.filter((_, j) => j !== i).filter((s) => s.trim()));
-  const add = () => onChange([...items.filter((s) => s.trim()), ""]);
-  return (
-    <div className="space-y-1.5">
-      {items.map((item, i) => (
-        <div key={i} className="flex items-center gap-1.5">
-          <span className="text-muted-foreground text-sm select-none">•</span>
-          <input
-            type="text"
-            value={item}
-            onChange={(e) => update(i, e.target.value)}
-            placeholder={placeholder}
-            className="flex-1 rounded-md border border-input bg-background px-2.5 py-1.5 text-sm"
-          />
-          <button
-            type="button"
-            onClick={() => removeAt(i)}
-            className="text-muted-foreground hover:text-red-600 text-sm px-1"
-            aria-label="Remove item"
-          >
-            ✕
-          </button>
-        </div>
-      ))}
-      <button type="button" onClick={add} className="text-xs text-primary hover:text-primary/80">
-        + Add item
-      </button>
-    </div>
-  );
-}
-
-const INPUT_CLS = "w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm";
-const INPUT_SM  = "rounded-md border border-input bg-background px-2 py-1 text-sm";
+const GOAL_FIELDS = [
+  { key: "goal", label: "Goal", type: "text", rows: 2 },
+  { key: "measurable", label: "How measured", type: "text", rows: 2 },
+  { key: "targetTimeframe", label: "Timeframe", type: "text", rows: 1 },
+];
 
 export function TreatmentBody({ payload: p, editable = false, onChange }) {
   if (!p) return null;
@@ -196,63 +164,20 @@ export function TreatmentBody({ payload: p, editable = false, onChange }) {
       )}
       <Field label="Approach">
         {editable ? (
-          <textarea
-            rows={2}
-            value={p.approach ?? ""}
-            onChange={(e) => set("approach", e.target.value)}
-            className={`${INPUT_CLS} resize-none`}
-          />
+          <EditText value={p.approach ?? ""} onChange={(v) => set("approach", v)} rows={2} />
         ) : (
           <p className="text-sm">{p.approach}</p>
         )}
       </Field>
       <Field label="Goals">
         {editable ? (
-          <div className="space-y-3">
-            {(p.goals ?? []).map((g, i) => (
-              <div key={i} className="flex gap-2 items-start">
-                <div className="flex-1 space-y-1.5">
-                  <label className="text-xs text-muted-foreground">Goal</label>
-                  <textarea
-                    rows={2}
-                    value={g.goal ?? ""}
-                    placeholder="Goal"
-                    onChange={(e) => set("goals", p.goals.map((x, j) => j === i ? { ...x, goal: e.target.value } : x))}
-                    className={`${INPUT_SM} w-full resize-none`}
-                  />
-                  <label className="text-xs text-muted-foreground">How measured</label>
-                  <textarea
-                    rows={2}
-                    value={g.measurable ?? ""}
-                    placeholder="How measured"
-                    onChange={(e) => set("goals", p.goals.map((x, j) => j === i ? { ...x, measurable: e.target.value } : x))}
-                    className={`${INPUT_SM} w-full resize-none`}
-                  />
-                  <label className="text-xs text-muted-foreground">Timeframe</label>
-                  <input
-                    value={g.targetTimeframe ?? ""}
-                    placeholder="e.g. 8 weeks"
-                    onChange={(e) => set("goals", p.goals.map((x, j) => j === i ? { ...x, targetTimeframe: e.target.value } : x))}
-                    className={`${INPUT_SM} w-40`}
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => set("goals", p.goals.filter((_, j) => j !== i))}
-                  className="mt-1 text-muted-foreground hover:text-destructive text-xs leading-none"
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
-            <button
-              type="button"
-              onClick={() => set("goals", [...(p.goals ?? []), { goal: "", measurable: "", targetTimeframe: "" }])}
-              className="text-xs text-primary hover:text-primary/80"
-            >
-              + Add goal
-            </button>
-          </div>
+          <EditRows
+            value={p.goals ?? []}
+            onChange={(v) => set("goals", v)}
+            fields={GOAL_FIELDS}
+            addLabel="+ Add goal"
+            emptyRow={{ goal: "", measurable: "", targetTimeframe: "" }}
+          />
         ) : (
           p.goals?.length ? (
             <ul className="space-y-2">
@@ -281,33 +206,28 @@ export function TreatmentBody({ payload: p, editable = false, onChange }) {
       </Field>
       <Field label="Interventions">
         {editable ? (
-          <EditableList value={p.interventions ?? []} onChange={(v) => set("interventions", v)} placeholder="Add an intervention" />
+          <EditList value={p.interventions ?? []} onChange={(v) => set("interventions", v)} placeholder="Add an intervention" />
         ) : (
           <List items={p.interventions} />
         )}
       </Field>
       <Field label="Homework">
         {editable ? (
-          <EditableList value={p.homework ?? []} onChange={(v) => set("homework", v)} placeholder="Add a homework item" />
+          <EditList value={p.homework ?? []} onChange={(v) => set("homework", v)} placeholder="Add a homework item" />
         ) : (
           <List items={p.homework} />
         )}
       </Field>
       <Field label="Referrals">
         {editable ? (
-          <EditableList value={p.referrals ?? []} onChange={(v) => set("referrals", v)} placeholder="Add a referral" />
+          <EditList value={p.referrals ?? []} onChange={(v) => set("referrals", v)} placeholder="Add a referral" />
         ) : (
           <List items={p.referrals} />
         )}
       </Field>
       <Field label="Review cadence">
         {editable ? (
-          <textarea
-            rows={2}
-            value={p.reviewCadence ?? ""}
-            onChange={(e) => set("reviewCadence", e.target.value)}
-            className={`${INPUT_CLS} resize-none`}
-          />
+          <EditText value={p.reviewCadence ?? ""} onChange={(v) => set("reviewCadence", v)} rows={2} />
         ) : (
           <p className="text-sm">{p.reviewCadence}</p>
         )}
