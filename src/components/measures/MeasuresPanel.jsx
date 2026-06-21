@@ -18,7 +18,7 @@ import { MeasureForm } from "./MeasureForm";
 import { MeasureTrend } from "./MeasureTrend";
 import { AdministrationHistory } from "./AdministrationHistory";
 
-export function MeasuresPanel({ clientId, sessionId, onSaved: onSavedProp, sections = false, compact = false }) {
+export function MeasuresPanel({ clientId, sessionId, onSaved: onSavedProp, sections = false, compact = false, hideHistory = false }) {
   const [instruments, setInstruments] = useState([]);
   const [chosenId, setChosenId] = useState("");
   const [formOpen, setFormOpen] = useState(false);
@@ -116,10 +116,12 @@ export function MeasuresPanel({ clientId, sessionId, onSaved: onSavedProp, secti
           <h2 className="text-xl font-semibold text-gray-900">Trends</h2>
           {trendsBlock}
         </div>
-        <div className="space-y-3">
-          <h2 className="text-xl font-semibold text-gray-900">History</h2>
-          <AdministrationHistory clientId={clientId} refreshKey={refreshKey} />
-        </div>
+        {!hideHistory && (
+          <div className="space-y-3">
+            <h2 className="text-xl font-semibold text-gray-900">History</h2>
+            <AdministrationHistory clientId={clientId} refreshKey={refreshKey} />
+          </div>
+        )}
       </div>
     );
   }

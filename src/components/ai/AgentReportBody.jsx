@@ -37,7 +37,7 @@ const CONFIDENCE_BADGE = {
   high: "bg-emerald-100 text-emerald-800 border-emerald-400",
 };
 const GOAL_BADGE = {
-  "not-started": "bg-slate-100 text-slate-600 border-slate-200",
+  "not-started": "bg-slate-200 text-slate-600 border-slate-400",
   emerging: "bg-amber-100 text-amber-800 border-amber-400",
   progressing: "bg-yellow-100 text-yellow-800 border-yellow-400",
   met: "bg-green-100 text-green-800 border-green-400",
