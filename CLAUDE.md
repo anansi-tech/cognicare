@@ -12,7 +12,7 @@ npm test           # Vitest (run once)
 npm run test:watch # Vitest (watch mode)
 ```
 
-Tests: Vitest, `npm test`. Cover clinical scoring (PHQ-9/GAD-7 bands + safety flags), age helpers, billing status, recurrence date math, and practice scoping. Run before any PHI-touching change.
+Tests: Vitest, `npm test`. Cover clinical scoring (PHQ-9/GAD-7/WHO-5 bands + safety flags + direction), `computeDirection`, age helpers, billing status, recurrence date math, and practice scoping. Run before any PHI-touching change.
 
 ## Architecture
 
@@ -30,7 +30,7 @@ Role hierarchy: `admin` (practice owner) > `counselor`. The session JWT carries 
 
 - **Edge-safe config**: `src/auth.config.js` — no Mongoose, used by middleware
 - **Full config**: `src/auth.js` — credentials provider, JWT enrichment, audit events
-- **Middleware**: `src/middleware.js` — protects all routes except public ones
+- **Middleware**: `src/middleware.js` — matcher covers `/clients`, `/sessions`, `/admin` only. `/login` and `/signup` are NOT in the matcher; those pages handle their own auth redirect via `useEffect`.
 - Login page: `/login`; signup creates a practice automatically
 
 ### Route Layout Groups
@@ -51,29 +51,84 @@ src/app/
 | `Practice` | Tenant root; owns Stripe subscription + seats |
 | `Client` | Patient record scoped to Practice + counselor |
 | `Session` | Therapy session; links Client ↔ User |
-| `AIReport` | Single AI agent output per session |
+| `AIReport` | Single AI agent output per session; has `agentType`, `status` (draft/approved), `version`, `payload` |
 | `Report` | Clinician-compiled report assembled from AIReports |
 | `Invoice` | Client billing; may have Stripe payment link |
 | `AuditLog` | HIPAA compliance trail — log all PHI access |
 | `ConsentForm` | Token-based e-signature request |
 | `Invitation` | Practice team invite (token + expiry) |
 | `LiamThread` | Rolling copilot conversation memory per (user, client) |
-| `MeasureAdministration` | Scored clinical instrument (PHQ-9, etc.) |
+| `MeasureAdministration` | Scored clinical instrument administration; `isBaseline` flag marks intake measurements |
 
 ### AI Agent System (`src/lib/ai/`)
 
 Six specialized agents run after sessions: `assessment`, `diagnostic`, `treatment`, `progress`, `documentation`, `report`. Each stores its output as an `AIReport` document. Orchestration lives in `src/lib/ai/orchestrator.js`; individual agent configs in `src/lib/ai/agents/`. Prompt templates are in `prompts/`.
 
-**Liam** (`src/lib/ai/liam/`) is a separate in-session copilot with per-thread rolling memory stored in `LiamThread`.
+**Agent triggers are deliberate, not automatic.** Intake assessment (`IntakeAssessment` component) and session prep (`AutoSessionPrep` component) both require an explicit clinician click — they never fire automatically on page open. This mirrors the principle: AI assists when the clinician decides.
+
+**Two AI display components:**
+- `src/app/components/clients/ClientInsights.js` — client-scoped (Overview tab): shows assessment, diagnostic, treatment plan (editable/approvable), progress. Treatment plans can be re-edited after approval via an "Edit plan" button.
+- `src/app/components/sessions/SessionAIInsights.js` — session-scoped; accepts a `focus` prop. `focus="session"` shows only Treatment + Progress (hides assessment/diagnostic). Default shows all four.
+
+**Prompt guidelines** (applied to all four agent prompts in `prompts/`):
+- Terseness instruction: "Be terse and clinically precise… no filler, no hedging boilerplate."
+- Soft-cap counts: ~3-4 goals, ~3-5 interventions, ~1-3 homework (treatment); ~2-3 ranked differentials (diagnostic); ~3-5 concerns, ~3 risk/protective factors (assessment); ~3 barriers, ~3 recommendations (progress). These are prompt-guided only — schemas remain unconstrained arrays.
+
+**Liam** (`src/lib/ai/liam/`) is a separate in-session copilot with per-thread rolling memory stored in `LiamThread`. The chat panel (`src/components/liam/LiamSheet.jsx`) is 480px wide.
+
+### Measurement-Based Care (`src/lib/mbc/`)
+
+Three instruments are registered: **PHQ-9** (depression, lower=better), **GAD-7** (anxiety, lower=better), **WHO-5** (wellbeing, higher=better). The `direction` field on each instrument JSON drives score interpretation throughout.
+
+**Always use the registry — never hardcode instrument IDs:**
+```js
+import { listInstruments } from "@/lib/mbc/instruments";
+const instruments = listInstruments(); // returns all registered instruments
+```
+
+Key files:
+- `src/data/instruments/phq9.json`, `gad7.json`, `who5.json` — instrument definitions with `shortName`, `direction`, `bands`, `reliableChange`, `criticalItems`
+- `src/lib/mbc/instruments.js` — registry; `listInstruments()` is the single source of truth
+- `src/lib/mbc/score.js` — `scoreInstrument()`, `computeDirection(delta, inst)` (exported, tested)
+- `src/lib/mbc/trend.js` — `getTrend()` returns `{ latest, delta, direction, percentageFactor, scoringMax, points[] }`
+- `GET /api/instruments` — returns all registered instruments (used by MeasuresPanel, MeasureGlance, etc.)
+- `GET /api/clients/[id]/measures?instrumentId=X` — returns trend data for one instrument
+
+**WHO-5 scoring note**: scores multiply by 4 for a 0-100% scale (`percentageFactor: 4`). A raw score ≤13 (≤52%) screens for depression.
+
+### MeasuresPanel (`src/components/measures/MeasuresPanel.jsx`)
+
+Accepts three rendering modes via props:
+- Default — administer picker + trend cards + history
+- `compact` — administer picker + form only (used in intake baseline card and session detail)
+- `sections` — three labeled sections: Administer / Trends / History (used on Assessments tab)
+
+### Client Detail Tabs (`src/app/components/clients/ClientDetail.js`)
+
+Tab names: `overview`, `sessions`, `reports`, `progress` (labelled "Assessments" in UI), `consent-billing`. Legacy URL aliases (`insights→overview`, `analytics→progress`, `measures→progress`, `assessments→progress`) are handled by `TAB_ALIAS`.
+
+The **Sessions tab** fetches the full session list via `GET /api/sessions?clientId=X` (not the 5-item `recentSessions` from the client endpoint). Sessions are sorted upcoming-first (ascending by date), then past (descending). Use `sortSessionsForDisplay()` for this pattern.
+
+The **Overview tab** shows `MeasureGlance` (compact stat chips, one per instrument) above `ClientInsights`, only after an assessment exists.
+
+### Sessions List (`src/app/components/sessions/SessionList.js`)
+
+The `/sessions` page filters and sorts client-side. The `filteredSessions` memo applies `sortSessionsForDisplay` logic inline — upcoming first, then most-recent past.
 
 ### Utility Patterns
 
 - **MongoDB connection**: `src/lib/mongodb.js` — cached global singleton, always import this, never instantiate directly.
+- **MongoDB aggregation**: `aggregate()` does NOT auto-cast strings to ObjectId (unlike `find()`). Always wrap practiceId/counselorId with `new mongoose.Types.ObjectId(id)` in pipeline `$match` stages.
 - **Audit logging**: `src/lib/audit.js` — call `logAudit()` for any PHI read/write. The `AuditLog` model enforces a closed enum for `action` and `entityType`; check those before adding new values.
-- **PDF generation**: `src/lib/consent-pdf.js` and `src/lib/report-pdf.js` use `pdf-lib`.
+- **PDF generation**: `src/lib/consent-pdf.js` and `src/lib/report-pdf.js` use `pdf-lib`. pdf-lib only supports WinAnsi encoding — run all LLM-generated text through `sanitizeWinAnsi()` in `report-pdf.js` before `drawText()` to avoid crashes on smart quotes/em-dashes.
 - **File storage**: `src/lib/storage.js` wraps Google Cloud Storage — no local disk writes for documents.
-- **Measurement-based care**: `src/lib/mbc/` handles instrument definitions, scoring, and trend analysis.
 - **Plans/pricing**: `src/config/plans.js` is the source of truth for subscription tier limits.
+
+### UI Gotchas
+
+**shadcn Sheet width override**: The Sheet component (`src/components/ui/sheet.jsx`) hardcodes `data-[side=right]:sm:max-w-sm` in its base class. This attribute selector has higher CSS specificity than a plain class, so `sm:max-w-[Xpx]` in `className` loses. Use the Tailwind important modifier: `sm:!max-w-[480px]`.
+
+**useSession dependency**: Use `status` (string) not `session` (object) as a `useEffect` dependency to avoid re-triggering on NextAuth's background session refetch, which would remount forms and wipe user input.
 
 ### Key Environment Variables
 
