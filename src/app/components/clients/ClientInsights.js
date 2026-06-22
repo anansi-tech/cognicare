@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useLiam } from "@/components/liam/LiamProvider";
-import { AgentReportBody, TreatmentBody, AssessmentBody } from "@/components/ai/AgentReportBody";
+import { AgentReportBody, TreatmentBody, AssessmentBody, DiagnosticBody } from "@/components/ai/AgentReportBody";
 import { Section, Empty } from "@/components/ai/Section";
 import { EditApproveBar } from "@/components/ai/editable";
 import { useEditableReport } from "@/components/ai/useEditableReport";
@@ -53,6 +53,7 @@ export default function ClientInsights({ clientId, refreshKey = 0 }) {
   }, [clientId, refreshKey]);
 
   const ax = useEditableReport({ clientId, report: assessment, onUpdated: setAssessment });
+  const dx = useEditableReport({ clientId, report: diagnostic, onUpdated: setDiagnostic });
   const tx = useEditableReport({ clientId, report: treatment, onUpdated: setTreatment });
 
   if (loading) {
@@ -125,7 +126,22 @@ export default function ClientInsights({ clientId, refreshKey = 0 }) {
         defaultOpen={false}
       >
         {diagnostic ? (
-          <AgentReportBody agentType="diagnostic" payload={diagnostic.payload} />
+          <>
+            <EditApproveBar tx={dx} report={diagnostic} draftLabel="Draft" />
+            {dx.canEdit ? (
+              <DiagnosticBody payload={dx.edited} editable onChange={dx.setEdited} />
+            ) : (
+              <>
+                <DiagnosticBody payload={diagnostic.payload} />
+                <button
+                  onClick={dx.startEdit}
+                  className="mt-2 text-xs text-primary hover:text-primary/80"
+                >
+                  Edit diagnosis
+                </button>
+              </>
+            )}
+          </>
         ) : (
           <Empty>Generated automatically after the assessment.</Empty>
         )}
