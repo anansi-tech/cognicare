@@ -113,6 +113,66 @@ export function EditSelect({ value, onChange, options }) {
   );
 }
 
+const CONFIDENCE_OPTIONS = [
+  { value: "low", label: "Low" },
+  { value: "moderate", label: "Moderate" },
+  { value: "high", label: "High" },
+];
+
+const INPUT = "w-full rounded-md border border-input bg-background px-2.5 py-1.5 text-sm";
+
+// One editable diagnosis candidate: code + name + confidence + criteriaMet list + rationale.
+export function DiagnosisCandidateEditor({ value = {}, onChange, onRemove }) {
+  const set = (k, v) => onChange({ ...value, [k]: v });
+  return (
+    <div className="rounded-md border border-gray-200 bg-gray-50/50 p-3 space-y-2">
+      <div className="flex gap-2">
+        <div className="flex-1">
+          <label className="text-xs text-gray-500">Code</label>
+          <input value={value.code ?? ""} onChange={(e) => set("code", e.target.value)}
+            placeholder="e.g. F32.1" className={INPUT} />
+        </div>
+        <div className="flex-[2]">
+          <label className="text-xs text-gray-500">Name</label>
+          <input value={value.name ?? ""} onChange={(e) => set("name", e.target.value)}
+            className={INPUT} />
+        </div>
+        <div className="w-32">
+          <label className="text-xs text-gray-500">Confidence</label>
+          <EditSelect value={value.confidence} onChange={(v) => set("confidence", v)} options={CONFIDENCE_OPTIONS} />
+        </div>
+        {onRemove && (
+          <button type="button" onClick={onRemove} aria-label="Remove"
+            className="self-end text-muted-foreground hover:text-red-600 text-sm px-1 pb-1.5">✕</button>
+        )}
+      </div>
+      <div>
+        <label className="text-xs text-gray-500">Criteria met</label>
+        <EditList value={value.criteriaMet ?? []} onChange={(v) => set("criteriaMet", v)} placeholder="Add a met criterion" />
+      </div>
+      <div>
+        <label className="text-xs text-gray-500">Rationale</label>
+        <EditText value={value.rationale ?? ""} onChange={(v) => set("rationale", v)} rows={3} />
+      </div>
+    </div>
+  );
+}
+
+// List of DiagnosisCandidateEditors with add/remove.
+export function DiagnosisCandidateList({ value = [], onChange, addLabel = "+ Add diagnosis" }) {
+  const update = (i, v) => onChange(value.map((x, j) => (j === i ? v : x)));
+  const remove = (i) => onChange(value.filter((_, j) => j !== i));
+  const add = () => onChange([...value, { code: "", name: "", confidence: "moderate", criteriaMet: [], rationale: "" }]);
+  return (
+    <div className="space-y-2">
+      {value.map((c, i) => (
+        <DiagnosisCandidateEditor key={i} value={c} onChange={(v) => update(i, v)} onRemove={() => remove(i)} />
+      ))}
+      <button type="button" onClick={add} className="text-xs text-primary hover:text-primary/80">{addLabel}</button>
+    </div>
+  );
+}
+
 // EditRows: repeating structured objects (goals, differentials, measure interpretations).
 // fields: [{ key, label, type: "text"|"select", options?, rows? }]
 // Each row is a bordered card with labeled controls + remove; Add appends a blank row.

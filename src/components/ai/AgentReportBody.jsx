@@ -2,7 +2,7 @@
 // when an envelope payload shape changes in schemas.js, edit ONLY this file.
 
 import { Badge } from "@/components/ui/badge";
-import { EditText, EditList, EditSelect, EditRows } from "@/components/ai/editable";
+import { EditText, EditList, EditSelect, EditRows, DiagnosisCandidateEditor, DiagnosisCandidateList } from "@/components/ai/editable";
 
 const RISK_OPTIONS = [
   { value: "none", label: "None" },
@@ -128,8 +128,9 @@ export function AssessmentBody({ payload: p, editable = false, onChange }) {
   );
 }
 
-export function DiagnosticBody({ payload: p }) {
+export function DiagnosticBody({ payload: p, editable = false, onChange }) {
   if (!p) return null;
+  const set = (k, v) => onChange?.({ ...p, [k]: v });
   const Dx = ({ d }) =>
     d ? (
       <div className="rounded-md border p-2 text-sm">
@@ -146,10 +147,22 @@ export function DiagnosticBody({ payload: p }) {
   return (
     <div className="space-y-3">
       <Field label="Primary diagnosis">
-        <Dx d={p.primaryDiagnosis} />
+        {editable ? (
+          <DiagnosisCandidateEditor
+            value={p.primaryDiagnosis ?? {}}
+            onChange={(v) => set("primaryDiagnosis", v)}
+          />
+        ) : (
+          <Dx d={p.primaryDiagnosis} />
+        )}
       </Field>
       <Field label="Differentials">
-        {p.differentials?.length ? (
+        {editable ? (
+          <DiagnosisCandidateList
+            value={p.differentials ?? []}
+            onChange={(v) => set("differentials", v)}
+          />
+        ) : p.differentials?.length ? (
           <div className="space-y-2">
             {p.differentials.map((d, i) => (
               <Dx key={i} d={d} />
@@ -160,10 +173,20 @@ export function DiagnosticBody({ payload: p }) {
         )}
       </Field>
       <Field label="Rule out">
-        <List items={p.ruleOut} />
+        {editable ? (
+          <EditList value={p.ruleOut ?? []} onChange={(v) => set("ruleOut", v)} placeholder="Add a rule-out" />
+        ) : (
+          <List items={p.ruleOut} />
+        )}
       </Field>
       <Field label="Comorbidities">
-        {p.comorbidities?.length ? (
+        {editable ? (
+          <DiagnosisCandidateList
+            value={p.comorbidities ?? []}
+            onChange={(v) => set("comorbidities", v)}
+            addLabel="+ Add comorbidity"
+          />
+        ) : p.comorbidities?.length ? (
           <div className="space-y-2">
             {p.comorbidities.map((d, i) => (
               <Dx key={i} d={d} />
@@ -174,10 +197,18 @@ export function DiagnosticBody({ payload: p }) {
         )}
       </Field>
       <Field label="Cultural considerations">
-        <List items={p.culturalConsiderations} />
+        {editable ? (
+          <EditList value={p.culturalConsiderations ?? []} onChange={(v) => set("culturalConsiderations", v)} placeholder="Add a consideration" />
+        ) : (
+          <List items={p.culturalConsiderations} />
+        )}
       </Field>
       <Field label="Clinical justification">
-        <p className="text-sm">{p.clinicalJustification}</p>
+        {editable ? (
+          <EditText value={p.clinicalJustification ?? ""} onChange={(v) => set("clinicalJustification", v)} rows={4} />
+        ) : (
+          <p className="text-sm">{p.clinicalJustification}</p>
+        )}
       </Field>
     </div>
   );
