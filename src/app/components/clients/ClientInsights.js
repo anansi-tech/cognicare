@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useLiam } from "@/components/liam/LiamProvider";
-import { AgentReportBody, TreatmentBody, AssessmentBody, DiagnosticBody } from "@/components/ai/AgentReportBody";
+import { AgentReportBody, TreatmentBody, AssessmentBody, DiagnosticBody, ProgressBody } from "@/components/ai/AgentReportBody";
 import { Section, Empty } from "@/components/ai/Section";
 import { EditApproveBar } from "@/components/ai/editable";
 import { useEditableReport } from "@/components/ai/useEditableReport";
@@ -55,6 +55,7 @@ export default function ClientInsights({ clientId, refreshKey = 0 }) {
   const ax = useEditableReport({ clientId, report: assessment, onUpdated: setAssessment });
   const dx = useEditableReport({ clientId, report: diagnostic, onUpdated: setDiagnostic });
   const tx = useEditableReport({ clientId, report: treatment, onUpdated: setTreatment });
+  const px = useEditableReport({ clientId, report: progress, onUpdated: setProgress });
 
   if (loading) {
     return (
@@ -184,7 +185,22 @@ export default function ClientInsights({ clientId, refreshKey = 0 }) {
         defaultOpen={false}
       >
         {progress ? (
-          <AgentReportBody agentType="progress" payload={progress.payload} />
+          <>
+            <EditApproveBar tx={px} report={progress} draftLabel="Draft" />
+            {px.canEdit ? (
+              <ProgressBody payload={px.edited} editable onChange={px.setEdited} />
+            ) : (
+              <>
+                <ProgressBody payload={progress.payload} />
+                <button
+                  onClick={px.startEdit}
+                  className="mt-2 text-xs text-primary hover:text-primary/80"
+                >
+                  Edit progress
+                </button>
+              </>
+            )}
+          </>
         ) : (
           <Empty>Generated automatically after you complete a session.</Empty>
         )}
