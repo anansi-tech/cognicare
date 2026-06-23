@@ -70,7 +70,7 @@ export const progressPayload = z.object({
   })),
   treatmentEffectiveness: z.string(),
   barriers: z.array(z.string()),
-  reassessmentRecommended: z.boolean(),
+  reassessmentRecommended: z.boolean().default(false),
   recommendations: z.array(z.string()),
   nextSessionFocus: z.string(),
 });
