@@ -75,7 +75,10 @@ export const PATCH = requireAuth(async (req) => {
 
     // Update all editable fields if they are provided
     if (notes !== undefined) existingSession.notes = notes;
-    if (status !== undefined) existingSession.status = status;
+    if (status !== undefined) {
+      existingSession.status = status;
+      if (status === "completed") existingSession.completedAt = new Date();
+    }
     if (date !== undefined) existingSession.date = new Date(date);
     if (duration !== undefined) existingSession.duration = duration;
     if (type !== undefined) existingSession.type = type;

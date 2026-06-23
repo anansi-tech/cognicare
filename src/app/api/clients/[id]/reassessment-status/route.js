@@ -29,7 +29,7 @@ export async function GET(req, { params }) {
       practiceId: session.user.practiceId,
       status: "completed",
     })
-      .sort({ completedAt: -1 })
+      .sort({ date: -1, createdAt: -1 })
       .lean();
 
     if (!mostRecentSession) {
