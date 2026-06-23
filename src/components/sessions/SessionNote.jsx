@@ -16,6 +16,7 @@ export function SessionNote({ sessionId, refreshKey }) {
   const [note, setNote] = useState(null);
   const [soap, setSoap] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const load = () =>
     fetch(`/api/sessions/${sessionId}/note`).then((r) => r.json()).then((n) => {
@@ -23,8 +24,9 @@ export function SessionNote({ sessionId, refreshKey }) {
     });
   useEffect(() => { load(); }, [sessionId, refreshKey]);
 
-  if (!note) return null; // post-session not run yet — the GeneratingState covers that moment
+  if (!note) return null;
   const draft = note.status === "draft";
+  const editorOpen = draft || isEditing;
 
   const save = async (approve) => {
     setSaving(true);
@@ -32,7 +34,9 @@ export function SessionNote({ sessionId, refreshKey }) {
       method: "PATCH", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ soap, status: approve ? "approved" : undefined }),
     });
-    setSaving(false); load();
+    setSaving(false);
+    if (approve) setIsEditing(false);
+    load();
   };
 
   return (
@@ -45,7 +49,7 @@ export function SessionNote({ sessionId, refreshKey }) {
         {FIELDS.map(([key, label]) => (
           <div key={key}>
             <p className="text-xs font-medium text-muted-foreground">{label}</p>
-            {draft ? (
+            {editorOpen ? (
               <Textarea value={soap?.[key] ?? ""} rows={3}
                 onChange={(e) => setSoap((s) => ({ ...s, [key]: e.target.value }))} />
             ) : (
@@ -53,7 +57,28 @@ export function SessionNote({ sessionId, refreshKey }) {
             )}
           </div>
         ))}
-        {draft && <Button onClick={() => save(true)} disabled={saving}>{saving ? "Saving…" : "Approve note"}</Button>}
+        <div className="flex gap-2">
+          {draft && (
+            <Button onClick={() => save(true)} disabled={saving}>
+              {saving ? "Saving…" : "Approve note"}
+            </Button>
+          )}
+          {!draft && isEditing && (
+            <>
+              <Button variant="outline" onClick={() => save(false)} disabled={saving}>
+                {saving ? "Saving…" : "Save"}
+              </Button>
+              <Button onClick={() => save(true)} disabled={saving}>
+                {saving ? "Saving…" : "Approve note"}
+              </Button>
+            </>
+          )}
+          {!draft && !isEditing && (
+            <Button variant="outline" onClick={() => setIsEditing(true)}>
+              Edit note
+            </Button>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
