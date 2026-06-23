@@ -437,7 +437,11 @@ export function ProgressBody({ payload: p, editable = false, onChange }) {
             />
             Reassessment recommended
           </label>
-        ) : null}
+        ) : p.reassessmentRecommended ? (
+          <p className="text-sm font-medium text-amber-700">Recommended</p>
+        ) : (
+          <p className="text-sm text-muted-foreground">Not recommended at this time</p>
+        )}
       </Field>
     </div>
   );
