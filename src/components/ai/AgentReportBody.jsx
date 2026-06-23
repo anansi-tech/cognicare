@@ -52,6 +52,13 @@ const GOAL_BADGE = {
   met: "bg-green-100 text-green-800 border-green-400",
   regressed: "bg-red-100 text-red-800 border-red-400",
 };
+const GOAL_STATUS_OPTIONS = [
+  { value: "not-started", label: "Not started" },
+  { value: "emerging", label: "Emerging" },
+  { value: "progressing", label: "Progressing" },
+  { value: "met", label: "Met" },
+  { value: "regressed", label: "Regressed" },
+];
 const NEUTRAL_BADGE = "bg-slate-100 text-slate-700 border-slate-400";
 
 const StatusBadge = ({ map, value, label }) => {
@@ -308,41 +315,54 @@ export function TreatmentBody({ payload: p, editable = false, onChange }) {
   );
 }
 
-export function ProgressBody({ payload: p }) {
+export function ProgressBody({ payload: p, editable = false, onChange }) {
   if (!p) return null;
+  const set = (k, v) => onChange?.({ ...p, [k]: v });
+
+  // Score header extracted so both read and editable modes can render it identically.
+  const MeasureScoreHeader = ({ m }) => {
+    const arrow = m.direction === "improved" ? "↗" : m.direction === "worsened" ? "↘" : m.direction === "unchanged" ? "→" : null;
+    const arrowColor = m.direction === "improved" ? "text-green-600" : m.direction === "worsened" ? "text-red-600" : "text-gray-400";
+    return (
+      <div className="flex flex-wrap items-center gap-2 mb-1">
+        <span className="font-semibold text-gray-900">{m.instrumentId}</span>
+        <span className="font-medium text-gray-900">
+          {m.previousScore != null ? `${m.previousScore} → ` : ""}{m.latestScore}
+        </span>
+        {arrow && <span className={`font-semibold ${arrowColor}`}>{arrow} {m.direction}</span>}
+        {m.reliableChange && (
+          <span className="rounded-full bg-blue-100 text-blue-800 border border-blue-200 text-xs font-medium px-2 py-0.5">
+            Reliable change
+          </span>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-3">
       <Field label="Measure interpretation">
         {p.measureInterpretation?.length ? (
           <ul className="space-y-2">
-            {p.measureInterpretation.map((m, i) => {
-              const arrow =
-                m.direction === "improved" ? "↗" :
-                m.direction === "worsened" ? "↘" :
-                m.direction === "unchanged" ? "→" : null;
-              const arrowColor =
-                m.direction === "improved" ? "text-green-600" :
-                m.direction === "worsened" ? "text-red-600" : "text-gray-400";
-              return (
-                <li key={i} className="rounded-md border border-gray-200 bg-gray-50/50 px-3 py-2 text-sm">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-semibold text-gray-900">{m.instrumentId}</span>
-                    <span className="font-medium text-gray-900">
-                      {m.previousScore != null ? `${m.previousScore} → ` : ""}{m.latestScore}
-                    </span>
-                    {arrow && <span className={`font-semibold ${arrowColor}`}>{arrow} {m.direction}</span>}
-                    {m.reliableChange && (
-                      <span className="rounded-full bg-blue-100 text-blue-800 border border-blue-200 text-xs font-medium px-2 py-0.5">
-                        Reliable change
-                      </span>
-                    )}
-                  </div>
-                  {m.interpretation && (
-                    <p className="mt-1 text-gray-600">{m.interpretation}</p>
-                  )}
-                </li>
-              );
-            })}
+            {p.measureInterpretation.map((m, i) => (
+              <li key={i} className="rounded-md border border-gray-200 bg-gray-50/50 px-3 py-2 text-sm">
+                <MeasureScoreHeader m={m} />
+                {/* Scores are objective data — only the clinical interpretation text is editable. */}
+                {editable ? (
+                  <EditText
+                    value={m.interpretation ?? ""}
+                    onChange={(v) =>
+                      set("measureInterpretation",
+                        p.measureInterpretation.map((x, j) => (j === i ? { ...x, interpretation: v } : x))
+                      )
+                    }
+                    rows={2}
+                  />
+                ) : (
+                  m.interpretation && <p className="mt-1 text-gray-600">{m.interpretation}</p>
+                )}
+              </li>
+            ))}
           </ul>
         ) : (
           <p className="text-sm text-muted-foreground">
@@ -351,7 +371,19 @@ export function ProgressBody({ payload: p }) {
         )}
       </Field>
       <Field label="Goal progress">
-        {p.goalProgress?.length ? (
+        {editable ? (
+          <EditRows
+            value={p.goalProgress ?? []}
+            onChange={(v) => set("goalProgress", v)}
+            fields={[
+              { key: "goal", label: "Goal", type: "textarea" },
+              { key: "status", label: "Status", type: "select", options: GOAL_STATUS_OPTIONS },
+              { key: "notes", label: "Notes", type: "textarea" },
+            ]}
+            emptyRow={{ goal: "", status: "emerging", notes: "" }}
+            addLabel="+ Add goal"
+          />
+        ) : p.goalProgress?.length ? (
           <ul className="space-y-2">
             {p.goalProgress.map((g, i) => (
               <li key={i} className="rounded-md border border-gray-200 bg-gray-50/50 px-3 py-2 text-sm">
@@ -368,22 +400,45 @@ export function ProgressBody({ payload: p }) {
         )}
       </Field>
       <Field label="Next session focus">
-        <p className="text-sm">{p.nextSessionFocus}</p>
+        {editable ? (
+          <EditText value={p.nextSessionFocus ?? ""} onChange={(v) => set("nextSessionFocus", v)} rows={2} />
+        ) : (
+          <p className="text-sm">{p.nextSessionFocus}</p>
+        )}
       </Field>
       <Field label="Barriers">
-        <List items={p.barriers} />
+        {editable ? (
+          <EditList value={p.barriers ?? []} onChange={(v) => set("barriers", v)} placeholder="Add a barrier" />
+        ) : (
+          <List items={p.barriers} />
+        )}
       </Field>
-      {p.recommendations?.length ? (
-        <Field label="Recommendations">
+      <Field label="Recommendations">
+        {editable ? (
+          <EditList value={p.recommendations ?? []} onChange={(v) => set("recommendations", v)} placeholder="Add a recommendation" />
+        ) : p.recommendations?.length ? (
           <List items={p.recommendations} />
-        </Field>
-      ) : null}
-      {p.treatmentEffectiveness && (
-        <Field label="Treatment effectiveness">
+        ) : null}
+      </Field>
+      <Field label="Treatment effectiveness">
+        {editable ? (
+          <EditText value={p.treatmentEffectiveness ?? ""} onChange={(v) => set("treatmentEffectiveness", v)} rows={3} />
+        ) : p.treatmentEffectiveness ? (
           <p className="text-sm">{p.treatmentEffectiveness}</p>
-        </Field>
-      )}
-      {/* Reassessment recommendation surfaces once, at the client-page banner. */}
+        ) : null}
+      </Field>
+      <Field label="Reassessment">
+        {editable ? (
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={!!p.reassessmentRecommended}
+              onChange={(e) => set("reassessmentRecommended", e.target.checked)}
+            />
+            Reassessment recommended
+          </label>
+        ) : null}
+      </Field>
     </div>
   );
 }
