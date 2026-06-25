@@ -1,8 +1,3 @@
-// Pin the server process timezone (Miami / Eastern). Vercel reserves the TZ env
-// var, so we set it here at config load — before any date logic runs — so the
-// server's Date math matches the practice timezone instead of UTC.
-process.env.TZ = "America/New_York";
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
