@@ -57,7 +57,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             .lean();
           token.stripeSubscriptionStatus = practice?.stripeSubscriptionStatus ?? null;
           token.isPracticeOwner = practice?.ownerId?.toString() === String(token.id);
-          token.timezone = practice?.timezone ?? "America/New_York";
+          token.practiceTimezone = practice?.timezone ?? "America/New_York";
         } else {
           token.stripeSubscriptionStatus = null;
           token.isPracticeOwner = false;
@@ -72,7 +72,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.practiceId = token.practiceId ?? null;
         session.user.stripeSubscriptionStatus = token.stripeSubscriptionStatus ?? null;
         session.user.isPracticeOwner = !!token.isPracticeOwner;
-        session.user.timezone = token.timezone ?? "America/New_York";
+        session.user.practiceTimezone = token.practiceTimezone ?? "America/New_York";
       }
       return session;
     },

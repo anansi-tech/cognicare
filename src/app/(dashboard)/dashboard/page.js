@@ -69,7 +69,7 @@ export default function DashboardPage() {
     }
   };
 
-  const tz = session?.user?.timezone ?? "America/New_York";
+  const tz = session?.user?.practiceTimezone ?? "America/New_York";
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleString("en-US", {

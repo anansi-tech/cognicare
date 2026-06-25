@@ -129,7 +129,7 @@ export default function SessionDetail({ sessionId }) {
     }
   };
 
-  const tz = authSession?.user?.timezone ?? "America/New_York";
+  const tz = authSession?.user?.practiceTimezone ?? "America/New_York";
 
   // Format date for display — practice timezone, 12-hour AM/PM.
   const formatDate = (dateString) => {

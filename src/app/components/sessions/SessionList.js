@@ -127,7 +127,7 @@ export default function SessionList({ initialStatusFilter = "" }) {
     }
   };
 
-  const tz = session?.user?.timezone ?? "America/New_York";
+  const tz = session?.user?.practiceTimezone ?? "America/New_York";
 
   // Format date for display — practice timezone, 12-hour AM/PM.
   const formatDate = (dateString) => {
