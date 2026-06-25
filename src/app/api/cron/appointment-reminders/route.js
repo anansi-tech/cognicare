@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/mongodb";
 import Session from "@/models/session";
 import Client from "@/models/client";
 import { sendEmail } from "@/lib/email";
+import { PRACTICE_TZ } from "@/lib/timezone";
 
 export const maxDuration = 60;
 // Node runtime — Mongoose + Resend SDK aren't edge-safe.
@@ -64,7 +65,8 @@ export async function GET(request) {
 }
 
 function reminderHtml({ name, date, format }) {
-  const when = new Date(date).toLocaleString(undefined, {
+  const when = new Date(date).toLocaleString("en-US", {
+    timeZone: PRACTICE_TZ,
     weekday: "long",
     month: "long",
     day: "numeric",
