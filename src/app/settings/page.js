@@ -22,6 +22,20 @@ export default function SettingsPage() {
     { value: "America/Denver", label: "Mountain (MT)" },
     { value: "America/Los_Angeles", label: "Pacific (PT)" },
     { value: "America/Phoenix", label: "Arizona (no DST)" },
+    { value: "America/Anchorage", label: "Alaska (AKT)" },
+    { value: "Pacific/Honolulu", label: "Hawaii (HST)" },
+    { value: "Europe/London", label: "London (GMT/BST)" },
+    { value: "Europe/Paris", label: "Central Europe (CET)" },
+    { value: "Europe/Moscow", label: "Moscow (MSK)" },
+    { value: "Asia/Dubai", label: "Dubai (GST)" },
+    { value: "Asia/Kolkata", label: "India (IST)" },
+    { value: "Asia/Bangkok", label: "Bangkok (ICT)" },
+    { value: "Asia/Singapore", label: "Singapore (SGT)" },
+    { value: "Asia/Shanghai", label: "China (CST)" },
+    { value: "Asia/Tokyo", label: "Japan (JST)" },
+    { value: "Australia/Sydney", label: "Sydney (AEST)" },
+    { value: "Pacific/Auckland", label: "New Zealand (NZST)" },
+    { value: "America/Sao_Paulo", label: "Brazil (BRT)" }
   ];
 
   useEffect(() => {
