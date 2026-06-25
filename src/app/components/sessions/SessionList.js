@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import SessionForm from "./SessionForm";
-import { PRACTICE_TZ } from "@/lib/timezone";
 import { useSession } from "next-auth/react";
 
 export default function SessionList({ initialStatusFilter = "" }) {
@@ -128,10 +127,12 @@ export default function SessionList({ initialStatusFilter = "" }) {
     }
   };
 
+  const tz = session?.user?.timezone ?? "America/New_York";
+
   // Format date for display — practice timezone, 12-hour AM/PM.
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleString("en-US", {
-      timeZone: PRACTICE_TZ,
+      timeZone: tz,
       year: "numeric",
       month: "short",
       day: "numeric",

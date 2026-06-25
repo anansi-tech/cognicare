@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { PRACTICE_TZ } from "@/lib/timezone";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -70,9 +69,11 @@ export default function DashboardPage() {
     }
   };
 
+  const tz = session?.user?.timezone ?? "America/New_York";
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleString("en-US", {
-      timeZone: PRACTICE_TZ,
+      timeZone: tz,
       month: "short",
       day: "numeric",
       hour: "numeric",
@@ -83,7 +84,7 @@ export default function DashboardPage() {
 
   const formatTime = (dateString) =>
     new Date(dateString).toLocaleTimeString("en-US", {
-      timeZone: PRACTICE_TZ,
+      timeZone: tz,
       hour: "numeric",
       minute: "2-digit",
       hour12: true,
@@ -131,7 +132,7 @@ export default function DashboardPage() {
             <h2 className="text-lg font-semibold text-gray-900">Today&apos;s Schedule</h2>
             <p className="text-xs text-gray-500 mt-0.5">
               {new Date().toLocaleDateString("en-US", {
-                timeZone: PRACTICE_TZ,
+                timeZone: tz,
                 weekday: "long",
                 month: "long",
                 day: "numeric",

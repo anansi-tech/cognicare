@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Session from "@/models/session";
 import Client from "@/models/client";
+import Practice from "@/models/practice";
 import { sendEmail } from "@/lib/email";
-import { PRACTICE_TZ } from "@/lib/timezone";
+import { fmtInTz } from "@/lib/timezone";
 
 export const maxDuration = 60;
 // Node runtime — Mongoose + Resend SDK aren't edge-safe.
@@ -43,16 +44,20 @@ export async function GET(request) {
   let skipped = 0;
   for (const s of sessions) {
     try {
-      const client = await Client.findById(s.clientId).select("name contactInfo").lean();
+      const [client, practice] = await Promise.all([
+        Client.findById(s.clientId).select("name contactInfo").lean(),
+        Practice.findById(s.practiceId).select("timezone").lean(),
+      ]);
       const to = client?.contactInfo?.email;
       if (!to) {
         skipped++;
         continue;
       }
+      const tz = practice?.timezone ?? "America/New_York";
       await sendEmail({
         to,
         subject: "Appointment reminder",
-        html: reminderHtml({ name: client.name, date: s.date, format: s.format }),
+        html: reminderHtml({ name: client.name, date: s.date, format: s.format, tz }),
       });
       await Session.updateOne({ _id: s._id }, { $set: { reminderSentAt: new Date() } });
       sent++;
@@ -64,9 +69,8 @@ export async function GET(request) {
   return NextResponse.json({ checked: sessions.length, sent, skipped });
 }
 
-function reminderHtml({ name, date, format }) {
-  const when = new Date(date).toLocaleString("en-US", {
-    timeZone: PRACTICE_TZ,
+function reminderHtml({ name, date, format, tz }) {
+  const when = fmtInTz(date, tz, {
     weekday: "long",
     month: "long",
     day: "numeric",

@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import SessionForm from "./SessionForm";
-import { PRACTICE_TZ } from "@/lib/timezone";
 import SessionAIInsights from "./SessionAIInsights";
 import { useLiam } from "@/components/liam/LiamProvider";
 import { AutoSessionPrep } from "@/components/ai/AutoSessionPrep";
@@ -14,6 +14,7 @@ import { MeasuresPanel } from "@/components/measures/MeasuresPanel";
 
 export default function SessionDetail({ sessionId }) {
   const router = useRouter();
+  const { data: authSession } = useSession();
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -128,10 +129,12 @@ export default function SessionDetail({ sessionId }) {
     }
   };
 
+  const tz = authSession?.user?.timezone ?? "America/New_York";
+
   // Format date for display — practice timezone, 12-hour AM/PM.
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleString("en-US", {
-      timeZone: PRACTICE_TZ,
+      timeZone: tz,
       year: "numeric",
       month: "long",
       day: "numeric",

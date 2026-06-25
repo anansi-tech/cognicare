@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { ConsentMarkdown } from "@/components/ai/ConsentMarkdown";
-import { PRACTICE_TZ } from "@/lib/timezone";
 
 // Public consent portal — opened from the link sent to the client. Token in
 // the URL is the only authorization (no account / no session). Mobile-first:
@@ -130,7 +129,7 @@ export default function ConsentPortalPage() {
             <p className="text-sm text-green-800">
               Thank you. This form was electronically signed on{" "}
               <span className="font-medium">
-                {form.dateSigned ? new Date(form.dateSigned).toLocaleString("en-US", { timeZone: PRACTICE_TZ }) : "—"}
+                {form.dateSigned ? new Date(form.dateSigned).toLocaleString() : "—"}
               </span>
               .
             </p>

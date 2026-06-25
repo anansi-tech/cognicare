@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { PRACTICE_TZ } from "@/lib/timezone";
 import { useRouter } from "next/navigation";
 
 // Audit log viewer — owner-only, practice-scoped. Read-only view for
@@ -259,7 +258,7 @@ export default function AuditPage() {
                 return (
                   <tr key={log._id} className="hover:bg-secondary/50">
                     <td className="px-4 py-2 text-sm text-foreground whitespace-nowrap">
-                      {new Date(log.timestamp).toLocaleString("en-US", { timeZone: PRACTICE_TZ })}
+                      {new Date(log.timestamp).toLocaleString("en-US", { timeZone: session?.user?.timezone ?? "America/New_York" })}
                     </td>
                     <td className="px-4 py-2 text-sm text-foreground">{formatActor(log.userId)}</td>
                     <td className={`px-4 py-2 text-sm ${tone}`}>{log.action}</td>

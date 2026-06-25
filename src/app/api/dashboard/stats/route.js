@@ -4,6 +4,8 @@ import { visibleClientIds } from "@/lib/practice";
 import { connectDB } from "@/lib/mongodb";
 import Session from "@/models/session";
 import Report from "@/models/report";
+import Practice from "@/models/practice";
+import { dayRangeInTz } from "@/lib/timezone";
 
 export const GET = requireAuth(async (req) => {
   try {
@@ -38,12 +40,10 @@ export const GET = requireAuth(async (req) => {
 
     // Today's schedule + a forward-looking "this week" count (Round 17).
     // Same scoping as the rest — clinicians see their own caseload only.
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
-    const endOfToday = new Date();
-    endOfToday.setHours(23, 59, 59, 999);
-    const endOfWeek = new Date(startOfToday);
-    endOfWeek.setDate(endOfWeek.getDate() + 7);
+    const practice = await Practice.findById(practiceId).select("timezone").lean();
+    const tz = practice?.timezone ?? "America/New_York";
+    const { start: startOfToday, end: endOfToday } = dayRangeInTz(tz);
+    const endOfWeek = new Date(startOfToday.getTime() + 7 * 24 * 60 * 60 * 1000);
 
     const [recentSessions, recentReports, todaysAppointmentsRaw, upcomingThisWeek] =
       await Promise.all([
@@ -112,6 +112,7 @@ export const GET = requireAuth(async (req) => {
       recentActivity,
       todaysAppointments,
       upcomingThisWeek,
+      timezone: tz,
     });
   } catch (error) {
     console.error("Dashboard stats error:", error);
