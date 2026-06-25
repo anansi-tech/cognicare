@@ -10,6 +10,7 @@ const practiceSchema = new mongoose.Schema(
     stripeCustomerId: { type: String },
     stripeSubscriptionStatus: { type: String }, // trialing|active|past_due|canceled|...
     seats: { type: Number, default: 1 }, // paid clinician seats (enforced later, with Auth.js v5)
+    timezone: { type: String, default: "America/New_York" }, // IANA zone, e.g. America/Chicago
   },
   { timestamps: true }
 );

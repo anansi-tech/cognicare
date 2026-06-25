@@ -14,7 +14,7 @@ export async function GET() {
 
   await connectDB();
   const practice = await Practice.findById(user.practiceId)
-    .select("name ownerId seats stripeSubscriptionStatus")
+    .select("name ownerId seats stripeSubscriptionStatus timezone")
     .lean();
   if (!practice) return NextResponse.json({ error: "No practice" }, { status: 404 });
   return NextResponse.json({
@@ -31,20 +31,22 @@ export async function PATCH(req) {
       { status: 403 }
     );
   }
-  const { name } = await req.json();
-  if (!name?.trim()) return NextResponse.json({ error: "Name required" }, { status: 400 });
+  const { name, timezone } = await req.json();
+  if (!name?.trim() && !timezone) return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
 
   await connectDB();
-  const trimmed = name.trim();
-  await Practice.updateOne({ _id: user.practiceId }, { $set: { name: trimmed } });
+  const update = {};
+  if (name?.trim()) update.name = name.trim();
+  if (timezone) update.timezone = timezone;
+  await Practice.updateOne({ _id: user.practiceId }, { $set: update });
   await logAuditEvent({
     userId: user.id,
     practiceId: user.practiceId,
     action: "update",
     entityType: "practice",
     entityId: user.practiceId,
-    details: { field: "name", name: trimmed },
+    details: { ...update },
     ...auditMetaFromRequest(req),
   });
-  return NextResponse.json({ ok: true, name: trimmed });
+  return NextResponse.json({ ok: true, ...update });
 }
