@@ -30,6 +30,7 @@ const auditLogSchema = new mongoose.Schema(
         "export",
         "import",
         "access_denied",
+        "regenerate",
       ],
     },
     entityType: {

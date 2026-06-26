@@ -9,6 +9,7 @@ import SessionAIInsights from "./SessionAIInsights";
 import { useLiam } from "@/components/liam/LiamProvider";
 import { AutoSessionPrep } from "@/components/ai/AutoSessionPrep";
 import { AutoPostSession } from "@/components/ai/AutoPostSession";
+import { RegenerateButton } from "@/components/ai/RegenerateButton";
 import { SessionNote } from "@/components/sessions/SessionNote";
 import { MeasuresPanel } from "@/components/measures/MeasuresPanel";
 
@@ -477,6 +478,13 @@ export default function SessionDetail({ sessionId }) {
               sessionStatus={session.status}
               onDone={() => setAiRefreshKey((k) => k + 1)}
             />
+            {session.status === "completed" && (
+              <RegenerateButton
+                clientId={typeof session.clientId === "object" ? session.clientId?._id : session.clientId}
+                sessionId={session._id}
+                onDone={() => setAiRefreshKey((k) => k + 1)}
+              />
+            )}
           </div>
           {!isEditing && <SessionNote sessionId={session._id} refreshKey={aiRefreshKey} />}
           {!isEditing && (

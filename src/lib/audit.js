@@ -111,6 +111,7 @@ export const AuditActions = {
   READ: "read",
   UPDATE: "update",
   DELETE: "delete",
+  REGENERATE: "regenerate",
   EXPORT: "export",
   IMPORT: "import",
   ACCESS_DENIED: "access_denied",
