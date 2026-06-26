@@ -5,6 +5,7 @@ import { evaluateProgress } from "./agents/progress";
 import { document as documentSession } from "./agents/documentation";
 import { persistReport } from "@/lib/report-utils";
 import AIReport from "@/models/aiReport";
+import Session from "@/models/session";
 import { connectDB } from "@/lib/mongodb";
 
 async function latestTreatment(clientId) {
@@ -37,8 +38,18 @@ export async function runWorkflow({ type, clientId, sessionId, userId, practiceI
     return { treatment: t };
   }
   if (type === "post-session") {
-    const p = await evaluateProgress({ clientId, sessionData }); await save(p, { status: "draft" });
-    const doc = await documentSession({ clientId, progress: p, sessionData }); await save(doc);
+    // Load the just-completed session so agents see the clinician's notes.
+    // Server-authoritative — don't rely on the client sending sessionData.
+    await connectDB();
+    const dbSession = await Session.findById(sessionId).lean();
+    const sd = sessionData ?? (dbSession ? {
+      notes: dbSession.notes ?? "",
+      date: dbSession.date,
+      sessionType: dbSession.type,
+      attendance: dbSession.status,
+    } : null);
+    const p = await evaluateProgress({ clientId, sessionData: sd }); await save(p, { status: "draft" });
+    const doc = await documentSession({ clientId, progress: p, sessionData: sd }); await save(doc);
     return { progress: p, documentation: doc };
   }
   throw new Error(`Unknown workflow type: ${type}`);
