@@ -28,9 +28,9 @@ export function RegenerateButton({ clientId, sessionId, onDone }) {
       type="button"
       onClick={handleClick}
       disabled={generating}
-      className="text-xs text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+      className="inline-flex items-center gap-1.5 rounded-md border border-border bg-white px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-accent-foreground hover:border-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
     >
-      {generating ? "Regenerating…" : "Regenerate note & progress"}
+      {generating ? "Regenerating…" : "↺ Regenerate note & progress"}
     </button>
   );
 }
