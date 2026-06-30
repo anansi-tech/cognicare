@@ -17,7 +17,7 @@ export default function Navbar() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const userMenuRef = useRef(null);
   const { setOpen: setLiamOpen } = useLiam();
-  const isAuthRoute = pathname === "/login" || pathname === "/signup";
+  const isAuthRoute = pathname === "/login" || pathname === "/signup" || pathname === "/";
   const isPublicRoute = pathname === "/" || pathname === "/about" || pathname === "/contact";
 
   useEffect(() => {

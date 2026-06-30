@@ -100,6 +100,36 @@
   animation: float-delay-2 4s ease-in-out infinite;
 }
 
+@keyframes ccFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes ccFloat2 {
+  0%, 100% { transform: translateY(4px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes ccGlow {
+  0%, 100% {
+    box-shadow: 0 1px 0 #E3ECF7, 0 18px 40px -28px rgba(11,43,107,.25);
+    border-color: #E3ECF7;
+  }
+  50% {
+    box-shadow: 0 0 0 1px var(--glow-color), 0 22px 50px -24px var(--glow-soft);
+    border-color: var(--glow-color);
+  }
+}
+
+@keyframes ccDash {
+  to { stroke-dashoffset: -200; }
+}
+
+@keyframes ccBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .25; }
+}
+
 :root {
   /* CogniCare Sky palette — bright-blue primary action, navy text base, teal
      secondary accent, soft sky surfaces. Multi-hue chart ramp for the agent
