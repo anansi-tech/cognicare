@@ -701,7 +701,7 @@ export default function LandingPage() {
           {[
             { heading: "Product",  links: [["#pipeline", "AI agents"], ["#liam", "LIAM copilot"], ["#practice", "Practice & team"], ["#pricing", "Pricing"]] },
             { heading: "Workflow", links: [["#", "Measurement-based care"], ["#", "Scheduling"], ["#", "Billing & consent"], ["#", "Reports"]] },
-            { heading: "Company",  links: [["#", "Compliance"], ["#", "Security"], ["#", "Documentation"], ["#", "Contact"]] },
+            { heading: "Company",  links: [["/about", "About"], ["/contact", "Contact"]] },
           ].map(({ heading, links }) => (
             <div key={heading}>
               <div className="text-[12px] font-bold uppercase" style={{ letterSpacing: ".08em", color: "#5E79A6", marginBottom: 14 }}>{heading}</div>
