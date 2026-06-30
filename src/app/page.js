@@ -82,9 +82,7 @@ export default function LandingPage() {
   const practiceNote  = annual ? "per seat · billed annually" : "per seat · billed monthly";
 
   return (
-    // Break out of the root layout's px-4 sm:px-6 lg:px-8 container
     <div
-      className="-mx-4 sm:-mx-6 lg:-mx-8"
       style={{ fontFamily: "var(--font-hanken, system-ui, sans-serif)", color: "#0B2B6B", background: "#FCFEFF" }}
     >
 

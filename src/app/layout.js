@@ -36,7 +36,7 @@ export default function RootLayout({ children }) {
             <LiamProvider>
               <Navbar />
               <main className="min-h-screen bg-background">
-                <div className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8">{children}</div>
+                {children}
               </main>
               <LiamSheet />
             </LiamProvider>

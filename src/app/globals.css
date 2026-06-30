@@ -130,6 +130,15 @@
   50% { opacity: .25; }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  [style*="ccFloat"],
+  [style*="ccGlow"],
+  [style*="ccDash"],
+  [style*="ccBlink"] {
+    animation: none !important;
+  }
+}
+
 :root {
   /* CogniCare Sky palette — bright-blue primary action, navy text base, teal
      secondary accent, soft sky surfaces. Multi-hue chart ramp for the agent
