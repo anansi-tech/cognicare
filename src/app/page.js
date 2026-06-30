@@ -687,20 +687,19 @@ export default function LandingPage() {
 
       {/* ── FOOTER ─────────────────────────────────────────────────────────── */}
       <footer style={{ background: "#081f54", color: "#8FA8CE", padding: "52px 28px 40px" }}>
-        <div className="mx-auto grid" style={{ maxWidth: 1200, gridTemplateColumns: "1.4fr 1fr 1fr 1fr", gap: 36 }}>
+        <div className="mx-auto grid" style={{ maxWidth: 1200, gridTemplateColumns: "1.8fr 1fr 1fr", gap: 56 }}>
           <div>
             <div className="flex items-center gap-2.5">
               <LogoMark size={34} radius={10} iconSize={19} />
               <span style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 19, color: "#fff" }}>CogniCare</span>
             </div>
-            <p style={{ fontSize: 13.5, lineHeight: 1.55, marginTop: 14, maxWidth: 260 }}>
-              AI-powered clinical practice management for mental-health therapists.
+            <p style={{ fontSize: 13.5, lineHeight: 1.6, marginTop: 14, maxWidth: 320, color: "#8FA8CE" }}>
+              AI-powered clinical practice management for mental-health therapists. Five specialized agents, one in-session copilot, everything a modern practice needs.
             </p>
           </div>
 
           {[
             { heading: "Product",  links: [["#pipeline", "AI agents"], ["#liam", "LIAM copilot"], ["#practice", "Practice & team"], ["#pricing", "Pricing"]] },
-            { heading: "Workflow", links: [["#", "Measurement-based care"], ["#", "Scheduling"], ["#", "Billing & consent"], ["#", "Reports"]] },
             { heading: "Company",  links: [["/about", "About"], ["/contact", "Contact"]] },
           ].map(({ heading, links }) => (
             <div key={heading}>
