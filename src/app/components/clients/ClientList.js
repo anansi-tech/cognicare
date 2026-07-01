@@ -1,11 +1,50 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import ClientForm from "./ClientForm";
 import { useSession } from "next-auth/react";
 import { ageFromDob, genderLabel } from "@/lib/age";
+import { Spinner } from "@/components/ui/Spinner";
+
+const AVATAR_COLORS = [
+  ["#EAF3FF", "#2F80FF"],
+  ["#E2F4F2", "#158A98"],
+  ["#E7F6EC", "#3B9E57"],
+  ["#FBF2DA", "#A9821F"],
+  ["#F0EAFB", "#7C5CBF"],
+];
+
+function avatarColors(name = "") {
+  const idx = name.charCodeAt(0) % AVATAR_COLORS.length;
+  return AVATAR_COLORS[idx];
+}
+
+function initials(name = "") {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+const STATUS_PILL = {
+  active:      { bg: "#E7F6EC", color: "#3B9E57", label: "Active" },
+  completed:   { bg: "#E4F1FF", color: "#2F80FF", label: "Completed" },
+  inactive:    { bg: "#EEF1F5", color: "#6E7E97", label: "Inactive" },
+  transferred: { bg: "#FBF2DA", color: "#A9821F", label: "Transferred" },
+};
+
+const SEGMENTS = [
+  { value: "",            label: "All" },
+  { value: "active",      label: "Active" },
+  { value: "inactive",    label: "Inactive" },
+  { value: "completed",   label: "Completed" },
+  { value: "transferred", label: "Transferred" },
+];
 
 export default function ClientList() {
   const [allClients, setAllClients] = useState([]);
@@ -33,13 +72,10 @@ export default function ClientList() {
 
       console.log("Fetching clients...");
       const response = await fetch("/api/clients", {
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include", // Include cookies for authentication
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
       });
 
-      // Debug information
       console.log("Response status:", response.status);
 
       if (!response.ok) {
@@ -68,58 +104,40 @@ export default function ClientList() {
   // Filter clients client-side
   const filteredClients = useMemo(() => {
     return allClients.filter((client) => {
-      // Apply search filter (case-insensitive)
       const matchesSearch =
         searchTerm === "" || client.name.toLowerCase().includes(searchTerm.toLowerCase());
-
-      // Apply status filter
       const matchesStatus =
         statusFilter === "" || client.status.toLowerCase() === statusFilter.toLowerCase();
-
       return matchesSearch && matchesStatus;
     });
   }, [allClients, searchTerm, statusFilter]);
 
   const handleClientAdded = (newClient) => {
     setShowAddClient(false);
-    //fetchAllClients(); // Refresh all clients
-    // Navigate to client details with insights tab active
     if (newClient && newClient._id) {
       sessionStorage.setItem("showClientReminderForId", newClient._id);
       router.push(`/clients/${newClient._id}`);
     }
   };
 
-  // Show loading when session is loading or not yet available
-  if (!session) {
+  if (!session || loading) {
     return (
-      <div className="flex justify-center items-center min-h-[300px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-[300px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      <div className="flex flex-col items-center justify-center min-h-[300px] gap-3">
+        <Spinner size={40} />
+        <p className="text-sm text-muted-foreground">Loading clients…</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div
-        className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative"
-        role="alert"
-      >
-        <strong className="font-bold">Error: </strong>
-        <span className="block sm:inline">{error}</span>
+      <div style={{ background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 14, padding: "16px 20px", color: "#B91C1C", fontSize: 14 }}>
+        <strong>Error: </strong>{error}
         <button
           onClick={fetchAllClients}
-          className="mt-2 bg-red-100 text-red-700 px-4 py-2 rounded hover:bg-red-200"
+          className="ml-3 rounded-lg bg-red-100 px-3 py-1.5 text-sm text-red-700 hover:bg-red-200 transition-colors"
         >
-          Try Again
+          Try again
         </button>
       </div>
     );
@@ -127,131 +145,237 @@ export default function ClientList() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Clients</h1>
+      {/* Header */}
+      <div style={{ marginBottom: 20, display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+        <div>
+          <p style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: ".12em", color: "#2F80FF", textTransform: "uppercase", margin: 0 }}>
+            Clients
+          </p>
+          <h1 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 34, letterSpacing: "-.025em", margin: "7px 0 0", color: "#0B2B6B" }}>
+            Your clients
+            {allClients.length > 0 && (
+              <span style={{ fontSize: 17, fontWeight: 500, color: "#8298BC", marginLeft: 10 }}>
+                {allClients.length}
+              </span>
+            )}
+          </h1>
+        </div>
         <button
           onClick={() => setShowAddClient(true)}
-          className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90"
+          className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
         >
-          Add New Client
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M7 1v12M1 7h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+          Add new client
         </button>
       </div>
 
-      {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <input
-          type="text"
-          placeholder="Search clients..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="border p-2 rounded"
-        />
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="border p-2 rounded"
-        >
-          <option value="">All Status</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-          <option value="completed">Completed</option>
-          <option value="transferred">Transferred</option>
-        </select>
+      {/* Toolbar */}
+      <div style={{ marginBottom: 16, display: "flex", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+        {/* Search */}
+        <div style={{ position: "relative", flex: "1 1 220px", minWidth: 180 }}>
+          <svg
+            width="15" height="15" viewBox="0 0 24 24" fill="none"
+            stroke="#8298BC" strokeWidth="2" strokeLinecap="round"
+            style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}
+          >
+            <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+          </svg>
+          <input
+            type="text"
+            placeholder="Search clients…"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{
+              width: "100%", boxSizing: "border-box",
+              border: "1px solid #DCE6F3", borderRadius: 12,
+              padding: "8px 12px 8px 34px",
+              fontSize: 14, fontFamily: "inherit", color: "#0B2B6B",
+              background: "#fff", outline: "none",
+            }}
+          />
+        </div>
+
+        {/* Segmented filter */}
+        <div style={{ display: "flex", gap: 4, background: "#F2F7FD", border: "1px solid #E3ECF7", borderRadius: 12, padding: 3 }}>
+          {SEGMENTS.map((seg) => (
+            <button
+              key={seg.value}
+              type="button"
+              onClick={() => setStatusFilter(seg.value)}
+              style={{
+                padding: "5px 13px",
+                borderRadius: 9,
+                border: "none",
+                fontSize: 13,
+                fontWeight: statusFilter === seg.value ? 700 : 500,
+                cursor: "pointer",
+                transition: "all 150ms",
+                background: statusFilter === seg.value ? "#EAF3FF" : "transparent",
+                color: statusFilter === seg.value ? "#2F80FF" : "#55698F",
+              }}
+            >
+              {seg.label}
+            </button>
+          ))}
+        </div>
       </div>
 
+      {/* Table card */}
       {filteredClients.length === 0 ? (
-        <div className="text-center py-8">
-          <p className="text-gray-500">
+        <div style={{ background: "#fff", border: "1px solid #E3ECF7", borderRadius: 20, padding: "52px 24px", textAlign: "center" }}>
+          <p style={{ fontSize: 14, color: "#55698F" }}>
             {allClients.length === 0
-              ? "No clients found. Add a new client to get started."
-              : "No clients match your search criteria."}
+              ? "No clients yet. Add a new client to get started."
+              : "No clients match your search."}
           </p>
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Age/Gender
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Last Updated
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredClients.map((client) => (
-                <tr key={client._id}>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <Link
-                      href={`/clients/${client._id}`}
-                      className="text-primary hover:text-primary/80"
+        <div style={{ background: "#fff", border: "1px solid #E3ECF7", borderRadius: 20, overflow: "hidden", boxShadow: "0 22px 50px -40px rgba(11,43,107,.3)" }}>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ minWidth: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ background: "#F6FAFE", borderBottom: "1px solid #E3ECF7" }}>
+                  {["Name", "Age / Gender", "Status", "Last updated", ""].map((h) => (
+                    <th
+                      key={h}
+                      style={{
+                        padding: "10px 20px",
+                        textAlign: "left",
+                        fontSize: 11.5,
+                        fontWeight: 700,
+                        letterSpacing: ".08em",
+                        textTransform: "uppercase",
+                        color: "#8298BC",
+                        whiteSpace: "nowrap",
+                      }}
                     >
-                      {client.name}
-                    </Link>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {ageFromDob(client.dateOfBirth) ?? "—"} / {genderLabel(client.gender)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        client.status === "active"
-                          ? "bg-green-100 text-green-800"
-                          : client.status === "inactive"
-                            ? "bg-gray-100 text-gray-800"
-                            : client.status === "completed"
-                              ? "bg-accent text-accent-foreground"
-                              : "bg-yellow-100 text-yellow-800"
-                      }`}
-                    >
-                      {client.status.charAt(0).toUpperCase() + client.status.slice(1)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {new Date(client.updatedAt).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <Link
-                      href={`/clients/${client._id}`}
-                      className="text-primary hover:text-primary/80 mr-4"
-                    >
-                      View
-                    </Link>
-                  </td>
+                      {h}
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredClients.map((client, idx) => {
+                  const [avatarBg, avatarColor] = avatarColors(client.name);
+                  const pill = STATUS_PILL[client.status] ?? { bg: "#EEF1F5", color: "#6E7E97", label: client.status };
+                  return (
+                    <tr
+                      key={client._id}
+                      style={{ borderTop: idx > 0 ? "1px solid #E3ECF7" : "none" }}
+                      className="hover:bg-[#F5F9FE] transition-colors"
+                    >
+                      {/* Name + avatar */}
+                      <td style={{ padding: "13px 20px", whiteSpace: "nowrap" }}>
+                        <Link
+                          href={`/clients/${client._id}`}
+                          className="flex items-center gap-[10px] group"
+                          style={{ textDecoration: "none" }}
+                        >
+                          <span style={{
+                            display: "grid", placeItems: "center",
+                            width: 34, height: 34, borderRadius: "50%",
+                            background: avatarBg, color: avatarColor,
+                            fontWeight: 700, fontSize: 12.5, flexShrink: 0,
+                          }}>
+                            {initials(client.name)}
+                          </span>
+                          <span
+                            style={{ fontSize: 14, fontWeight: 600, color: "#0B2B6B" }}
+                            className="group-hover:text-primary transition-colors"
+                          >
+                            {client.name}
+                          </span>
+                        </Link>
+                      </td>
+
+                      {/* Age / Gender */}
+                      <td style={{ padding: "13px 20px", fontSize: 13.5, color: "#55698F", whiteSpace: "nowrap" }}>
+                        {ageFromDob(client.dateOfBirth) ?? "—"} / {genderLabel(client.gender)}
+                      </td>
+
+                      {/* Status pill */}
+                      <td style={{ padding: "13px 20px", whiteSpace: "nowrap" }}>
+                        <span style={{
+                          display: "inline-flex", alignItems: "center",
+                          background: pill.bg, color: pill.color,
+                          fontWeight: 600, fontSize: 12.5,
+                          padding: "3px 10px", borderRadius: 999,
+                        }}>
+                          {pill.label}
+                        </span>
+                      </td>
+
+                      {/* Last updated */}
+                      <td style={{ padding: "13px 20px", fontSize: 13.5, color: "#8298BC", whiteSpace: "nowrap" }}>
+                        {new Date(client.updatedAt).toLocaleDateString()}
+                      </td>
+
+                      {/* Action */}
+                      <td style={{ padding: "13px 20px", whiteSpace: "nowrap" }}>
+                        <Link
+                          href={`/clients/${client._id}`}
+                          style={{ fontSize: 13.5, fontWeight: 600, color: "#2F80FF", textDecoration: "none" }}
+                          className="hover:text-primary/70 transition-colors"
+                        >
+                          View →
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Footer count */}
+          <div style={{ padding: "10px 20px", borderTop: "1px solid #E3ECF7", background: "#F6FAFE" }}>
+            <p style={{ fontSize: 13, color: "#8298BC", margin: 0 }}>
+              Showing {filteredClients.length} of {allClients.length} client{allClients.length !== 1 ? "s" : ""}
+            </p>
+          </div>
         </div>
       )}
 
-      {/* Add Client Modal */}
-      {showAddClient && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Add New Client</h2>
+      {/* Add-client modal */}
+      {showAddClient && createPortal(
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center px-4"
+          style={{ background: "rgba(0,0,0,.5)" }}
+          onClick={() => setShowAddClient(false)}
+        >
+          <div
+            style={{
+              background: "#FCFEFF",
+              border: "1px solid #E3ECF7",
+              borderRadius: 20,
+              padding: "28px 28px 24px",
+              width: "100%",
+              maxWidth: 720,
+              maxHeight: "90vh",
+              overflowY: "auto",
+              boxShadow: "0 32px 64px -24px rgba(11,43,107,.35)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 22 }}>
+              <h2 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 22, color: "#0B2B6B", margin: 0 }}>
+                Add new client
+              </h2>
               <button
                 onClick={() => setShowAddClient(false)}
-                className="text-gray-500 hover:text-gray-700"
+                style={{ display: "grid", placeItems: "center", width: 32, height: 32, borderRadius: "50%", border: "none", background: "#F2F7FD", color: "#55698F", fontSize: 18, cursor: "pointer" }}
+                className="hover:bg-[#E3ECF7] transition-colors"
+                aria-label="Close"
               >
-                &times;
+                ✕
               </button>
             </div>
             <ClientForm onSuccess={handleClientAdded} onCancel={() => setShowAddClient(false)} />
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

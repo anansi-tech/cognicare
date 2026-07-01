@@ -1,10 +1,40 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import SessionForm from "./SessionForm";
 import { useSession } from "next-auth/react";
+import { Spinner } from "@/components/ui/Spinner";
+
+const STATUS_PILL = {
+  "scheduled":   { bg: "#E2F4F2", color: "#158A98",  label: "Scheduled" },
+  "in-progress": { bg: "#FBF2DA", color: "#A9821F",  label: "In progress" },
+  "completed":   { bg: "#E7F6EC", color: "#3B9E57",  label: "Completed" },
+  "cancelled":   { bg: "#EEF1F5", color: "#6E7E97",  label: "Cancelled" },
+  "no-show":     { bg: "#FDE8E8", color: "#C0392B",  label: "No show" },
+};
+
+const STATUS_SEGMENTS = [
+  { value: "",            label: "All" },
+  { value: "scheduled",  label: "Scheduled" },
+  { value: "in-progress",label: "In progress" },
+  { value: "completed",  label: "Completed" },
+  { value: "cancelled",  label: "Cancelled" },
+  { value: "no-show",    label: "No show" },
+];
+
+const SELECT_STYLE = {
+  border: "1px solid #DCE6F3",
+  borderRadius: 12,
+  padding: "8px 12px",
+  fontSize: 14,
+  fontFamily: "inherit",
+  color: "#0B2B6B",
+  background: "#fff",
+  outline: "none",
+};
 
 export default function SessionList({ initialStatusFilter = "" }) {
   const [allSessions, setAllSessions] = useState([]);
@@ -35,13 +65,10 @@ export default function SessionList({ initialStatusFilter = "" }) {
 
       console.log("Fetching sessions...");
       const response = await fetch("/api/sessions", {
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include", // Include cookies for authentication
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
       });
 
-      // Debug information
       console.log("Response status:", response.status);
 
       if (!response.ok) {
@@ -69,22 +96,15 @@ export default function SessionList({ initialStatusFilter = "" }) {
 
   // Filter sessions client-side, then sort: upcoming first (asc), past next (desc)
   const filteredSessions = useMemo(() => {
-    const filtered = allSessions.filter((session) => {
-      // Apply search filter (case-insensitive)
+    const filtered = allSessions.filter((s) => {
       const matchesSearch =
         searchTerm === "" ||
-        (session.clientId?.name &&
-          session.clientId.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (session.notes && session.notes.toLowerCase().includes(searchTerm.toLowerCase()));
-
-      // Apply status filter
+        (s.clientId?.name && s.clientId.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (s.notes && s.notes.toLowerCase().includes(searchTerm.toLowerCase()));
       const matchesStatus =
-        statusFilter === "" || session.status.toLowerCase() === statusFilter.toLowerCase();
-
-      // Apply type filter
+        statusFilter === "" || s.status.toLowerCase() === statusFilter.toLowerCase();
       const matchesType =
-        typeFilter === "" || session.type.toLowerCase() === typeFilter.toLowerCase();
-
+        typeFilter === "" || s.type.toLowerCase() === typeFilter.toLowerCase();
       return matchesSearch && matchesStatus && matchesType;
     });
     const now = Date.now();
@@ -99,9 +119,7 @@ export default function SessionList({ initialStatusFilter = "" }) {
 
   const handleSessionAdded = (newSession) => {
     setShowAddSession(false);
-    fetchAllSessions(); // Refresh all sessions
-
-    // Navigate to the session details page if we have a session ID
+    fetchAllSessions();
     if (newSession && newSession._id) {
       router.push(`/sessions/${newSession._id}`);
     }
@@ -109,18 +127,13 @@ export default function SessionList({ initialStatusFilter = "" }) {
 
   const handleDeleteSession = async (sessionId) => {
     if (!confirm("Are you sure you want to delete this session?")) return;
-
     try {
-      const response = await fetch(`/api/sessions/${sessionId}`, {
-        method: "DELETE",
-      });
-
+      const response = await fetch(`/api/sessions/${sessionId}`, { method: "DELETE" });
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Failed to delete session");
       }
-
-      fetchAllSessions(); // Refresh the list
+      fetchAllSessions();
     } catch (err) {
       console.error("Error deleting session:", err);
       setError(err.message || "Error deleting session");
@@ -142,54 +155,24 @@ export default function SessionList({ initialStatusFilter = "" }) {
     });
   };
 
-  // Get status badge color
-  const getStatusBadgeColor = (status) => {
-    switch (status.toLowerCase()) {
-      case "scheduled":
-        return "bg-accent text-accent-foreground";
-      case "in-progress":
-        return "bg-yellow-100 text-yellow-800";
-      case "completed":
-        return "bg-green-100 text-green-800";
-      case "cancelled":
-        return "bg-gray-100 text-gray-800";
-      case "no-show":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  // Show loading when session is loading or not yet available
-  if (!session) {
+  if (!session || loading) {
     return (
-      <div className="flex justify-center items-center min-h-[300px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-[300px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      <div className="flex flex-col items-center justify-center min-h-[300px] gap-3">
+        <Spinner size={40} />
+        <p className="text-sm text-muted-foreground">Loading sessions…</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div
-        className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative"
-        role="alert"
-      >
-        <strong className="font-bold">Error: </strong>
-        <span className="block sm:inline">{error}</span>
+      <div style={{ background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 14, padding: "16px 20px", color: "#B91C1C", fontSize: 14 }}>
+        <strong>Error: </strong>{error}
         <button
           onClick={fetchAllSessions}
-          className="mt-2 bg-red-100 text-red-700 px-4 py-2 rounded hover:bg-red-200"
+          className="ml-3 rounded-lg bg-red-100 px-3 py-1.5 text-sm text-red-700 hover:bg-red-200 transition-colors"
         >
-          Try Again
+          Try again
         </button>
       </div>
     );
@@ -197,43 +180,80 @@ export default function SessionList({ initialStatusFilter = "" }) {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Sessions</h1>
+      {/* Header */}
+      <div style={{ marginBottom: 20, display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+        <div>
+          <p style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: ".12em", color: "#2F80FF", textTransform: "uppercase", margin: 0 }}>
+            Sessions
+          </p>
+          <h1 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 34, letterSpacing: "-.025em", margin: "7px 0 0", color: "#0B2B6B" }}>
+            Your sessions
+            {allSessions.length > 0 && (
+              <span style={{ fontSize: 17, fontWeight: 500, color: "#8298BC", marginLeft: 10 }}>
+                {allSessions.length}
+              </span>
+            )}
+          </h1>
+        </div>
         <button
           onClick={() => setShowAddSession(true)}
-          className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90"
+          className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
         >
-          New Session
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M7 1v12M1 7h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+          New session
         </button>
       </div>
 
-      {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <input
-          type="text"
-          placeholder="Search by client name or notes..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="border p-2 rounded"
-        />
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="border p-2 rounded"
-        >
-          <option value="">All Status</option>
-          <option value="scheduled">Scheduled</option>
-          <option value="in-progress">In Progress</option>
-          <option value="completed">Completed</option>
-          <option value="cancelled">Cancelled</option>
-          <option value="no-show">No Show</option>
-        </select>
-        <select
-          value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value)}
-          className="border p-2 rounded"
-        >
-          <option value="">All Types</option>
+      {/* Toolbar */}
+      <div style={{ marginBottom: 16, display: "flex", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+        {/* Search */}
+        <div style={{ position: "relative", flex: "1 1 220px", minWidth: 180 }}>
+          <svg
+            width="15" height="15" viewBox="0 0 24 24" fill="none"
+            stroke="#8298BC" strokeWidth="2" strokeLinecap="round"
+            style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}
+          >
+            <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+          </svg>
+          <input
+            type="text"
+            placeholder="Search by client or notes…"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{ width: "100%", boxSizing: "border-box", border: "1px solid #DCE6F3", borderRadius: 12, padding: "8px 12px 8px 34px", fontSize: 14, fontFamily: "inherit", color: "#0B2B6B", background: "#fff", outline: "none" }}
+          />
+        </div>
+
+        {/* Status segmented control */}
+        <div style={{ display: "flex", gap: 4, background: "#F2F7FD", border: "1px solid #E3ECF7", borderRadius: 12, padding: 3, flexWrap: "wrap" }}>
+          {STATUS_SEGMENTS.map((seg) => (
+            <button
+              key={seg.value}
+              type="button"
+              onClick={() => setStatusFilter(seg.value)}
+              style={{
+                padding: "5px 11px",
+                borderRadius: 9,
+                border: "none",
+                fontSize: 13,
+                fontWeight: statusFilter === seg.value ? 700 : 500,
+                cursor: "pointer",
+                transition: "all 150ms",
+                background: statusFilter === seg.value ? "#EAF3FF" : "transparent",
+                color: statusFilter === seg.value ? "#2F80FF" : "#55698F",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {seg.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Type select */}
+        <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} style={SELECT_STYLE}>
+          <option value="">All types</option>
           <option value="initial">Initial</option>
           <option value="followup">Follow-up</option>
           <option value="assessment">Assessment</option>
@@ -243,103 +263,164 @@ export default function SessionList({ initialStatusFilter = "" }) {
         </select>
       </div>
 
+      {/* Table card */}
       {filteredSessions.length === 0 ? (
-        <div className="text-center py-8">
-          <p className="text-gray-500">
+        <div style={{ background: "#fff", border: "1px solid #E3ECF7", borderRadius: 20, padding: "52px 24px", textAlign: "center" }}>
+          <p style={{ fontSize: 14, color: "#55698F" }}>
             {allSessions.length === 0
-              ? "No sessions found. Add a new session to get started."
-              : "No sessions match your search criteria."}
+              ? "No sessions yet. Schedule a new session to get started."
+              : "No sessions match your filters."}
           </p>
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Client
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date & Time
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Type
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Format
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredSessions.map((session) => (
-                <tr key={session._id}>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {session.clientId ? (
-                      <Link
-                        href={`/clients/${session.clientId._id}`}
-                        className="text-primary hover:text-primary/80"
-                      >
-                        {session.clientId.name}
-                      </Link>
-                    ) : (
-                      <span className="text-gray-500">Unknown Client</span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">{formatDate(session.date)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap capitalize">{session.type}</td>
-                  <td className="px-6 py-4 whitespace-nowrap capitalize">{session.format}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeColor(
-                        session.status
-                      )}`}
+        <div style={{ background: "#fff", border: "1px solid #E3ECF7", borderRadius: 20, overflow: "hidden", boxShadow: "0 22px 50px -40px rgba(11,43,107,.3)" }}>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ minWidth: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ background: "#F6FAFE", borderBottom: "1px solid #E3ECF7" }}>
+                  {["Client", "Date & time", "Type", "Format", "Status", ""].map((h) => (
+                    <th
+                      key={h}
+                      style={{
+                        padding: "10px 20px",
+                        textAlign: "left",
+                        fontSize: 11.5,
+                        fontWeight: 700,
+                        letterSpacing: ".08em",
+                        textTransform: "uppercase",
+                        color: "#8298BC",
+                        whiteSpace: "nowrap",
+                      }}
                     >
-                      {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button
-                      onClick={() => router.push(`/sessions/${session._id}`)}
-                      className="text-primary hover:text-primary/80 mr-4"
-                    >
-                      View
-                    </button>
-                    <button
-                      onClick={() => handleDeleteSession(session._id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      Delete
-                    </button>
-                  </td>
+                      {h}
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredSessions.map((s, idx) => {
+                  const pill = STATUS_PILL[s.status] ?? { bg: "#EEF1F5", color: "#6E7E97", label: s.status };
+                  return (
+                    <tr
+                      key={s._id}
+                      style={{ borderTop: idx > 0 ? "1px solid #E3ECF7" : "none" }}
+                      className="hover:bg-[#F5F9FE] transition-colors"
+                    >
+                      {/* Client */}
+                      <td style={{ padding: "13px 20px", whiteSpace: "nowrap" }}>
+                        {s.clientId ? (
+                          <Link
+                            href={`/clients/${s.clientId._id}`}
+                            style={{ fontSize: 14, fontWeight: 600, color: "#0B2B6B", textDecoration: "none" }}
+                            className="hover:text-primary transition-colors"
+                          >
+                            {s.clientId.name}
+                          </Link>
+                        ) : (
+                          <span style={{ fontSize: 14, color: "#8298BC" }}>Unknown client</span>
+                        )}
+                      </td>
+
+                      {/* Date */}
+                      <td style={{ padding: "13px 20px", fontSize: 13.5, color: "#55698F", whiteSpace: "nowrap" }}>
+                        {formatDate(s.date)}
+                      </td>
+
+                      {/* Type */}
+                      <td style={{ padding: "13px 20px", fontSize: 13.5, color: "#55698F", whiteSpace: "nowrap", textTransform: "capitalize" }}>
+                        {s.type}
+                      </td>
+
+                      {/* Format */}
+                      <td style={{ padding: "13px 20px", fontSize: 13.5, color: "#55698F", whiteSpace: "nowrap", textTransform: "capitalize" }}>
+                        {s.format}
+                      </td>
+
+                      {/* Status pill */}
+                      <td style={{ padding: "13px 20px", whiteSpace: "nowrap" }}>
+                        <span style={{
+                          display: "inline-flex", alignItems: "center",
+                          background: pill.bg, color: pill.color,
+                          fontWeight: 600, fontSize: 12.5,
+                          padding: "3px 10px", borderRadius: 999,
+                        }}>
+                          {pill.label}
+                        </span>
+                      </td>
+
+                      {/* Actions */}
+                      <td style={{ padding: "13px 20px", whiteSpace: "nowrap" }}>
+                        <div className="flex items-center gap-4">
+                          <button
+                            onClick={() => router.push(`/sessions/${s._id}`)}
+                            style={{ fontSize: 13.5, fontWeight: 600, color: "#2F80FF", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                            className="hover:text-primary/70 transition-colors"
+                          >
+                            View →
+                          </button>
+                          <button
+                            onClick={() => handleDeleteSession(s._id)}
+                            style={{ fontSize: 13, color: "#C0392B", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                            className="hover:opacity-70 transition-opacity"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Footer count */}
+          <div style={{ padding: "10px 20px", borderTop: "1px solid #E3ECF7", background: "#F6FAFE" }}>
+            <p style={{ fontSize: 13, color: "#8298BC", margin: 0 }}>
+              Showing {filteredSessions.length} of {allSessions.length} session{allSessions.length !== 1 ? "s" : ""}
+            </p>
+          </div>
         </div>
       )}
 
-      {/* Add Session Modal */}
-      {showAddSession && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">New Session</h2>
+      {/* New Session Modal */}
+      {showAddSession && createPortal(
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center px-4"
+          style={{ background: "rgba(0,0,0,.5)" }}
+          onClick={() => setShowAddSession(false)}
+        >
+          <div
+            style={{
+              background: "#FCFEFF",
+              border: "1px solid #E3ECF7",
+              borderRadius: 20,
+              padding: "28px 28px 24px",
+              width: "100%",
+              maxWidth: 672,
+              maxHeight: "90vh",
+              overflowY: "auto",
+              boxShadow: "0 32px 64px -24px rgba(11,43,107,.35)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 22 }}>
+              <h2 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 22, color: "#0B2B6B", margin: 0 }}>
+                New session
+              </h2>
               <button
                 onClick={() => setShowAddSession(false)}
-                className="text-gray-500 hover:text-gray-700"
+                style={{ display: "grid", placeItems: "center", width: 32, height: 32, borderRadius: "50%", border: "none", background: "#F2F7FD", color: "#55698F", fontSize: 18, cursor: "pointer" }}
+                className="hover:bg-[#E3ECF7] transition-colors"
+                aria-label="Close"
               >
-                &times;
+                ✕
               </button>
             </div>
             <SessionForm onSuccess={handleSessionAdded} onCancel={() => setShowAddSession(false)} />
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
