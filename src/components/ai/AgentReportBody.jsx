@@ -84,7 +84,9 @@ export function AssessmentBody({ payload: p, editable = false, onChange }) {
         {editable ? (
           <EditSelect value={p.riskLevel} onChange={(v) => set("riskLevel", v)} options={RISK_OPTIONS} />
         ) : (
-          <StatusBadge map={SEV} value={p.riskLevel} />
+          <span style={{ textTransform: "uppercase", fontSize: 10.5, fontWeight: 700, letterSpacing: ".04em", padding: "3px 9px", borderRadius: 6, background: (SEV[p.riskLevel] || NEUTRAL).bg, color: (SEV[p.riskLevel] || NEUTRAL).color }}>
+            {p.riskLevel}
+          </span>
         )}
       </Field>
       <Field label="Primary concerns">
@@ -151,10 +153,21 @@ export function DiagnosticBody({ payload: p, editable = false, onChange }) {
             {d.code}
           </span>
           <span style={{ fontWeight: 600, color: "#0B2B6B", fontSize: 13.5 }}>{d.name}</span>
-          <StatusBadge map={CONFIDENCE} value={d.confidence} />
+          <span style={{ textTransform: "uppercase", fontSize: 10.5, fontWeight: 700, letterSpacing: ".04em", padding: "3px 9px", borderRadius: 6, background: (CONFIDENCE[d.confidence] || NEUTRAL).bg, color: (CONFIDENCE[d.confidence] || NEUTRAL).color }}>
+            {d.confidence}
+          </span>
         </div>
-        {d.rationale && <p style={{ fontSize: 13, color: "#55698F", marginTop: 6, marginBottom: 0 }}>{d.rationale}</p>}
-        {d.criteriaMet?.length ? <List items={d.criteriaMet} /> : null}
+        {d.rationale && <p style={{ fontSize: 12.5, color: "#7C8DA8", lineHeight: 1.5, marginTop: 5, marginBottom: 0 }}>{d.rationale}</p>}
+        {d.criteriaMet?.length ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 5 }}>
+            {d.criteriaMet.map((c, i) => (
+              <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                <span style={{ flexShrink: 0, width: 4, height: 4, borderRadius: "50%", background: "#B8C9DC", marginTop: 7 }} />
+                <span style={{ fontSize: 12.5, color: "#7C8DA8", lineHeight: 1.5 }}>{c}</span>
+              </div>
+            ))}
+          </div>
+        ) : null}
       </div>
     ) : null;
   return (
@@ -327,27 +340,17 @@ export function ProgressBody({ payload: p, editable = false, onChange }) {
 
   const MeasureScoreHeader = ({ m }) => {
     const arrow = m.direction === "improved" ? "↗" : m.direction === "worsened" ? "↘" : m.direction === "unchanged" ? "→" : null;
-    const trendPill = m.direction === "improved"
-      ? { bg: "#E7F6EC", color: "#3B9E57" }
-      : m.direction === "worsened"
-        ? { bg: "#FDECEC", color: "#C0392B" }
-        : { bg: "#EEF1F5", color: "#6E7E97" };
+    const t = m.direction === "improved" ? { bg: "#E7F6EC", color: "#3B9E57" }
+      : m.direction === "worsened" ? { bg: "#FDECEC", color: "#C0392B" }
+      : { bg: "#EEF1F5", color: "#6E7E97" };
     return (
-      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6, marginBottom: 4 }}>
-        <span style={{ fontWeight: 700, color: "#0B2B6B", fontSize: 13.5 }}>{m.instrumentId}</span>
-        <span style={{ fontWeight: 600, color: "#41557A", fontSize: 13 }}>
+      <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 7, minWidth: 172 }}>
+        <span style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", color: "#0B2B6B" }}>{m.instrumentId?.toUpperCase()}</span>
+        <span style={{ fontSize: 12.5, color: "#55698F", fontVariantNumeric: "tabular-nums" }}>
           {m.previousScore != null ? `${m.previousScore} → ` : ""}{m.latestScore}
         </span>
-        {arrow && (
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: trendPill.bg, color: trendPill.color, fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 999 }}>
-            {arrow} {m.direction}
-          </span>
-        )}
-        {m.reliableChange && (
-          <span style={{ display: "inline-flex", alignItems: "center", background: "#EAF3FF", color: "#2F80FF", fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 999 }}>
-            Reliable change
-          </span>
-        )}
+        {arrow && <span style={{ display: "inline-flex", alignItems: "center", gap: 3, background: t.bg, color: t.color, fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 999 }}>{arrow} {m.direction}</span>}
+        {m.reliableChange && <span style={{ background: "#EAF3FF", color: "#2F80FF", fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 999 }}>Reliable change</span>}
       </div>
     );
   };
@@ -356,9 +359,9 @@ export function ProgressBody({ payload: p, editable = false, onChange }) {
     <div>
       <Field label="Measure interpretation">
         {p.measureInterpretation?.length ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
             {p.measureInterpretation.map((m, i) => (
-              <div key={i} style={{ border: "1px solid #E7EEF7", background: "#F9FBFE", borderRadius: 12, padding: "12px 14px" }}>
+              <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
                 <MeasureScoreHeader m={m} />
                 {/* Scores are objective data — only the clinical interpretation text is editable. */}
                 {editable ? (
@@ -372,7 +375,7 @@ export function ProgressBody({ payload: p, editable = false, onChange }) {
                     rows={2}
                   />
                 ) : (
-                  m.interpretation && <p style={{ margin: 0, fontSize: 13, color: "#7C8DA8" }}>{m.interpretation}</p>
+                  m.interpretation && <span style={{ fontSize: 12.5, color: "#7C8DA8", lineHeight: 1.5 }}>{m.interpretation}</span>
                 )}
               </div>
             ))}
@@ -397,14 +400,14 @@ export function ProgressBody({ payload: p, editable = false, onChange }) {
             addLabel="+ Add goal"
           />
         ) : p.goalProgress?.length ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
             {p.goalProgress.map((g, i) => (
-              <div key={i} style={{ border: "1px solid #E7EEF7", background: "#F9FBFE", borderRadius: 12, padding: "12px 14px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <StatusBadge map={GOAL} value={g.status} />
-                  <span style={{ fontWeight: 600, color: "#24344F", fontSize: 13 }}>{g.goal}</span>
+              <div key={i} style={{ display: "flex", gap: 11, alignItems: "flex-start" }}>
+                <span style={{ flexShrink: 0, minWidth: 92, textAlign: "center", textTransform: "uppercase", fontSize: 10.5, fontWeight: 700, letterSpacing: ".04em", padding: "3px 9px", borderRadius: 6, background: (GOAL[g.status] || NEUTRAL).bg, color: (GOAL[g.status] || NEUTRAL).color }}>{g.status}</span>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "#24344F", lineHeight: 1.45 }}>{g.goal}</div>
+                  {g.notes && <div style={{ fontSize: 12, color: "#7C8DA8", lineHeight: 1.5, marginTop: 2 }}>{g.notes}</div>}
                 </div>
-                {g.notes && <p style={{ margin: "4px 0 0", fontSize: 13, color: "#7C8DA8" }}>{g.notes}</p>}
               </div>
             ))}
           </div>
