@@ -7,6 +7,7 @@ import Link from "next/link";
 import toast from "react-hot-toast";
 import { ClipboardDocumentIcon } from "@heroicons/react/24/outline";
 import { Spinner } from "@/components/ui/Spinner";
+import { avatarColors, initials } from "@/lib/avatar";
 
 // Team management screen — owner only. Lists clinicians + pending invites,
 // surfaces seat usage, and is where the owner adds/removes members. Non-owners
@@ -302,18 +303,28 @@ export default function TeamPage() {
                   gap: 12,
                 }}
               >
-                <div>
-                  <p style={{ fontSize: 14, fontWeight: 600, color: "#0B2B6B", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
-                    {c.name}
-                    {c.isOwner && (
-                      <span style={{ display: "inline-flex", alignItems: "center", background: "#EAF3FF", color: "#2F80FF", fontWeight: 700, fontSize: 11, padding: "2px 9px", borderRadius: 999 }}>
-                        Owner
+                <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                  {(() => {
+                    const [bg, color] = avatarColors(c.name);
+                    return (
+                      <span style={{ display: "grid", placeItems: "center", width: 34, height: 34, borderRadius: "50%", background: bg, color, fontWeight: 700, fontSize: 12.5, flexShrink: 0 }}>
+                        {initials(c.name)}
                       </span>
-                    )}
-                  </p>
-                  <p style={{ fontSize: 12.5, color: "#8298BC", margin: "2px 0 0" }}>
-                    {c.email} · {c.assignedClientCount} assigned client{c.assignedClientCount === 1 ? "" : "s"}
-                  </p>
+                    );
+                  })()}
+                  <div>
+                    <p style={{ fontSize: 14, fontWeight: 600, color: "#0B2B6B", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+                      {c.name}
+                      {c.isOwner && (
+                        <span style={{ display: "inline-flex", alignItems: "center", background: "#EAF3FF", color: "#2F80FF", fontWeight: 700, fontSize: 11, padding: "2px 9px", borderRadius: 999 }}>
+                          Owner
+                        </span>
+                      )}
+                    </p>
+                    <p style={{ fontSize: 12.5, color: "#8298BC", margin: "2px 0 0" }}>
+                      {c.email} · {c.assignedClientCount} assigned client{c.assignedClientCount === 1 ? "" : "s"}
+                    </p>
+                  </div>
                 </div>
                 {!c.isOwner && (
                   <button
