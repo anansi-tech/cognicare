@@ -7,6 +7,7 @@ import Link from "next/link";
 import SessionForm from "./SessionForm";
 import { useSession } from "next-auth/react";
 import { Spinner } from "@/components/ui/Spinner";
+import { avatarColors, initials } from "@/lib/avatar";
 
 const STATUS_PILL = {
   "scheduled":   { bg: "#E2F4F2", color: "#158A98",  label: "Scheduled" },
@@ -45,14 +46,16 @@ export default function SessionList({ initialStatusFilter = "" }) {
   const [typeFilter, setTypeFilter] = useState("");
   const [showAddSession, setShowAddSession] = useState(false);
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
 
-  // Only fetch all sessions once on component mount and when session is available
+  // Fetch once when session becomes authenticated. Keying on `status` (stable string)
+  // rather than the session object prevents next-auth's on-focus refetch from
+  // re-triggering this effect and remounting the form mid-input.
   useEffect(() => {
-    if (session) {
+    if (status === "authenticated") {
       fetchAllSessions();
     }
-  }, [session]);
+  }, [status]);
 
   // Update status filter when initialStatusFilter changes
   useEffect(() => {
@@ -155,7 +158,7 @@ export default function SessionList({ initialStatusFilter = "" }) {
     });
   };
 
-  if (!session || loading) {
+  if (status !== "authenticated" || loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[300px] gap-3">
         <Spinner size={40} />
@@ -234,7 +237,7 @@ export default function SessionList({ initialStatusFilter = "" }) {
               type="button"
               onClick={() => setStatusFilter(seg.value)}
               style={{
-                padding: "5px 11px",
+                padding: "5px 13px",
                 borderRadius: 9,
                 border: "none",
                 fontSize: 13,
@@ -311,10 +314,20 @@ export default function SessionList({ initialStatusFilter = "" }) {
                         {s.clientId ? (
                           <Link
                             href={`/clients/${s.clientId._id}`}
-                            style={{ fontSize: 14, fontWeight: 600, color: "#0B2B6B", textDecoration: "none" }}
-                            className="hover:text-primary transition-colors"
+                            className="flex items-center gap-[10px] group"
+                            style={{ textDecoration: "none" }}
                           >
-                            {s.clientId.name}
+                            {(() => {
+                              const [bg, color] = avatarColors(s.clientId.name);
+                              return (
+                                <span style={{ display: "grid", placeItems: "center", width: 34, height: 34, borderRadius: "50%", background: bg, color, fontWeight: 700, fontSize: 12.5, flexShrink: 0 }}>
+                                  {initials(s.clientId.name)}
+                                </span>
+                              );
+                            })()}
+                            <span style={{ fontSize: 14, fontWeight: 600, color: "#0B2B6B" }} className="group-hover:text-primary transition-colors">
+                              {s.clientId.name}
+                            </span>
                           </Link>
                         ) : (
                           <span style={{ fontSize: 14, color: "#8298BC" }}>Unknown client</span>

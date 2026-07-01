@@ -8,28 +8,7 @@ import ClientForm from "./ClientForm";
 import { useSession } from "next-auth/react";
 import { ageFromDob, genderLabel } from "@/lib/age";
 import { Spinner } from "@/components/ui/Spinner";
-
-const AVATAR_COLORS = [
-  ["#EAF3FF", "#2F80FF"],
-  ["#E2F4F2", "#158A98"],
-  ["#E7F6EC", "#3B9E57"],
-  ["#FBF2DA", "#A9821F"],
-  ["#F0EAFB", "#7C5CBF"],
-];
-
-function avatarColors(name = "") {
-  const idx = name.charCodeAt(0) % AVATAR_COLORS.length;
-  return AVATAR_COLORS[idx];
-}
-
-function initials(name = "") {
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
+import { avatarColors, initials } from "@/lib/avatar";
 
 const STATUS_PILL = {
   active:      { bg: "#E7F6EC", color: "#3B9E57", label: "Active" },
