@@ -443,7 +443,8 @@ export function ProgressBody({ payload: p, editable = false, onChange }) {
           <Para>{p.treatmentEffectiveness}</Para>
         ) : null}
       </Field>
-      <Field label="Reassessment">
+      <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 10 }}>
+        <p style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: "#7C93B8", margin: 0 }}>Reassessment</p>
         {editable ? (
           <label className="flex items-center gap-2 text-sm">
             <input
@@ -451,16 +452,16 @@ export function ProgressBody({ payload: p, editable = false, onChange }) {
               checked={!!p.reassessmentRecommended}
               onChange={(e) => set("reassessmentRecommended", e.target.checked)}
             />
-            Reassessment recommended
+            Recommended
           </label>
         ) : p.reassessmentRecommended ? (
           <span style={{ display: "inline-flex", alignItems: "center", background: "#FBF2DA", color: "#A9821F", fontSize: 11, fontWeight: 700, padding: "2px 9px", borderRadius: 999 }}>
             Recommended
           </span>
         ) : (
-          <p style={{ fontSize: 13, color: "#8298BC" }}>Not recommended at this time</p>
+          <span style={{ fontSize: 13, color: "#8298BC" }}>Not recommended at this time</span>
         )}
-      </Field>
+      </div>
     </div>
   );
 }
