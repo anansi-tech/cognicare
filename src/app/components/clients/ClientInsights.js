@@ -96,9 +96,18 @@ export default function ClientInsights({ clientId, refreshKey = 0 }) {
   const treatmentVersion = treatment?.version;
   const treatmentTitle = `Treatment Plan${treatmentVersion ? ` v${treatmentVersion}` : ""}`;
 
+  const fmtDate = (iso) =>
+    iso ? new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : null;
+
   return (
     <div className="space-y-6">
-      <Section title="Assessment" summary={assessment?.summary} collapsible defaultOpen>
+      <Section
+        title="Assessment"
+        summary={assessment?.summary}
+        collapsible
+        defaultOpen
+        subtitle={`Assessment agent${fmtDate(assessment?.createdAt) ? ` · Updated ${fmtDate(assessment?.createdAt)}` : ""}`}
+      >
         {assessment ? (
           <>
             <EditApproveBar tx={ax} report={assessment} draftLabel={`Draft v${assessment.version ?? 1}`} />
@@ -125,6 +134,7 @@ export default function ClientInsights({ clientId, refreshKey = 0 }) {
         summary={diagnostic?.summary}
         collapsible
         defaultOpen={false}
+        subtitle={`Diagnostic agent${fmtDate(diagnostic?.createdAt) ? ` · Updated ${fmtDate(diagnostic?.createdAt)}` : ""}`}
       >
         {diagnostic ? (
           <>
@@ -152,6 +162,7 @@ export default function ClientInsights({ clientId, refreshKey = 0 }) {
         summary={treatment?.summary}
         collapsible
         defaultOpen={false}
+        subtitle={`Treatment agent${fmtDate(treatment?.createdAt) ? ` · Updated ${fmtDate(treatment?.createdAt)}` : ""}`}
       >
         {treatment ? (
           <>
@@ -183,6 +194,8 @@ export default function ClientInsights({ clientId, refreshKey = 0 }) {
         summary={progress?.summary}
         collapsible
         defaultOpen={false}
+        subtitle={`Progress agent${fmtDate(progress?.createdAt) ? ` · Updated ${fmtDate(progress?.createdAt)}` : ""}`}
+        badge={progress?.payload?.reassessmentRecommended ? "Reassessment recommended" : undefined}
       >
         {progress ? (
           <>
