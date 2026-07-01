@@ -55,15 +55,13 @@ export function IntakeAssessment({
 
   if (!canProcess) {
     return (
-      <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 space-y-3">
-        <div>
-          <p className="text-sm font-medium text-amber-800">Waiting for informed consent</p>
-          <p className="text-sm text-amber-700 mt-1">
-            The AI clinical pipeline will begin once the client signs, or you can record consent
-            obtained in person to proceed immediately.
-          </p>
-        </div>
-        <div className="flex gap-2">
+      <div style={{ background: "#FEF9EC", border: "1px solid #F6E6BC", borderRadius: 14, padding: "14px 16px" }}>
+        <p style={{ fontSize: 14, fontWeight: 700, color: "#A9821F", margin: 0 }}>Waiting for informed consent</p>
+        <p style={{ fontSize: 13.5, color: "#7A6020", marginTop: 4 }}>
+          The AI clinical pipeline will begin once the client signs, or you can record consent
+          obtained in person to proceed immediately.
+        </p>
+        <div className="flex gap-2 mt-3">
           <Button size="sm" onClick={recordConsentObtained}>Record consent obtained</Button>
           <Button variant="outline" size="sm" onClick={resendConsent}>Resend consent</Button>
         </div>
@@ -80,8 +78,8 @@ export function IntakeAssessment({
 
   if (notesStale) {
     return (
-      <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 space-y-2">
-        <p className="text-sm font-medium text-amber-900">
+      <div style={{ background: "#FEF9EC", border: "1px solid #F6E6BC", borderRadius: 14, padding: "14px 16px" }}>
+        <p style={{ fontSize: 14, fontWeight: 700, color: "#A9821F", margin: "0 0 10px" }}>
           Intake notes changed since the last assessment.
         </p>
         <Button size="sm" variant="outline" onClick={run}>Re-run assessment</Button>
@@ -93,9 +91,9 @@ export function IntakeAssessment({
   if (assessmentExists !== false) return null;
 
   return (
-    <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 space-y-2">
-      <p className="text-sm font-medium text-green-900">Ready to generate the clinical picture</p>
-      <p className="text-sm text-green-700">
+    <div style={{ background: "#E7F6EC", border: "1px solid #B7E0C4", borderRadius: 14, padding: "14px 16px" }}>
+      <p style={{ fontSize: 14, fontWeight: 700, color: "#3B9E57", margin: "0 0 4px" }}>Ready to generate the clinical picture</p>
+      <p style={{ fontSize: 13.5, color: "#2E7A44", marginBottom: 10 }}>
         Administer any baseline measures first, then run the assessment when ready.
       </p>
       <Button size="sm" onClick={run}>Run intake assessment</Button>

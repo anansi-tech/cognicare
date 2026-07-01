@@ -23,29 +23,30 @@ export function Section({
   const showBody = !collapsible || open || !summary;
 
   return (
-    <section className="bg-white rounded-lg shadow-sm border border-gray-100">
-      <div className="flex items-center justify-between p-5 pb-3">
-        <h3 className="text-lg font-semibold text-gray-800">{title}</h3>
+    <section style={{ background: "#fff", border: "1px solid #E3ECF7", borderRadius: 20, boxShadow: "0 22px 50px -40px rgba(11,43,107,.25)" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 20px 12px" }}>
+        <h3 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 16, color: "#0B2B6B", margin: 0 }}>{title}</h3>
         {collapsible && summary && (
           <button
             type="button"
             onClick={() => setOpen((o) => !o)}
             aria-expanded={open}
-            className="text-sm text-primary hover:text-primary/80 flex items-center gap-1"
+            style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12.5, fontWeight: 600, color: "#2F80FF", background: "none", border: "none", cursor: "pointer" }}
+            className="hover:text-primary/70 transition-colors"
           >
             {open ? "Hide details" : "Show details"}
             <span
               aria-hidden
-              className={`transition-transform ${open ? "rotate-180" : ""}`}
+              style={{ display: "inline-block", transition: "transform 150ms", transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
             >
               ▾
             </span>
           </button>
         )}
       </div>
-      <div className="px-5 pb-5">
+      <div style={{ padding: "0 20px 18px" }}>
         {summary && (
-          <p className="mb-4 rounded-md bg-muted px-3 py-2 text-sm text-foreground/80 leading-relaxed">
+          <p style={{ marginBottom: 14, background: "#F2F7FD", borderRadius: 10, padding: "10px 14px", fontSize: 13.5, color: "#0B2B6B", lineHeight: 1.6, opacity: 0.85 }}>
             {summary}
           </p>
         )}

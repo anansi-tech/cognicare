@@ -28,17 +28,18 @@ export function ReassessmentBanner({ clientId }) {
   if (!data) return null;
 
   return (
-    <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-amber-900">
-      <p className="font-medium">Reassessment recommended</p>
-      {data.rationale && <p className="mt-1 text-sm">{data.rationale}</p>}
-      <p className="mt-1 text-sm text-amber-800/90">
+    <div style={{ marginBottom: 16, background: "#FEF9EC", border: "1px solid #F6E6BC", borderRadius: 14, padding: "14px 16px" }}>
+      <p style={{ fontWeight: 700, fontSize: 14, color: "#A9821F", margin: 0 }}>Reassessment recommended</p>
+      {data.rationale && <p style={{ fontSize: 13.5, color: "#7A6020", marginTop: 4 }}>{data.rationale}</p>}
+      <p style={{ fontSize: 13.5, color: "#7A6020", marginTop: 4 }}>
         Re-administer the client&apos;s measures (PHQ-9 / GAD-7) so progress and the treatment
         plan can be re-evaluated before the next session.
       </p>
       <button
         type="button"
         onClick={() => router.push(`/clients/${clientId}?tab=progress`)}
-        className="mt-2 inline-flex items-center rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+        style={{ marginTop: 10, display: "inline-flex", alignItems: "center", borderRadius: 9, background: "#A9821F", color: "#fff", padding: "6px 14px", fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer" }}
+        className="hover:opacity-90 transition-opacity"
       >
         Administer measures
       </button>

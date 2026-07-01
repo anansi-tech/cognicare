@@ -27,6 +27,9 @@ import {
   XMarkIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
+import { createPortal } from "react-dom";
+import { Spinner } from "@/components/ui/Spinner";
+import { avatarColors, initials } from "@/lib/avatar";
 
 /** Compact one-line score summary per instrument, shown on Overview post-intake. */
 function MeasureGlance({ clientId, onViewAssessments }) {
@@ -50,29 +53,32 @@ function MeasureGlance({ clientId, onViewAssessments }) {
   if (scores.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-start", gap: 12 }}>
       {scores.map((t) => {
         const arrow = t.delta == null ? null : t.delta > 0 ? "↑" : t.delta < 0 ? "↓" : "→";
         const arrowColor =
-          t.direction === "improved" ? "text-green-600"
-          : t.direction === "worsened" ? "text-red-600"
-          : "text-gray-400";
+          t.direction === "improved" ? "#3B9E57"
+          : t.direction === "worsened" ? "#C0392B"
+          : "#8298BC";
         const pct = t.percentageFactor ? ` (${t.latest * t.percentageFactor}%)` : "";
         const band = t.points.at(-1)?.band ?? "";
         return (
-          <div key={t.instrumentId} className="rounded-lg border border-gray-200 bg-white px-3 py-2 min-w-[140px]">
-            <div className="text-xs text-gray-500">{t.shortName}</div>
-            <div className="text-sm font-semibold text-gray-900">
-              {t.latest}{pct}{" "}
-              <span className="font-normal text-gray-600">· {band}</span>
-              {arrow && <span className={`ml-1 ${arrowColor}`}>{arrow}</span>}
+          <div key={t.instrumentId} style={{ background: "#fff", border: "1px solid #E3ECF7", borderRadius: 14, padding: "10px 14px", minWidth: 140 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "#8298BC" }}>{t.shortName}</div>
+            <div style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 22, color: "#0B2B6B", lineHeight: 1.15, marginTop: 2 }}>
+              {t.latest}{pct}
+            </div>
+            <div style={{ fontSize: 12.5, color: "#55698F", marginTop: 2 }}>
+              {band}
+              {arrow && <span style={{ marginLeft: 6, color: arrowColor }}>{arrow}</span>}
             </div>
           </div>
         );
       })}
       <button
         onClick={onViewAssessments}
-        className="self-center text-xs text-primary hover:text-primary/80"
+        style={{ fontSize: 13, fontWeight: 600, color: "#2F80FF", background: "none", border: "none", cursor: "pointer", alignSelf: "center" }}
+        className="hover:text-primary/70 transition-colors"
       >
         View assessments →
       </button>
@@ -117,7 +123,7 @@ export default function ClientDetail({ clientId }) {
   const [attendance, setAttendance] = useState(null);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { bindClient } = useLiam();
+  const { bindClient, setOpen: setLiamOpen } = useLiam();
 
   // Bind LIAM to this client so Ask LIAM / Cmd-K consults this record.
   useEffect(() => {
@@ -557,26 +563,25 @@ export default function ClientDetail({ clientId }) {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      <div className="flex flex-col items-center justify-center h-64 gap-3">
+        <Spinner size={40} />
+        <p style={{ fontSize: 13.5, color: "#8298BC" }}>Loading client…</p>
       </div>
     );
   }
 
   if (error && error !== "no_reports") {
     return (
-      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative">
-        <strong className="font-bold">Error: </strong>
-        <span className="block sm:inline">{error}</span>
+      <div style={{ background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 14, padding: "16px 20px", color: "#B91C1C", fontSize: 14 }}>
+        <strong>Error: </strong>{error}
       </div>
     );
   }
 
   if (!client) {
     return (
-      <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded relative">
-        <strong className="font-bold">Warning: </strong>
-        <span className="block sm:inline">Client not found</span>
+      <div style={{ background: "#FEF9EC", border: "1px solid #F6E6BC", borderRadius: 14, padding: "16px 20px", color: "#A9821F", fontSize: 14 }}>
+        <strong>Warning: </strong>Client not found
       </div>
     );
   }
@@ -584,7 +589,10 @@ export default function ClientDetail({ clientId }) {
   if (isEditing) {
     return (
       <div>
-        <h1 className="text-2xl font-bold mb-6">Edit Client</h1>
+        <p style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: ".12em", color: "#2F80FF", textTransform: "uppercase", margin: 0 }}>Client</p>
+        <h1 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 28, letterSpacing: "-.025em", margin: "6px 0 24px", color: "#0B2B6B" }}>
+          Edit {client.name}
+        </h1>
         <ClientForm
           client={client}
           onSuccess={handleEditSuccess}
@@ -603,176 +611,153 @@ export default function ClientDetail({ clientId }) {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* New Client Reminder Banner (logic remains the same) */}
+    <div>
+      {/* New Client Reminder Banner */}
       {showNewClientReminder && (
-        <div className="mb-4 p-3 bg-accent text-accent-foreground rounded-lg flex justify-between items-center">
-          <span>
+        <div style={{ marginBottom: 16, background: "#EEF4FB", border: "1px solid #CBE0F8", borderRadius: 14, padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          <span style={{ fontSize: 13.5, color: "#0B2B6B" }}>
             {client?.contactInfo?.email
               ? "✨ Client created. A consent form has been emailed to the client — the AI pipeline will begin once it’s signed, or you can record consent obtained."
               : "✨ Client created. No email on file — share the consent link from the Consent tab, or record consent obtained to begin."}
           </span>
           <button
             onClick={dismissNewClientReminder}
-            className="text-accent-foreground hover:opacity-80 ml-4"
+            style={{ display: "grid", placeItems: "center", width: 28, height: 28, borderRadius: "50%", background: "none", border: "none", cursor: "pointer", color: "#55698F", flexShrink: 0 }}
+            className="hover:bg-[#DCE6F3] transition-colors"
             aria-label="Dismiss reminder"
           >
-            <XMarkIcon className="h-5 w-5" />
+            <XMarkIcon className="h-4 w-4" />
           </button>
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">
-            {client.name}{" "}
-            <span
-              className={`ml-2 px-2 py-1 text-xs font-semibold rounded-full ${
-                client.status === "active"
-                  ? "bg-green-100 text-green-800"
-                  : client.status === "inactive"
-                    ? "bg-gray-100 text-gray-800"
-                    : client.status === "completed"
-                      ? "bg-accent text-accent-foreground"
-                      : "bg-yellow-100 text-yellow-800"
-              }`}
-            >
-              {client.status.charAt(0).toUpperCase() + client.status.slice(1)}
-            </span>
-            {consentStatus && (
-              <span
-                className={`ml-2 px-2 py-1 text-xs font-semibold rounded-full ${
-                  consentStatus.signed
-                    ? "bg-emerald-100 text-emerald-800"
+      {/* Back link */}
+      <button
+        onClick={() => router.push("/clients")}
+        style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, color: "#55698F", background: "none", border: "none", cursor: "pointer", marginBottom: 14, padding: 0 }}
+        className="hover:text-primary transition-colors"
+      >
+        ‹ All clients
+      </button>
+
+      {/* Header card */}
+      <div style={{ background: "#fff", border: "1px solid #E3ECF7", borderRadius: 20, padding: "20px 24px", boxShadow: "0 22px 50px -40px rgba(11,43,107,.3)", marginBottom: 28 }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+          {/* Left: avatar + info */}
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 16, minWidth: 0 }}>
+            {(() => {
+              const [bg, color] = avatarColors(client.name);
+              return (
+                <span style={{ display: "grid", placeItems: "center", width: 62, height: 62, borderRadius: "50%", background: bg, color, fontWeight: 700, fontSize: 20, flexShrink: 0 }}>
+                  {initials(client.name)}
+                </span>
+              );
+            })()}
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                <h1 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 28, letterSpacing: "-.025em", color: "#0B2B6B", margin: 0 }}>
+                  {client.name}
+                </h1>
+                {(() => {
+                  const s = { active: { bg: "#E7F6EC", c: "#3B9E57" }, inactive: { bg: "#EEF1F5", c: "#6E7E97" }, completed: { bg: "#E4F1FF", c: "#2F80FF" }, transferred: { bg: "#FBF2DA", c: "#A9821F" } }[client.status] ?? { bg: "#EEF1F5", c: "#6E7E97" };
+                  return <span style={{ background: s.bg, color: s.c, fontWeight: 600, fontSize: 12, padding: "3px 10px", borderRadius: 999 }}>{client.status.charAt(0).toUpperCase() + client.status.slice(1)}</span>;
+                })()}
+                {consentStatus && (() => {
+                  const p = consentStatus.signed
+                    ? { bg: "#E7F6EC", c: "#3B9E57", label: "Consent: signed" }
                     : consentStatus.overridden
-                      ? "bg-slate-100 text-slate-700"
-                      : "bg-amber-100 text-amber-800"
-                }`}
-              >
-                {consentStatus.signed
-                  ? "Consent: signed"
-                  : consentStatus.overridden
-                    ? "Consent: recorded in person"
-                    : "Consent: pending"}
-              </span>
-            )}
-          </h1>
-          {counselor?.name && (
-            <p className="mt-1 text-sm text-gray-600">
-              Assigned to <span className="font-medium text-gray-800">{counselor.name}</span>
-            </p>
-          )}
-          {attendance &&
-            (attendance.noShows90 > 0 || attendance.cancellations90 > 0) && (
-              <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                {attendance.noShows90 > 0 && (
-                  <span
-                    className="inline-flex items-center px-2 py-0.5 rounded-full bg-red-100 text-red-800"
-                    title="No-shows in the last 90 days"
-                  >
-                    {attendance.noShows90} no-show
-                    {attendance.noShows90 === 1 ? "" : "s"} (90d)
-                  </span>
-                )}
-                {attendance.cancellations90 > 0 && (
-                  <span
-                    className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-100 text-amber-800"
-                    title="Cancellations in the last 90 days"
-                  >
-                    {attendance.cancellations90} cancel
-                    {attendance.cancellations90 === 1 ? "" : "s"} (90d)
-                  </span>
-                )}
+                      ? { bg: "#EEF1F5", c: "#6E7E97", label: "Consent: recorded in person" }
+                      : { bg: "#FBF2DA", c: "#A9821F", label: "Consent: pending" };
+                  return <span style={{ background: p.bg, color: p.c, fontWeight: 600, fontSize: 12, padding: "3px 10px", borderRadius: 999 }}>{p.label}</span>;
+                })()}
               </div>
-            )}
-        </div>
-        <div className="space-x-2">
-          <button
-            onClick={() => router.push("/clients")}
-            className="px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
-          >
-            Back
-          </button>
-          <ReassignControl
-            client={client}
-            onReassigned={({ counselorId, counselorName }) => {
-              setClient((c) => (c ? { ...c, counselorId } : c));
-              setCounselor((cur) => ({ ...(cur ?? {}), _id: counselorId, name: counselorName }));
-            }}
-          />
-          <button
-            onClick={() => setIsEditing(true)}
-            className="px-3 py-1 bg-primary text-white rounded hover:bg-primary/90"
-          >
-            Edit
-          </button>
-          <button
-            onClick={handleDeleteClient}
-            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-          >
-            Delete
-          </button>
+              <p style={{ fontSize: 13.5, color: "#55698F", margin: "6px 0 0" }}>
+                {counselor?.name && (<>Assigned to <strong style={{ color: "#0B2B6B" }}>{counselor.name}</strong> · </>)}
+                {ageFromDob(client.dateOfBirth) ?? "—"} / {genderLabel(client.gender)}
+              </p>
+              {attendance && (attendance.noShows90 > 0 || attendance.cancellations90 > 0) && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
+                  {attendance.noShows90 > 0 && (
+                    <span style={{ background: "#FDECEC", color: "#C0392B", fontWeight: 600, fontSize: 11.5, padding: "2px 9px", borderRadius: 999 }} title="No-shows in the last 90 days">
+                      {attendance.noShows90} no-show{attendance.noShows90 === 1 ? "" : "s"} (90d)
+                    </span>
+                  )}
+                  {attendance.cancellations90 > 0 && (
+                    <span style={{ background: "#FBF2DA", color: "#A9821F", fontWeight: 600, fontSize: 11.5, padding: "2px 9px", borderRadius: 999 }} title="Cancellations in the last 90 days">
+                      {attendance.cancellations90} cancel{attendance.cancellations90 === 1 ? "" : "s"} (90d)
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+          {/* Right: action row */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+            <button
+              onClick={() => setLiamOpen(true)}
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, borderRadius: 10, border: "1px solid #CBE0F8", background: "#EEF4FB", padding: "7px 14px", fontSize: 13, fontWeight: 600, color: "#2F80FF", cursor: "pointer" }}
+              className="hover:bg-[#E3ECF7] transition-colors"
+            >
+              Ask LIAM
+            </button>
+            <ReassignControl
+              client={client}
+              onReassigned={({ counselorId, counselorName }) => {
+                setClient((c) => (c ? { ...c, counselorId } : c));
+                setCounselor((cur) => ({ ...(cur ?? {}), _id: counselorId, name: counselorName }));
+              }}
+            />
+            <button
+              onClick={() => setIsEditing(true)}
+              style={{ borderRadius: 10, border: "1px solid #E3ECF7", background: "#fff", padding: "7px 16px", fontSize: 13, fontWeight: 600, color: "#0B2B6B", cursor: "pointer" }}
+              className="hover:bg-[#F2F7FD] transition-colors"
+            >
+              Edit
+            </button>
+            <button
+              onClick={handleDeleteClient}
+              style={{ borderRadius: 10, border: "1px solid #FECACA", background: "#fff", padding: "7px 14px", fontSize: 13, fontWeight: 600, color: "#C0392B", cursor: "pointer" }}
+              className="hover:bg-[#FEF2F2] transition-colors"
+            >
+              Delete
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200 mb-6">
-        <nav className="-mb-px flex space-x-8">
-          <button
-            onClick={() => setActiveTab("overview")}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "overview"
-                ? "border-primary text-primary"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
-          >
-            Overview
-          </button>
-          <button
-            onClick={() => setActiveTab("sessions")}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "sessions"
-                ? "border-primary text-primary"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
-          >
-            Sessions
-          </button>
-          <button
-            onClick={() => setActiveTab("progress")}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "progress"
-                ? "border-primary text-primary"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
-          >
-            Assessments
-          </button>
-          <button
-            onClick={() => setActiveTab("reports")}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "reports"
-                ? "border-primary text-primary"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
-          >
-            Reports
-          </button>
-          <button
-            onClick={() => setActiveTab("consent-billing")}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "consent-billing"
-                ? "border-primary text-primary"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
-          >
-            Billing &amp; Consent
-          </button>
+      <div style={{ borderBottom: "1px solid #E3ECF7", marginBottom: 24 }}>
+        <nav style={{ display: "flex" }}>
+          {[
+            { key: "overview", label: "Overview" },
+            { key: "sessions", label: "Sessions" },
+            { key: "progress", label: "Assessments" },
+            { key: "reports", label: "Reports" },
+            { key: "consent-billing", label: "Billing & Consent" },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              style={{
+                padding: "10px 18px",
+                fontSize: 13.5,
+                fontWeight: activeTab === tab.key ? 700 : 500,
+                color: activeTab === tab.key ? "#0B2B6B" : "#55698F",
+                background: "none",
+                border: "none",
+                borderBottom: activeTab === tab.key ? "2.5px solid #2F80FF" : "2.5px solid transparent",
+                cursor: "pointer",
+                transition: "all 150ms",
+                marginBottom: -1,
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
         </nav>
       </div>
 
-      {/* Auto-run intake on first view of a client without an assessment. */}
+      {/* IntakeAssessment + ReassessmentBanner shown on all tabs */}
       <div className="mb-4">
         <IntakeAssessment
           clientId={clientId}
@@ -787,29 +772,28 @@ export default function ClientDetail({ clientId }) {
       <ReassessmentBanner clientId={clientId} />
 
       {/* Tab Content */}
-      <div className="bg-white shadow rounded-lg p-6">
+      <div>
         {activeTab === "overview" && (
-          <div className="space-y-6">
-            {/* Baseline measures card — visible during intake phase (before assessment runs).
-                Collapses once the assessment has been generated. */}
+          <div className="space-y-5">
+            {/* Baseline measures card — visible during intake phase */}
             {assessmentExists === false && (
-              <div className="rounded-md border border-blue-200 bg-blue-50 p-4 space-y-3">
-                <div>
-                  <h3 className="text-sm font-semibold text-blue-900">Baseline measures</h3>
-                  <p className="text-sm text-blue-700 mt-1">
+              <div style={{ background: "#EEF4FB", border: "1px solid #CBE0F8", borderRadius: 16, padding: 16 }}>
+                <div style={{ marginBottom: 12 }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 700, color: "#0B2B6B", margin: 0 }}>Baseline measures</h3>
+                  <p style={{ fontSize: 13.5, color: "#2F80FF", marginTop: 4 }}>
                     Administer baseline measures to establish a starting point. These inform the
                     assessment and anchor progress tracking.
                   </p>
                   {administeredInstruments.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1.5">
+                    <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: 6 }}>
                       {listInstruments()
                         .filter((i) => administeredInstruments.includes(i.id))
                         .map((i) => (
                           <span
                             key={i.id}
-                            className="inline-flex items-center gap-1 rounded-full bg-green-100 text-green-800 text-xs font-medium px-2 py-0.5"
+                            style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "#E7F6EC", color: "#3B9E57", fontWeight: 600, fontSize: 12, padding: "3px 10px", borderRadius: 999 }}
                           >
-                            {i.shortName ?? i.id.toUpperCase()} <span aria-hidden>✓</span>
+                            {i.shortName ?? i.id.toUpperCase()} ✓
                           </span>
                         ))}
                     </div>
@@ -825,7 +809,7 @@ export default function ClientDetail({ clientId }) {
               </div>
             )}
 
-            {/* Score chips — glanceable summary at the top of Overview, post-intake. */}
+            {/* Score chips — post-intake glanceable summary */}
             {assessmentExists === true && (
               <MeasureGlance
                 clientId={clientId}
@@ -833,110 +817,62 @@ export default function ClientDetail({ clientId }) {
               />
             )}
 
-            {/* The AI clinical picture — risk, assessment, diagnosis, treatment. */}
+            {/* AI clinical picture */}
             <ClientInsights clientId={client._id} refreshKey={aiRefreshKey} />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Basic Info */}
-              <div>
-                <h2 className="text-lg font-medium text-gray-900 mb-2">Basic Information</h2>
-                <dl className="divide-y divide-gray-200">
-                  <div className="py-2 grid grid-cols-3">
-                    <dt className="text-sm font-medium text-gray-500">Name</dt>
-                    <dd className="text-sm text-gray-900 col-span-2">{client.name}</dd>
-                  </div>
-                  <div className="py-2 grid grid-cols-3">
-                    <dt className="text-sm font-medium text-gray-500">Age</dt>
-                    <dd className="text-sm text-gray-900 col-span-2">
-                      {ageFromDob(client.dateOfBirth) ?? "—"}
-                      {client.dateOfBirth && (
-                        <span className="ml-2 text-xs text-gray-500">
-                          (DOB {formatDob(client.dateOfBirth)})
-                        </span>
-                      )}
-                    </dd>
-                  </div>
-                  <div className="py-2 grid grid-cols-3">
-                    <dt className="text-sm font-medium text-gray-500">Gender</dt>
-                    <dd className="text-sm text-gray-900 col-span-2">
-                      {genderLabel(client.gender)}
-                      {client.pronouns && (
-                        <span className="ml-2 text-xs text-gray-500">
-                          ({client.pronouns})
-                        </span>
-                      )}
-                    </dd>
-                  </div>
-                  <div className="py-2 grid grid-cols-3">
-                    <dt className="text-sm font-medium text-gray-500">Status</dt>
-                    <dd className="text-sm text-gray-900 col-span-2">
-                      {client.status.charAt(0).toUpperCase() + client.status.slice(1)}
-                    </dd>
-                  </div>
-                  <div className="py-2 grid grid-cols-3">
-                    <dt className="text-sm font-medium text-gray-500">Created</dt>
-                    <dd className="text-sm text-gray-900 col-span-2">
-                      {formatDate(client.createdAt)}
-                    </dd>
-                  </div>
-                  <div className="py-2 grid grid-cols-3">
-                    <dt className="text-sm font-medium text-gray-500">Last Updated</dt>
-                    <dd className="text-sm text-gray-900 col-span-2">
-                      {formatDate(client.updatedAt)}
-                    </dd>
-                  </div>
+            {/* Basic + Contact info cards */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
+              <div style={{ background: "#fff", border: "1px solid #E3ECF7", borderRadius: 18, padding: "20px 22px", boxShadow: "0 22px 50px -40px rgba(11,43,107,.3)" }}>
+                <h2 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 16, color: "#0B2B6B", margin: "0 0 12px" }}>Basic Information</h2>
+                <dl>
+                  {[
+                    { label: "Name", value: client.name },
+                    { label: "Age", value: (<>{ageFromDob(client.dateOfBirth) ?? "—"}{client.dateOfBirth && <span style={{ fontSize: 12.5, color: "#8298BC", marginLeft: 8 }}>DOB {formatDob(client.dateOfBirth)}</span>}</>) },
+                    { label: "Gender", value: (<>{genderLabel(client.gender)}{client.pronouns && <span style={{ fontSize: 12.5, color: "#8298BC", marginLeft: 8 }}>({client.pronouns})</span>}</>) },
+                    { label: "Status", value: client.status.charAt(0).toUpperCase() + client.status.slice(1) },
+                    { label: "Created", value: formatDate(client.createdAt) },
+                    { label: "Last Updated", value: formatDate(client.updatedAt) },
+                  ].map(({ label, value }, i) => (
+                    <div key={label} style={{ display: "grid", gridTemplateColumns: "108px 1fr", padding: "9px 0", borderTop: i > 0 ? "1px solid #E3ECF7" : "none" }}>
+                      <dt style={{ fontSize: 13, fontWeight: 500, color: "#8298BC" }}>{label}</dt>
+                      <dd style={{ fontSize: 13.5, color: "#0B2B6B" }}>{value}</dd>
+                    </div>
+                  ))}
                 </dl>
               </div>
 
-              {/* Contact Info */}
-              <div>
-                <h2 className="text-lg font-medium text-gray-900 mb-2">Contact Information</h2>
-                <dl className="divide-y divide-gray-200">
-                  <div className="py-2 grid grid-cols-3">
-                    <dt className="text-sm font-medium text-gray-500">Email</dt>
-                    <dd className="text-sm text-gray-900 col-span-2">
-                      {client.contactInfo?.email || "-"}
-                    </dd>
+              <div style={{ background: "#fff", border: "1px solid #E3ECF7", borderRadius: 18, padding: "20px 22px", boxShadow: "0 22px 50px -40px rgba(11,43,107,.3)" }}>
+                <h2 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 16, color: "#0B2B6B", margin: "0 0 12px" }}>Contact Information</h2>
+                <dl>
+                  <div style={{ display: "grid", gridTemplateColumns: "108px 1fr", padding: "9px 0" }}>
+                    <dt style={{ fontSize: 13, fontWeight: 500, color: "#8298BC" }}>Email</dt>
+                    <dd style={{ fontSize: 13.5, color: "#0B2B6B" }}>{client.contactInfo?.email || "—"}</dd>
                   </div>
-                  <div className="py-2 grid grid-cols-3">
-                    <dt className="text-sm font-medium text-gray-500">Phone</dt>
-                    <dd className="text-sm text-gray-900 col-span-2">
-                      {client.contactInfo?.phone || "-"}
-                    </dd>
+                  <div style={{ display: "grid", gridTemplateColumns: "108px 1fr", padding: "9px 0", borderTop: "1px solid #E3ECF7" }}>
+                    <dt style={{ fontSize: 13, fontWeight: 500, color: "#8298BC" }}>Phone</dt>
+                    <dd style={{ fontSize: 13.5, color: "#0B2B6B" }}>{client.contactInfo?.phone || "—"}</dd>
                   </div>
-                  <div className="py-2 grid grid-cols-3">
-                    <dt className="text-sm font-medium text-gray-500">Emergency Contact</dt>
-                    <dd className="text-sm text-gray-900 col-span-2">
+                  <div style={{ display: "grid", gridTemplateColumns: "108px 1fr", padding: "9px 0", borderTop: "1px solid #E3ECF7" }}>
+                    <dt style={{ fontSize: 13, fontWeight: 500, color: "#8298BC" }}>Emergency</dt>
+                    <dd style={{ fontSize: 13.5, color: "#0B2B6B" }}>
                       {client.contactInfo?.emergencyContact ? (
                         <div>
-                          {client.contactInfo.emergencyContact.name &&
-                            `${client.contactInfo.emergencyContact.name}`}
-
+                          {client.contactInfo.emergencyContact.name && `${client.contactInfo.emergencyContact.name}`}
                           {client.contactInfo.emergencyContact.relationship && (
                             <span>
                               {client.contactInfo.emergencyContact.name ? ", " : ""}
                               {client.contactInfo.emergencyContact.relationship}
                             </span>
                           )}
-
                           {client.contactInfo.emergencyContact.phone && (
                             <span>
-                              {client.contactInfo.emergencyContact.name ||
-                              client.contactInfo.emergencyContact.relationship
-                                ? ", "
-                                : ""}
+                              {client.contactInfo.emergencyContact.name || client.contactInfo.emergencyContact.relationship ? ", " : ""}
                               {client.contactInfo.emergencyContact.phone}
                             </span>
                           )}
-
-                          {!client.contactInfo.emergencyContact.name &&
-                            !client.contactInfo.emergencyContact.relationship &&
-                            !client.contactInfo.emergencyContact.phone &&
-                            "-"}
+                          {!client.contactInfo.emergencyContact.name && !client.contactInfo.emergencyContact.relationship && !client.contactInfo.emergencyContact.phone && "—"}
                         </div>
-                      ) : (
-                        "-"
-                      )}
+                      ) : "—"}
                     </dd>
                   </div>
                 </dl>
@@ -944,18 +880,19 @@ export default function ClientDetail({ clientId }) {
             </div>
 
             {/* Initial Assessment */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-lg font-medium text-gray-900">Initial Assessment</h2>
+            <div style={{ background: "#fff", border: "1px solid #E3ECF7", borderRadius: 18, padding: "20px 22px", boxShadow: "0 22px 50px -40px rgba(11,43,107,.3)" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                <h2 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 16, color: "#0B2B6B", margin: 0 }}>Initial Assessment</h2>
                 <button
                   onClick={() => router.push(`/sessions/new?clientId=${clientId}`)}
-                  className="text-sm text-primary hover:text-primary/80"
+                  style={{ fontSize: 13.5, fontWeight: 600, color: "#2F80FF", background: "none", border: "none", cursor: "pointer" }}
+                  className="hover:text-primary/70 transition-colors"
                 >
                   + Add New Session
                 </button>
               </div>
-              <div className="bg-gray-50 p-4 rounded border border-gray-200">
-                <p className="text-sm text-gray-900 whitespace-pre-line">
+              <div style={{ background: "#F2F7FD", borderRadius: 12, padding: "14px 16px" }}>
+                <p style={{ fontSize: 14, color: "#0B2B6B", whiteSpace: "pre-line", lineHeight: 1.65, margin: 0 }}>
                   {client.initialAssessment}
                 </p>
               </div>
