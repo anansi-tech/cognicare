@@ -149,3 +149,72 @@ RESEND_API_KEY
 ### PHI Handling
 
 This is a HIPAA-aligned healthcare product. All client/session data is PHI. Every API route that reads or writes PHI must call `logAudit()`. The repo is private and must never become public.
+
+## Sky design system (UI overhaul)
+
+### Tokens
+
+Source of truth is `src/app/globals.css`. Prefer `var(--*)` where a token exists; hardcode hex only where none does. Never guess a token name.
+
+| Role | Hex | CSS var |
+|---|---|---|
+| Navy headings/text | `#0B2B6B` | `--foreground` |
+| Primary blue | `#2F80FF` | `--primary` / `--ring` |
+| Teal accent | `#158A98` | `--accent` |
+| Cyan | `#25B9C8` | `--chart-4` |
+| Green | `#3B9E57` / `#4DBB6A` | `--chart-1` |
+| Amber | `#A9821F` | — |
+| Danger | `#C0392B` | — |
+| Soft-sky surface | `#F2F7FD` / `#EEF4FB` | `--secondary` |
+| Inset background | `#F7FAFE` | — |
+| Card | `#fff` | `--card` |
+| Muted text | `#55698F` / `#8298BC` / `#7C93B8` | `--muted-foreground` |
+| Borders | `#E3ECF7` / `#E9F0F9` / `#E7EEF7` | `--border` |
+| Row hover | `#F5F9FE` | — |
+
+### Typography
+
+- Headings: **Bricolage Grotesque** — `var(--font-bricolage)`, wired in `layout.js`
+- Body: **Hanken Grotesk** — `var(--font-hanken)`
+- Wordmark: `@/components/Brand` — never re-implement inline
+- Page eyebrow: `12.5px / 700 / uppercase / letter-spacing .12em / #2F80FF`
+- Page H1: Bricolage ~34px / 800 / `#0B2B6B`
+
+### Cards & shapes
+
+- Card radius: 18–20px; shadow `0 22px 50px -40px rgba(11,43,107,.4)` (list cards) / `.3` (settings)
+- Pill / button radius: 10–11px
+
+### Reusable patterns
+
+**Status pill scale** — `fontSize 11.5 / fontWeight 700 / borderRadius 999`:
+
+| State | bg | color |
+|---|---|---|
+| active / completed / signed / paid | `#E7F6EC` | `#3B9E57` |
+| scheduled | `#E2F4F2` | `#158A98` |
+| pending / in-progress | `#FBF2DA` | `#A9821F` |
+| expired / no-show | `#FDECEC` | `#C0392B` |
+| inactive / cancelled | `#EEF1F5` | `#6E7E97` |
+| client-completed | `#E4F1FF` | `#2F80FF` |
+
+**Spinner** — `@/components/ui/Spinner` (branded conic ring). Sizes: 56 full-page, 40 section, 16–22 in-button. Replaces the old two-border `animate-spin` div.
+
+**Avatars** — `@/lib/avatar` (`avatarColors`, `initials`). Use only on person-identity cells: Clients list, Sessions client column, Team clinicians. Do NOT use on document lists (Reports) or event logs (Audit).
+
+**Shared table pattern** — white rounded-18 card; `#F6FAFE`/`#F2F7FD` header with 11.5px uppercase `#8298BC` labels; `divide-y` rows; hover `#F5F9FE`; Sky status pills; primary "New" pill button; muted empty state.
+
+**AI report components** — `@/components/ai/Section.jsx` (collapsible shell: logo tile, subtitle, badge, rotating chevron) + `@/components/ai/AgentReportBody.jsx` (assessment / diagnostic / treatment / progress / documentation bodies). Edit read-mode presentation only — never touch editable branches, field keys, or props. These are shared by the client Overview tab AND session detail views. Severity/trend/goal scales live in `AgentReportBody`'s `SEV` / `CONFIDENCE` / `GOAL` maps.
+
+### Architecture notes
+
+- Authenticated pages live under `src/app/(app)/` with the shared padded layout. Marketing/auth pages are intentionally full-bleed — never add the container to the root layout.
+- Instrument JSONs (`src/data/instruments/*.json`) carry `shortName` (PHQ-9/GAD-7/WHO-5); the API and `getTrend` pass it through — use short names in pickers, pills, and titles. `MeasureTrend` "Latest X of Y" is score/max, not a date.
+
+### Restyle status
+
+**Done:** marketing/auth pages; app shell (Navbar, Dashboard, Billing/Subscription, Clients); LIAM sheet + citations; Spinner; shared table pattern (Clients + Sessions); Assessments tab; `AgentReportBody` read-mode; full Client Detail view (all tabs + `BillingInfo`/`InsuranceInfo`); Session Detail (`SessionDetail.js` + `SessionNote.jsx`); Team, Profile, Audit, Settings.
+
+**Remaining:** `src/app/(app)/client-portal/consent/[token]/page.js` — still old gray Tailwind. Needs Sky treatment: eyebrow + Bricolage title, Sky card, status-pill scale (signed→green / awaiting→amber), soft-sky body box, `border-input` + focus-ring fields, Sky success/error alerts. Preserve all token-auth/sign logic, `ConsentMarkdown`, the minor/guardian branch, and the ESIGN copy.
+
+**Working rule:** UI changes are styling only — never alter data fetching, auth, routing, form contracts, or handler logic.
