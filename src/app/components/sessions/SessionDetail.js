@@ -12,6 +12,29 @@ import { AutoPostSession } from "@/components/ai/AutoPostSession";
 import { RegenerateButton } from "@/components/ai/RegenerateButton";
 import { SessionNote } from "@/components/sessions/SessionNote";
 import { MeasuresPanel } from "@/components/measures/MeasuresPanel";
+import { Spinner } from "@/components/ui/Spinner";
+
+const STATUS_PILL = {
+  completed: { bg: "#E7F6EC", color: "#3B9E57" },
+  scheduled: { bg: "#E2F4F2", color: "#158A98" },
+  "in-progress": { bg: "#FBF2DA", color: "#A9821F" },
+  cancelled: { bg: "#EEF1F5", color: "#6E7E97" },
+  "no-show": { bg: "#FDECEC", color: "#C0392B" },
+};
+
+function InfoRow({ label, children }) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "96px 1fr", gap: "0 12px", padding: "9px 0", borderTop: "1px solid #F2F6FB", alignItems: "start" }}>
+      <span style={{ fontSize: 12.5, color: "#8298BC", fontWeight: 500, paddingTop: 1 }}>{label}</span>
+      <span style={{ fontSize: 13.5, color: "#24344F", fontWeight: 500 }}>{children}</span>
+    </div>
+  );
+}
+
+const CARD = { background: "#fff", border: "1px solid #E9F0F9", borderRadius: 20, boxShadow: "0 22px 50px -40px rgba(11,43,107,.4)", padding: "22px 24px" };
+const SECTION_H2 = { fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 15, color: "#0B2B6B", margin: "0 0 2px" };
+const GHOST_BTN = { border: "1px solid #DCE6F3", cursor: "pointer", fontFamily: "inherit", background: "#fff", color: "#55698F", fontWeight: 600, fontSize: 13.5, padding: "9px 16px", borderRadius: 10 };
+const DANGER_BTN = { border: "1px solid #F3D2D2", cursor: "pointer", fontFamily: "inherit", background: "#fff", color: "#C0392B", fontWeight: 600, fontSize: 13.5, padding: "9px 16px", borderRadius: 10 };
 
 export default function SessionDetail({ sessionId }) {
   const router = useRouter();
@@ -145,142 +168,109 @@ export default function SessionDetail({ sessionId }) {
     });
   };
 
+  // Header meta line: date · time (separated by ·)
+  const formatDateMeta = (dateString) => {
+    const date = new Date(dateString);
+    const d = date.toLocaleDateString("en-US", { timeZone: tz, year: "numeric", month: "long", day: "numeric" });
+    const t = date.toLocaleTimeString("en-US", { timeZone: tz, hour: "numeric", minute: "2-digit", hour12: true });
+    return `${d} · ${t}`;
+  };
+
   // Format duration in hours and minutes
   const formatDuration = (minutes) => {
     if (minutes < 60) return `${minutes} minutes`;
     const hours = Math.floor(minutes / 60);
     const remainingMinutes = minutes % 60;
     return remainingMinutes > 0
-      ? `${hours} hour${hours > 1 ? "s" : ""} and ${remainingMinutes} minute${
-          remainingMinutes > 1 ? "s" : ""
-        }`
+      ? `${hours} hour${hours > 1 ? "s" : ""} and ${remainingMinutes} minute${remainingMinutes > 1 ? "s" : ""}`
       : `${hours} hour${hours > 1 ? "s" : ""}`;
-  };
-
-  // Get status badge color
-  const getStatusBadgeColor = (status) => {
-    switch (status.toLowerCase()) {
-      case "scheduled":
-        return "bg-accent text-accent-foreground";
-      case "in-progress":
-        return "bg-yellow-100 text-yellow-800";
-      case "completed":
-        return "bg-green-100 text-green-800";
-      case "cancelled":
-        return "bg-gray-100 text-gray-800";
-      case "no-show":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
   };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-[200px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 240, gap: 14 }}>
+        <Spinner size={40} />
+        <span style={{ fontSize: 13.5, color: "#8298BC" }}>Loading session…</span>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div
-        className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative"
-        role="alert"
-      >
-        <strong className="font-bold">Error: </strong>
-        <span className="block sm:inline">{error}</span>
-        <button
-          onClick={() => fetchSession()}
-          className="mt-2 bg-red-100 text-red-700 px-4 py-2 rounded hover:bg-red-200"
-        >
-          Try Again
-        </button>
+      <div style={{ maxWidth: 520, margin: "32px auto", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 14, padding: "18px 20px" }}>
+        <p style={{ fontSize: 14, fontWeight: 600, color: "#C0392B", margin: "0 0 6px" }}>Error</p>
+        <p style={{ fontSize: 13.5, color: "#7B2020", margin: "0 0 14px" }}>{error}</p>
+        <button onClick={() => fetchSession()} style={DANGER_BTN}>Try again</button>
       </div>
     );
   }
 
   if (!session) {
     return (
-      <div className="text-center p-4">
-        <p className="text-gray-600">Session not found</p>
-        <button
-          onClick={() => router.push("/sessions")}
-          className="mt-4 bg-primary text-white px-4 py-2 rounded hover:bg-primary/90"
-        >
-          Back to Sessions
-        </button>
+      <div style={{ maxWidth: 520, margin: "32px auto", background: "#FFFBF0", border: "1px solid #F5E0A0", borderRadius: 14, padding: "18px 20px" }}>
+        <p style={{ fontSize: 14, fontWeight: 600, color: "#A9821F", margin: "0 0 6px" }}>Session not found</p>
+        <p style={{ fontSize: 13.5, color: "#6D5100", margin: "0 0 14px" }}>This session may have been deleted or you may not have access.</p>
+        <button onClick={() => router.push("/sessions")} style={GHOST_BTN}>Back to sessions</button>
       </div>
     );
   }
 
   if (isEditing) {
     return (
-      <div className="p-4">
-        <h1 className="text-2xl font-bold mb-6">Edit Session</h1>
-        <SessionForm
-          session={session}
-          onSuccess={handleEditSuccess}
-          onCancel={() => setIsEditing(false)}
-        />
+      <div style={{ maxWidth: 940, margin: "0 auto", padding: "28px 32px 64px" }}>
+        <h1 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 22, color: "#0B2B6B", marginBottom: 24 }}>Edit session</h1>
+        <SessionForm session={session} onSuccess={handleEditSuccess} onCancel={() => setIsEditing(false)} />
       </div>
     );
   }
 
+  const clientId = typeof session.clientId === "object" ? session.clientId?._id : session.clientId;
+  const clientName = typeof session.clientId === "object" ? (session.clientId?.name ?? "") : "";
+  const sessionType = session.type ? session.type.charAt(0).toUpperCase() + session.type.slice(1) : "Session";
+  const pageTitle = clientName ? `${sessionType} with ${clientName}` : sessionType;
+  const metaLine = session.date ? `${formatDateMeta(session.date)} · ${formatDuration(session.duration)}` : "";
+  const sp = STATUS_PILL[session.status] ?? { bg: "#EEF1F5", color: "#6E7E97" };
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Session Details</h1>
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => router.push("/sessions")}
-            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
-          >
-            Back
-          </button>
-          <button
-            onClick={() => setIsEditing(true)}
-            className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90"
-          >
-            Edit
-          </button>
+    <div style={{ maxWidth: 940, margin: "0 auto", padding: "28px 32px 64px" }}>
+      {/* Back link */}
+      <Link
+        href="/sessions"
+        style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13.5, fontWeight: 600, color: "#55698F", textDecoration: "none", marginBottom: 18 }}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+        All sessions
+      </Link>
+
+      {/* Header row */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 20, flexWrap: "wrap", marginBottom: 24 }}>
+        <div>
+          <div style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: ".12em", color: "#2F80FF", textTransform: "uppercase" }}>Session</div>
+          <h1 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 30, letterSpacing: "-.025em", margin: "6px 0 0", color: "#0B2B6B" }}>{pageTitle}</h1>
+          <p style={{ fontSize: 14.5, color: "#55698F", margin: "6px 0 0" }}>{metaLine}</p>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, flexWrap: "wrap" }}>
+          <button onClick={() => setIsEditing(true)} style={GHOST_BTN}>Edit</button>
           {session.status === "scheduled" && (
             <>
-              <button
-                onClick={() => openCancelDialog("noshow")}
-                className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600"
-              >
-                Mark no-show
-              </button>
-              <button
-                onClick={() => openCancelDialog("cancel")}
-                className="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700"
-              >
-                Cancel
-              </button>
+              <button onClick={() => openCancelDialog("noshow")} style={{ ...GHOST_BTN, color: "#A9821F", border: "1px solid #EEE0C0" }}>Mark no-show</button>
+              <button onClick={() => openCancelDialog("cancel")} style={GHOST_BTN}>Cancel</button>
             </>
           )}
-          <button
-            onClick={() => openCancelDialog("delete")}
-            className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-          >
-            Delete
-          </button>
+          <button onClick={() => openCancelDialog("delete")} style={DANGER_BTN}>Delete</button>
         </div>
       </div>
 
+      {/* Cancel / no-show / delete dialog */}
       {showCancelDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-lg font-semibold text-gray-900">
-              {cancelMode === "delete"
-                ? "Delete session?"
-                : cancelMode === "noshow"
-                  ? "Mark as no-show"
-                  : "Cancel session"}
+        <div style={{ position: "fixed", inset: 0, background: "rgba(11,43,107,.35)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}>
+          <div style={{ background: "#fff", borderRadius: 20, padding: "26px 28px", maxWidth: 440, width: "100%", boxShadow: "0 20px 60px -10px rgba(11,43,107,.25)", margin: "0 16px" }}>
+            <h3 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 18, color: "#0B2B6B", margin: "0 0 6px" }}>
+              {cancelMode === "delete" ? "Delete session?" : cancelMode === "noshow" ? "Mark as no-show" : "Cancel session"}
             </h3>
-            <p className="mt-2 text-sm text-gray-600">
+            <p style={{ fontSize: 13.5, color: "#55698F", margin: "0 0 16px", lineHeight: 1.55 }}>
               {cancelMode === "delete"
                 ? "This removes the appointment from the schedule. Cancellation history is lost."
                 : cancelMode === "noshow"
@@ -288,45 +278,37 @@ export default function SessionDetail({ sessionId }) {
                   : "Cancels this appointment. Add a reason for your records (optional)."}
             </p>
             {cancelMode !== "delete" && (
-              <div className="mt-4">
-                <label
-                  htmlFor="cancelReason"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Reason {cancelMode === "noshow" ? "" : "(optional)"}
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ display: "block", fontSize: 12.5, fontWeight: 600, color: "#55698F", marginBottom: 6 }}>
+                  Reason{cancelMode === "noshow" ? "" : " (optional)"}
                 </label>
                 <textarea
                   id="cancelReason"
                   value={cancelReason}
                   onChange={(e) => setCancelReason(e.target.value)}
                   rows={3}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary"
+                  className="block w-full rounded-md border-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   placeholder="e.g. Client called to reschedule"
                 />
               </div>
             )}
-            {session.seriesId &&
-              (cancelMode === "cancel" || cancelMode === "delete") && (
-                <label className="mt-4 flex items-start gap-2 text-sm text-gray-800">
-                  <input
-                    type="checkbox"
-                    checked={cancelApplyToFuture}
-                    onChange={(e) => setCancelApplyToFuture(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary focus:ring-ring"
-                  />
-                  <span>
-                    Also{" "}
-                    {cancelMode === "delete" ? "delete" : "cancel"} every future
-                    scheduled session in this series.
-                  </span>
-                </label>
-              )}
-            <div className="mt-6 flex justify-end gap-2">
+            {session.seriesId && (cancelMode === "cancel" || cancelMode === "delete") && (
+              <label style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 13.5, color: "#41557A", marginBottom: 14 }}>
+                <input
+                  type="checkbox"
+                  checked={cancelApplyToFuture}
+                  onChange={(e) => setCancelApplyToFuture(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary focus:ring-ring"
+                />
+                <span>Also {cancelMode === "delete" ? "delete" : "cancel"} every future scheduled session in this series.</span>
+              </label>
+            )}
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 20 }}>
               <button
                 type="button"
                 onClick={() => setShowCancelDialog(false)}
-                className="px-3 py-2 text-sm rounded bg-gray-100 text-gray-700 hover:bg-gray-200"
                 disabled={cancelBusy}
+                style={GHOST_BTN}
               >
                 Close
               </button>
@@ -334,161 +316,125 @@ export default function SessionDetail({ sessionId }) {
                 type="button"
                 onClick={submitCancelDialog}
                 disabled={cancelBusy}
-                className={`px-3 py-2 text-sm rounded text-white disabled:opacity-60 ${
-                  cancelMode === "delete"
-                    ? "bg-red-600 hover:bg-red-700"
-                    : cancelMode === "noshow"
-                      ? "bg-orange-600 hover:bg-orange-700"
-                      : "bg-amber-700 hover:bg-amber-800"
-                }`}
+                style={{
+                  border: "none", cursor: "pointer", fontFamily: "inherit",
+                  background: cancelMode === "delete" ? "#C0392B" : "#A9821F",
+                  color: "#fff", fontWeight: 600, fontSize: 13.5, padding: "9px 16px", borderRadius: 10,
+                  opacity: cancelBusy ? 0.6 : 1,
+                }}
               >
                 {cancelBusy
                   ? "Saving…"
                   : cancelMode === "delete"
-                    ? cancelApplyToFuture
-                      ? "Delete series from here"
-                      : "Delete this one"
+                    ? cancelApplyToFuture ? "Delete series from here" : "Delete this one"
                     : cancelMode === "noshow"
                       ? "Mark no-show"
-                      : cancelApplyToFuture
-                        ? "Cancel this and future"
-                        : "Cancel this one"}
+                      : cancelApplyToFuture ? "Cancel this and future" : "Cancel this one"}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      <div className="space-y-6">
-        <div className="bg-white shadow rounded-lg p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            {/* Basic Session Info */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+        {/* Card 1 — Session info */}
+        <div style={CARD}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 40px" }}>
             <div>
-              <h2 className="text-lg font-medium text-gray-900 mb-2">Session Information</h2>
-              <dl className="divide-y divide-gray-200">
-                <div className="py-2 grid grid-cols-3">
-                  <dt className="text-sm font-medium text-gray-500">Client</dt>
-                  <dd className="text-sm text-gray-900 col-span-2">
-                    {session.clientId ? (
-                      <Link
-                        href={`/clients/${session.clientId._id}`}
-                        className="text-primary hover:text-primary/80"
-                      >
-                        {session.clientId.name}
-                      </Link>
-                    ) : (
-                      "Unknown Client"
-                    )}
-                  </dd>
-                </div>
-                <div className="py-2 grid grid-cols-3">
-                  <dt className="text-sm font-medium text-gray-500">Date & Time</dt>
-                  <dd className="text-sm text-gray-900 col-span-2">{formatDate(session.date)}</dd>
-                </div>
-                <div className="py-2 grid grid-cols-3">
-                  <dt className="text-sm font-medium text-gray-500">Duration</dt>
-                  <dd className="text-sm text-gray-900 col-span-2">
-                    {formatDuration(session.duration)}
-                  </dd>
-                </div>
-                <div className="py-2 grid grid-cols-3">
-                  <dt className="text-sm font-medium text-gray-500">Type</dt>
-                  <dd className="text-sm text-gray-900 col-span-2 capitalize">{session.type}</dd>
-                </div>
-                <div className="py-2 grid grid-cols-3">
-                  <dt className="text-sm font-medium text-gray-500">Format</dt>
-                  <dd className="text-sm text-gray-900 col-span-2 capitalize">{session.format}</dd>
-                </div>
-                <div className="py-2 grid grid-cols-3">
-                  <dt className="text-sm font-medium text-gray-500">Status</dt>
-                  <dd className="text-sm col-span-2">
-                    <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeColor(
-                        session.status
-                      )}`}
-                    >
-                      {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
-                    </span>
-                  </dd>
-                </div>
-              </dl>
+              <h2 style={SECTION_H2}>Session information</h2>
+              <InfoRow label="Client">
+                {session.clientId ? (
+                  <Link
+                    href={`/clients/${clientId}`}
+                    style={{ color: "#0B2B6B", fontWeight: 600, textDecoration: "none" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = "#2F80FF")}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = "#0B2B6B")}
+                  >
+                    {clientName}
+                  </Link>
+                ) : (
+                  "Unknown Client"
+                )}
+              </InfoRow>
+              <InfoRow label="Date & time">{formatDate(session.date)}</InfoRow>
+              <InfoRow label="Duration">{formatDuration(session.duration)}</InfoRow>
+              <InfoRow label="Type">{session.type ? session.type.charAt(0).toUpperCase() + session.type.slice(1) : "—"}</InfoRow>
+              <InfoRow label="Format">{session.format ? session.format.charAt(0).toUpperCase() + session.format.slice(1) : "—"}</InfoRow>
+              <InfoRow label="Status">
+                <span style={{ fontSize: 11.5, fontWeight: 700, padding: "3px 11px", borderRadius: 999, background: sp.bg, color: sp.color }}>
+                  {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
+                </span>
+              </InfoRow>
             </div>
-
-            {/* Additional Session Details */}
             <div>
-              <h2 className="text-lg font-medium text-gray-900 mb-2">Session Details</h2>
-              <dl className="divide-y divide-gray-200">
-                <div className="py-2 grid grid-cols-3">
-                  <dt className="text-sm font-medium text-gray-500">Created</dt>
-                  <dd className="text-sm text-gray-900 col-span-2">
-                    {formatDate(session.createdAt)}
-                  </dd>
-                </div>
-                <div className="py-2 grid grid-cols-3">
-                  <dt className="text-sm font-medium text-gray-500">Last Updated</dt>
-                  <dd className="text-sm text-gray-900 col-span-2">
-                    {formatDate(session.updatedAt)}
-                  </dd>
-                </div>
-              </dl>
-            </div>
-          </div>
-
-          {/* Measures — clinical data capture, before the AI output */}
-          <div className="mb-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-2">Measures</h2>
-            <MeasuresPanel
-              clientId={typeof session.clientId === "object" ? session.clientId?._id : session.clientId}
-              sessionId={session._id}
-              compact
-            />
-          </div>
-
-          {/* Session Notes */}
-          <div>
-            <h2 className="text-lg font-medium text-gray-900 mb-2">Session Notes</h2>
-            <div className="bg-gray-50 p-4 rounded border border-gray-200">
-              <p className="text-sm text-gray-900 whitespace-pre-line">
-                {session.notes || "No notes recorded for this session."}
-              </p>
+              <h2 style={SECTION_H2}>Record details</h2>
+              <InfoRow label="Created">{formatDate(session.createdAt)}</InfoRow>
+              <InfoRow label="Last updated">{formatDate(session.updatedAt)}</InfoRow>
             </div>
           </div>
         </div>
 
-        {/* AI Insights Section */}
-        <div id="ai-insights-section" className="bg-white shadow rounded-lg p-6">
-          <div className="flex items-center mb-4">
-            <h2 className="text-xl font-semibold">AI Insights</h2>
-            {session.status === "completed" && (
-              <span className="ml-2 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
-                Analysis Available
-              </span>
-            )}
+        {/* Card 2 — Measures + Session notes */}
+        <div style={CARD}>
+          <h2 style={SECTION_H2}>Measures</h2>
+          <div style={{ marginBottom: 22 }}>
+            <MeasuresPanel
+              clientId={clientId}
+              sessionId={session._id}
+              compact
+            />
           </div>
-          <div className="mb-4 space-y-2">
-            <AutoSessionPrep
-              clientId={typeof session.clientId === "object" ? session.clientId?._id : session.clientId}
-              sessionId={session._id}
-              sessionStatus={session.status}
-              onDone={() => setAiRefreshKey((k) => k + 1)}
-            />
-            <AutoPostSession
-              clientId={typeof session.clientId === "object" ? session.clientId?._id : session.clientId}
-              sessionId={session._id}
-              sessionStatus={session.status}
-              onDone={() => setAiRefreshKey((k) => k + 1)}
-            />
+          <h2 style={SECTION_H2}>Session notes</h2>
+          <div style={{ background: "#F7FAFE", border: "1px solid #EEF3FA", borderRadius: 12, padding: "14px 16px", marginTop: 8 }}>
+            <p style={{ fontSize: 13.5, lineHeight: 1.6, color: session.notes ? "#41557A" : "#8298BC", margin: 0, whiteSpace: "pre-wrap" }}>
+              {session.notes || "No notes recorded for this session."}
+            </p>
+          </div>
+        </div>
+
+        {/* Card 3 — AI Insights */}
+        <div id="ai-insights-section" style={CARD}>
+          {/* AI card header */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 18 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ display: "grid", placeItems: "center", width: 30, height: 30, borderRadius: 9, background: "#0B2B6B", flexShrink: 0 }}>
+                <svg width="16" height="16" viewBox="0 0 512 512" fill="none">
+                  <path d="M352 166c-26-24-60-38-98-38-74 0-134 56-134 128s60 128 134 128c38 0 72-14 98-38" stroke="#25B9C8" strokeWidth="46" strokeLinecap="round" />
+                </svg>
+              </span>
+              <h2 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 18, letterSpacing: "-.01em", margin: 0, color: "#0B2B6B" }}>AI insights</h2>
+              {session.status === "completed" && (
+                <span style={{ fontSize: 11.5, fontWeight: 700, padding: "3px 11px", borderRadius: 999, background: "#E7F6EC", color: "#3B9E57" }}>Analysis available</span>
+              )}
+            </div>
             {session.status === "completed" && (
               <RegenerateButton
-                clientId={typeof session.clientId === "object" ? session.clientId?._id : session.clientId}
+                clientId={clientId}
                 sessionId={session._id}
                 onDone={() => setAiRefreshKey((k) => k + 1)}
               />
             )}
           </div>
+
+          {/* Auto-prep components */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+            <AutoSessionPrep
+              clientId={clientId}
+              sessionId={session._id}
+              sessionStatus={session.status}
+              onDone={() => setAiRefreshKey((k) => k + 1)}
+            />
+            <AutoPostSession
+              clientId={clientId}
+              sessionId={session._id}
+              sessionStatus={session.status}
+              onDone={() => setAiRefreshKey((k) => k + 1)}
+            />
+          </div>
+
           {!isEditing && <SessionNote sessionId={session._id} refreshKey={aiRefreshKey} />}
           {!isEditing && (
-            <div className="mt-6">
+            <div style={{ marginTop: 16 }}>
               <SessionAIInsights session={session} refreshKey={aiRefreshKey} focus="session" />
             </div>
           )}
