@@ -17,7 +17,7 @@ export function MeasureTrend({ clientId, instrumentId, refreshKey }) {
     const pct = trend.percentageFactor ? only.total * trend.percentageFactor : null;
     return (
       <div style={{ background: "#fff", border: "1px solid #E9F0F9", borderRadius: 16, boxShadow: "0 20px 46px -40px rgba(11,43,107,.35)", padding: "18px 20px" }}>
-        <h3 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 15, margin: 0, color: "#0B2B6B" }}>{trend.name}</h3>
+        <h3 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 15, margin: 0, color: "#0B2B6B" }}>{trend.shortName ?? trend.name}</h3>
         <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginTop: 12 }}>
           <span style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 30, color: "#0B2B6B" }}>{only.total}</span>
           <span style={{ fontSize: 13, color: "#8298BC" }}>/ {trend.scoringMax}{pct != null ? ` (${pct}%)` : ""} · {only.band}</span>
@@ -42,13 +42,13 @@ export function MeasureTrend({ clientId, instrumentId, refreshKey }) {
   }));
 
   const pct = trend.percentageFactor ? `${trend.latest * trend.percentageFactor}%` : null;
-  const latestLabel = `Latest ${trend.latest}/${trend.scoringMax}${pct ? ` (${pct})` : ""}`;
+  const latestLabel = `Latest score ${trend.latest} of ${trend.scoringMax}${pct ? ` (${pct})` : ""}`;
 
   return (
     <div style={{ background: "#fff", border: "1px solid #E9F0F9", borderRadius: 16, boxShadow: "0 20px 46px -40px rgba(11,43,107,.35)", padding: "18px 20px" }}>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10 }}>
         <h3 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 15, margin: 0, color: "#0B2B6B" }}>
-          {trend.name}{" "}
+          {trend.shortName ?? trend.name}{" "}
           <span style={{ fontWeight: 500, color: directionColor, fontSize: 13 }}>— {trend.direction}</span>
         </h3>
         <span style={{ fontSize: 11.5, color: "#8298BC", whiteSpace: "nowrap", flexShrink: 0 }}>{latestLabel}</span>

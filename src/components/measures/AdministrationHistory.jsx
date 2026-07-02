@@ -6,6 +6,20 @@ export function AdministrationHistory({ clientId, refreshKey }) {
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(new Set());
   const [instCache, setInstCache] = useState({});
+  const [shortNameById, setShortNameById] = useState({});
+
+  useEffect(() => {
+    fetch("/api/instruments")
+      .then((r) => r.ok ? r.json() : [])
+      .then((list) => {
+        if (Array.isArray(list)) {
+          const map = {};
+          for (const i of list) map[i.id] = i.shortName ?? i.name;
+          setShortNameById(map);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -52,7 +66,7 @@ export function AdministrationHistory({ clientId, refreshKey }) {
           onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
           style={{
             display: "grid",
-            gridTemplateColumns: "74px 30px 84px 1fr 16px",
+            gridTemplateColumns: "78px 30px 1fr auto 16px",
             gap: 12,
             alignItems: "center",
             width: "100%",
@@ -61,7 +75,6 @@ export function AdministrationHistory({ clientId, refreshKey }) {
             cursor: "pointer",
             background: "transparent",
             border: "none",
-            borderBottom: isLast ? "none" : "1px solid #F2F6FB",
             textAlign: "left",
             transition: "background .13s",
           }}
@@ -71,12 +84,12 @@ export function AdministrationHistory({ clientId, refreshKey }) {
           </span>
           <span style={{ fontSize: 14, fontWeight: 700, color: "#0B2B6B" }}>{adm.total}</span>
           <span style={{ fontSize: 12.5, color: "#55698F" }}>{adm.severityBand}</span>
-          <span style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
+          <span style={{ display: "flex", gap: 7, flexWrap: "nowrap" }}>
             {adm.isBaseline && (
-              <span style={{ fontSize: 11, fontWeight: 700, color: "#A9821F", background: "#FBF2DA", padding: "1px 8px", borderRadius: 999 }}>Baseline</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: "#A9821F", background: "#FBF2DA", padding: "1px 8px", borderRadius: 999, whiteSpace: "nowrap" }}>Baseline</span>
             )}
             {hasFlags && (
-              <span style={{ fontSize: 11, fontWeight: 700, color: "#C0392B", background: "#FDECEC", padding: "1px 8px", borderRadius: 999 }}>⚠ Safety flag</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: "#C0392B", background: "#FDECEC", padding: "1px 8px", borderRadius: 999, whiteSpace: "nowrap" }}>⚠ Safety flag</span>
             )}
           </span>
           <svg
@@ -116,7 +129,7 @@ export function AdministrationHistory({ clientId, refreshKey }) {
       {Object.entries(groups).map(([instrumentId, group]) => (
         <div key={instrumentId}>
           <h3 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 14, margin: "0 0 8px", color: "#0B2B6B" }}>
-            {group.name}{" "}
+            {shortNameById[instrumentId] ?? group.name}{" "}
             <span style={{ fontWeight: 500, color: "#A6B8D4", fontSize: 12.5 }}>({group.items.length})</span>
           </h3>
           <div style={{ background: "#fff", border: "1px solid #E9F0F9", borderRadius: 14, boxShadow: "0 18px 40px -38px rgba(11,43,107,.4)", overflow: "hidden" }}>

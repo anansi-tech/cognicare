@@ -32,7 +32,7 @@ export async function getTrend(clientId, instrumentId, limit = 6) {
   const direction = computeDirection(delta, inst);
 
   return {
-    instrumentId, name: inst.name,
+    instrumentId, name: inst.name, shortName: inst.shortName,
     percentageFactor: inst.scoring?.percentageFactor ?? null,
     scoringMax: inst.scoring.max,
     points, latest, previous: prev, delta, reliableChange, direction,

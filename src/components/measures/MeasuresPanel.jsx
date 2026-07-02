@@ -81,14 +81,14 @@ export function MeasuresPanel({ clientId, sessionId, onSaved: onSavedProp, secti
               <SelectValue placeholder="Choose a measure">
                 {(value) => {
                   const inst = instruments.find((i) => i.id === value);
-                  return inst ? `${inst.name} (${inst.construct})` : "Choose a measure";
+                  return inst ? `${inst.shortName ?? inst.name} (${inst.construct})` : "Choose a measure";
                 }}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {instruments.map((i) => (
                 <SelectItem key={i.id} value={i.id}>
-                  {i.name} ({i.construct})
+                  {i.shortName ?? i.name} ({i.construct})
                 </SelectItem>
               ))}
             </SelectContent>
@@ -146,13 +146,13 @@ export function MeasuresPanel({ clientId, sessionId, onSaved: onSavedProp, secti
                     <SelectValue placeholder="Choose a measure">
                       {(value) => {
                         const inst = instruments.find((i) => i.id === value);
-                        return inst ? `${inst.name} (${inst.construct})` : "Choose a measure";
+                        return inst ? `${inst.shortName ?? inst.name} (${inst.construct})` : "Choose a measure";
                       }}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {instruments.map((i) => (
-                      <SelectItem key={i.id} value={i.id}>{i.name} ({i.construct})</SelectItem>
+                      <SelectItem key={i.id} value={i.id}>{i.shortName ?? i.name} ({i.construct})</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -197,7 +197,7 @@ export function MeasuresPanel({ clientId, sessionId, onSaved: onSavedProp, secti
           <div style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: ".12em", color: "#2F80FF", textTransform: "uppercase", marginBottom: 12, paddingLeft: 2 }}>
             Trends
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 16 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 16 }}>
             {instruments.map((i) => (
               <MeasureTrend key={i.id} clientId={clientId} instrumentId={i.id} refreshKey={refreshKey} />
             ))}

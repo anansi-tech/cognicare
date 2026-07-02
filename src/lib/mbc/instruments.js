@@ -10,5 +10,5 @@ export function getInstrument(id) {
   return i;
 }
 export function listInstruments() {
-  return Object.values(REGISTRY).map(({ id, name, construct }) => ({ id, name, construct }));
+  return Object.values(REGISTRY).map(({ id, name, shortName, construct }) => ({ id, name, shortName, construct }));
 }
