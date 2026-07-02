@@ -1,4 +1,5 @@
 export const runtime = "nodejs";
+export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
