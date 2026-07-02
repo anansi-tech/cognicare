@@ -292,16 +292,18 @@ function LogoTile() {
 
 function WarningIcon() {
   return (
-    <Svg width="16" height="16" viewBox="0 0 24 24" style={{ marginTop: 1 }}>
-      <Path
-        d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
-        stroke={C.riskLeft}
-        strokeWidth="2.2"
-        fill="none"
-        strokeLinejoin="round"
-      />
-      <Path d="M12 9v4M12 17h.01" stroke={C.riskLeft} strokeWidth="2.2" strokeLinecap="round" />
-    </Svg>
+    <View style={{ marginTop: 1 }}>
+      <Svg width="16" height="16" viewBox="0 0 24 24">
+        <Path
+          d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+          stroke={C.riskLeft}
+          strokeWidth="2.2"
+          fill="none"
+          strokeLinejoin="round"
+        />
+        <Path d="M12 9v4M12 17h.01" stroke={C.riskLeft} strokeWidth="2.2" strokeLinecap="round" />
+      </Svg>
+    </View>
   );
 }
 
