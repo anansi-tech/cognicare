@@ -910,7 +910,7 @@ export default function ClientDetail({ clientId }) {
                   {/* Header */}
                   <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr 1fr 1fr 0.7fr", gap: 0, background: "#F6FAFE", padding: "10px 20px", borderBottom: "1px solid #E9F0F9" }}>
                     {["Date", "Duration", "Type", "Status", "Actions"].map((h) => (
-                      <span key={h} style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: "#8298BC", ...(h === "Actions" ? { textAlign: "right" } : {}) }}>{h}</span>
+                      <span key={h} style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: "#8298BC" }}>{h}</span>
                     ))}
                   </div>
                   {sessions.map((session, i) => {
@@ -936,7 +936,7 @@ export default function ClientDetail({ clientId }) {
                             <span style={{ color: "#8298BC" }}>{session.status}</span>
                           )}
                         </span>
-                        <span style={{ textAlign: "right" }}>
+                        <span>
                           <a href={`/sessions/${session._id}`} style={{ fontSize: 13, fontWeight: 600, color: "#2F80FF", textDecoration: "none" }}>View</a>
                         </span>
                       </div>
@@ -969,7 +969,7 @@ export default function ClientDetail({ clientId }) {
                 <>
                   <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 0.9fr", gap: 0, background: "#F6FAFE", padding: "10px 20px", borderBottom: "1px solid #E9F0F9" }}>
                     {["Title", "Date", "Type", "Actions"].map((h) => (
-                      <span key={h} style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: "#8298BC", ...(h === "Actions" ? { textAlign: "right" } : {}) }}>{h}</span>
+                      <span key={h} style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: "#8298BC" }}>{h}</span>
                     ))}
                   </div>
                   {recentReports.map((report, i) => (
@@ -986,7 +986,7 @@ export default function ClientDetail({ clientId }) {
                           {(report.agentType ?? "report").charAt(0).toUpperCase() + (report.agentType ?? "report").slice(1)}
                         </span>
                       </span>
-                      <span style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
+                      <span style={{ display: "flex", gap: 12 }}>
                         <button onClick={() => handleViewReport(report)} style={{ fontSize: 13, fontWeight: 600, color: "#2F80FF", background: "none", border: "none", cursor: "pointer", padding: 0 }}>View</button>
                         <button onClick={() => handleDeleteReport(report._id)} style={{ fontSize: 13, fontWeight: 600, color: "#C0392B", background: "none", border: "none", cursor: "pointer", padding: 0 }}>Delete</button>
                       </span>
