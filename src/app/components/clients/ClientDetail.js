@@ -910,7 +910,7 @@ export default function ClientDetail({ clientId }) {
                   {/* Header */}
                   <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr 1fr 1fr 0.7fr", gap: 0, background: "#F6FAFE", padding: "10px 20px", borderBottom: "1px solid #E9F0F9" }}>
                     {["Date", "Duration", "Type", "Status", "Actions"].map((h) => (
-                      <span key={h} style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: "#8298BC" }}>{h}</span>
+                      <span key={h} style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: "#8298BC", ...(h === "Actions" ? { textAlign: "right" } : {}) }}>{h}</span>
                     ))}
                   </div>
                   {sessions.map((session, i) => {
@@ -969,7 +969,7 @@ export default function ClientDetail({ clientId }) {
                 <>
                   <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 0.9fr", gap: 0, background: "#F6FAFE", padding: "10px 20px", borderBottom: "1px solid #E9F0F9" }}>
                     {["Title", "Date", "Type", "Actions"].map((h) => (
-                      <span key={h} style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: "#8298BC" }}>{h}</span>
+                      <span key={h} style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: "#8298BC", ...(h === "Actions" ? { textAlign: "right" } : {}) }}>{h}</span>
                     ))}
                   </div>
                   {recentReports.map((report, i) => (

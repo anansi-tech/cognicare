@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  doc-page:not(:defined) { visibility: hidden; }
+  body { margin: 0; background: #E7EDF5; }
+</style>
+</helmet>
+<x-import component-from-global-scope="doc-page" from="./doc-page.js" size="letter" margin="0.75in" hint-size="100%,100%">
+
+  <!-- Running footer -->
+  <div slot="footer" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0 10px; border-top: 1px solid #E3ECF7; font-family: 'Hanken Grotesk', sans-serif; font-size: 9.5px; color: #8298BC;">
+    <span>Generated Jul 2, 2026 · 18:49 UTC</span>
+    <span>Inner Essence Therapy · Confidential clinical record</span>
+  </div>
+
+  <!-- ===== LETTERHEAD ===== -->
+  <div style="font-family: 'Hanken Grotesk', sans-serif; color: #24344F;">
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; padding-bottom: 18px; border-bottom: 2px solid #0B2B6B;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="display: grid; place-items: center; width: 44px; height: 44px; border-radius: 11px; background: #0B2B6B;"><svg width="26" height="26" viewBox="0 0 512 512"><path d="M352 166c-26-24-60-38-98-38-74 0-134 56-134 128s60 128 134 128c38 0 72-14 98-38" fill="none" stroke="#25B9C8" stroke-width="46" stroke-linecap="round"></path></svg></span>
+        <div>
+          <div style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 19px; color: #0B2B6B; letter-spacing: -.01em;">Inner Essence Therapy</div>
+          <div style="font-size: 11px; color: #55698F; margin-top: 2px;">1000 Brickell Ave, Ste 715 · Miami, FL 33131 · (305) 555-0100</div>
+        </div>
+      </div>
+      <div style="text-align: right;">
+        <div style="font-size: 10.5px; font-weight: 700; letter-spacing: .12em; color: #2F80FF; text-transform: uppercase;">Clinical Documentation</div>
+      </div>
+    </div>
+
+    <!-- Title -->
+    <h1 style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 27px; letter-spacing: -.02em; color: #0B2B6B; margin: 22px 0 0;">Documentation Report</h1>
+
+    <!-- Metadata panel -->
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px 20px; background: #F4F8FD; border: 1px solid #E3ECF7; border-radius: 12px; padding: 16px 18px; margin-top: 16px;">
+      <sc-for list="{{ meta }}" as="m" hint-placeholder-count="5">
+        <div>
+          <div style="font-size: 9.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #8298BC;">{{ m.k }}</div>
+          <sc-if value="{{ m.isStatus }}" hint-placeholder-val="{{ false }}">
+            <span style="display: inline-block; margin-top: 5px; font-size: 10.5px; font-weight: 700; padding: 2px 10px; border-radius: 999px; background: #E7F6EC; color: #3B9E57;">Completed</span>
+          </sc-if>
+          <sc-if value="{{ m.plain }}" hint-placeholder-val="{{ true }}">
+            <div style="font-size: 13px; font-weight: 600; color: #0B2B6B; margin-top: 4px;">{{ m.v }}</div>
+            <sc-if value="{{ m.sub }}" hint-placeholder-val="{{ false }}"><div style="font-size: 11px; color: #55698F; margin-top: 1px;">{{ m.sub }}</div></sc-if>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- Summary lead -->
+    <p style="font-family: 'Source Serif 4', Georgia, serif; font-size: 12.5px; line-height: 1.62; color: #33465F; margin: 20px 0 0;">This documentation report summarizes available clinical information for <strong style="color: #0B2B6B;">Dee</strong>, age 40, for the period <strong style="color: #0B2B6B;">May 26 – Jun 25, 2026</strong>. The available source material includes one psychotherapy follow-up note dated Jun 26, 2026; conclusions about change over the full period are therefore limited and should be interpreted within that constraint.</p>
+
+    <!-- ===== SECTIONS ===== -->
+    <sc-for list="{{ sections }}" as="s" hint-placeholder-count="5">
+      <div style="margin-top: 22px; break-inside: avoid;">
+        <div style="display: flex; align-items: center; gap: 9px;">
+          <span style="width: 4px; height: 15px; border-radius: 2px; background: #2F80FF;"></span>
+          <h2 style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 14px; letter-spacing: -.005em; color: #0B2B6B; margin: 0; text-transform: uppercase;">{{ s.title }}</h2>
+        </div>
+        <sc-for list="{{ s.paras }}" as="p" hint-placeholder-count="1">
+          <p style="font-family: 'Source Serif 4', Georgia, serif; font-size: 12.5px; line-height: 1.62; color: #33465F; margin: 9px 0 0;">{{ p }}</p>
+        </sc-for>
+      </div>
+    </sc-for>
+
+    <!-- ===== RISK CALLOUT ===== -->
+    <div style="margin-top: 22px; break-inside: avoid; background: #FDF6F5; border: 1px solid #F0D9D6; border-left: 4px solid #C0392B; border-radius: 10px; padding: 14px 16px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C0392B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><path d="M12 9v4M12 17h.01"></path></svg>
+        <h2 style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 14px; color: #A6322A; margin: 0; text-transform: uppercase;">Risk assessment</h2>
+      </div>
+      <p style="font-family: 'Source Serif 4', Georgia, serif; font-size: 12.5px; line-height: 1.62; color: #6B4340; margin: 9px 0 0;">Risk documentation for the Jun 26, 2026 session indicated <strong>no suicidal ideation, homicidal ideation, self-harm behavior, psychosis, or acute safety concern</strong> reported or observed. However, a structured risk reassessment was not completed or documented during that session. Given her tearfulness and poor wellbeing noted in the clinical formulation, continued monitoring and completion of a structured suicide risk screen (C-SSRS or equivalent) were recommended.</p>
+    </div>
+
+    <!-- ===== SIGNATURE BLOCK ===== -->
+    <div style="margin-top: 30px; break-inside: avoid; display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
+      <div>
+        <div style="border-top: 1.5px solid #0B2B6B; padding-top: 7px;">
+          <div style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 14px; font-weight: 700; color: #0B2B6B;">Shari Taylor, LMHC</div>
+          <div style="font-size: 11px; color: #55698F; margin-top: 2px;">Clinician of record · License #MH-14028</div>
+        </div>
+      </div>
+      <div>
+        <div style="border-top: 1.5px solid #C7D5E8; padding-top: 7px;">
+          <div style="font-size: 11px; color: #8298BC;">Date signed</div>
+          <div style="font-size: 13px; font-weight: 600; color: #0B2B6B; margin-top: 3px;">July 2, 2026</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI disclosure -->
+    <p style="font-size: 10px; color: #8298BC; font-style: italic; margin: 22px 0 0; padding-top: 12px; border-top: 1px solid #EEF3FA;">This report was prepared with AI clinical decision support and reviewed by the clinician of record. It reflects available documentation for the stated period and should be read alongside the complete clinical record.</p>
+  </div>
+
+</x-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      meta: [
+        { k: 'Client', v: 'Dee', sub: '40 yrs · Female', plain: true },
+        { k: 'Reporting period', v: 'May 26 – Jun 25, 2026', plain: true },
+        { k: 'Prepared by', v: 'Shari Taylor, LMHC', plain: true },
+        { k: 'Source records', v: '1 session note', plain: true },
+        { k: 'Status', isStatus: true, plain: false },
+      ],
+      sections: [
+        {
+          title: 'Presenting concerns',
+          paras: [
+            'During the documented session, Dee presented with significant relationship-related distress. She described feeling let down, lonely, betrayed, and tearful in the context of a six-month romantic relationship characterized by limited emotional responsiveness, lack of reciprocity, and reported lying/cheating over the prior three months.',
+            'She reported that she often provides emotional, practical, and financial support to others but does not experience comparable support in return. She also endorsed homesickness for Kenya and a broader sense of loneliness. Dee expressed emerging awareness that she may not be able to rely on the relationship in its current form and questioned why she continues to hold on despite feeling that she should let it go.',
+          ],
+        },
+        {
+          title: 'Clinical formulation',
+          paras: [
+            'Her presentation was documented as consistent with adjustment-related mixed anxiety and depressive distress in the context of relationship stress, acculturation/homesickness, and prior bereavement history. The note identified current maintaining factors including betrayal, limited reciprocal support, emotional unavailability in the relationship, lack of open communication, people-pleasing, over-trusting others, ignoring red flags, and remaining in situations where her needs are dismissed. Dee articulated concern that continuing in the relationship as-is may contribute to emotional exhaustion and instability.',
+          ],
+        },
+        {
+          title: 'Treatment provided',
+          paras: [
+            'Treatment during the documented encounter used CBT-oriented interventions. The clinician used an emotions wheel to support emotional identification, provided psychoeducation regarding the CBT model, and guided Dee in exploring thoughts, beliefs, and interpersonal patterns. A central belief/theme was formulated around wanting or needing to feel wanted. Dee was actively engaged in self-reflection and became tearful when discussing over-trusting others and lack of reciprocity. No standardized measures were administered during the session.',
+          ],
+        },
+        {
+          title: 'Progress',
+          paras: [
+            'Progress noted in the available documentation consisted primarily of increased insight. Dee demonstrated growing recognition of patterns related to people-pleasing, tolerating concerns in hopes of improvement, staying despite unmet needs, and the role of self-worth and boundaries in her relationship decisions. However, behavioral implementation of boundaries was not yet documented. The clinical priority identified was to translate this insight into a concrete relationship boundary plan.',
+          ],
+        },
+        {
+          title: 'Plan & recommendations',
+          paras: [
+            'Continue CBT-focused psychotherapy targeting relationship beliefs, self-worth, reciprocity, emotional exhaustion, and boundary effectiveness. Administer the PHQ-9, GAD-7, and WHO-5 at the next session, with monitoring of PHQ-9 item 9, and complete a C-SSRS or equivalent structured suicide risk assessment.',
+            'Additional recommended interventions include developing a concrete relationship boundary plan (needs, non-negotiables, support contacts, and next steps if needs remain dismissed); using a CBT thought record to examine the belief related to needing to feel wanted and fear of letting go; and identifying at least one supportive contact or values-based activity to address loneliness and homesickness. Continued assessment of appetite, sleep, functioning, social supports, and relationship safety is also indicated.',
+          ],
+        },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

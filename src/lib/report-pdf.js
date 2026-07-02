@@ -219,18 +219,24 @@ async function htmlToPdfBuffer(html, footerTemplate) {
   const chromium = (await import("@sparticuz/chromium")).default;
   const puppeteer = (await import("puppeteer-core")).default;
 
-  const executablePath =
-    process.env.CHROME_PATH || (await chromium.executablePath());
+  const localChrome = process.env.CHROME_PATH;
+  const executablePath = localChrome || (await chromium.executablePath());
 
-  const browser = await puppeteer.launch({
-    args: chromium.args,
-    executablePath,
-    headless: chromium.headless,
-  });
+  // Local Chrome needs plain sandbox args; @sparticuz/chromium.args are
+  // Lambda-specific and only apply to its bundled binary.
+  const browser = await puppeteer.launch(
+    localChrome
+      ? { executablePath, headless: true, args: ["--no-sandbox", "--disable-setuid-sandbox"] }
+      : { executablePath, headless: chromium.headless, args: chromium.args }
+  );
 
   try {
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "networkidle0" });
+    // Data-URI @font-face fonts have no network event, so networkidle0 fires
+    // before they're parsed. Explicitly wait for font readiness or the PDF
+    // renders in fallback fonts (Arial/Georgia) — the "not as nice" symptom.
+    await page.evaluateHandle("document.fonts.ready");
     return await page.pdf({
       format: "Letter",
       printBackground: true,
