@@ -23,6 +23,9 @@ export default function ReportViewPage() {
   const [saving, setSaving] = useState(false);
   const [finalizing, setFinalizing] = useState(false);
 
+  const [pdfLoading, setPdfLoading] = useState(null); // "preview" | "download" | null
+  const [pdfError, setPdfError] = useState(null);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -84,6 +87,31 @@ export default function ReportViewPage() {
     }
   };
 
+  const openPdf = async (download = false) => {
+    setPdfError(null);
+    setPdfLoading(download ? "download" : "preview");
+    try {
+      const url = `/api/clients/${params.id}/reports/${params.reportId}/pdf${download ? "?download=1" : ""}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("failed");
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      if (download) {
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = `${report?.type ?? "report"}-${params.reportId}.pdf`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+      } else {
+        window.open(blobUrl, "_blank");
+      }
+    } catch {
+      setPdfError(download ? "download" : "preview");
+    } finally {
+      setPdfLoading(null);
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 280, gap: 14 }}>
@@ -109,7 +137,6 @@ export default function ReportViewPage() {
     );
   }
 
-  const pdfUrl = `/api/clients/${params.id}/reports/${params.reportId}/pdf`;
   const sections = parseReportSections(narrative);
 
   return (
@@ -139,22 +166,52 @@ export default function ReportViewPage() {
             </p>
           </div>
           <div style={{ display: "flex", gap: 8, flexShrink: 0, flexWrap: "wrap" }}>
-            <a
-              href={pdfUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ display: "inline-flex", alignItems: "center", border: "1px solid #DCE6F3", background: "#fff", color: "#55698F", fontWeight: 600, fontSize: 13.5, padding: "9px 14px", borderRadius: 10, textDecoration: "none" }}
+            <button
+              type="button"
+              onClick={() => openPdf(false)}
+              disabled={!!pdfLoading}
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, border: "1px solid #DCE6F3", cursor: pdfLoading ? "not-allowed" : "pointer", fontFamily: "inherit", background: "#fff", color: "#55698F", fontWeight: 600, fontSize: 13.5, padding: "9px 14px", borderRadius: 10, opacity: pdfLoading ? 0.6 : 1 }}
             >
-              Preview PDF
-            </a>
-            <a
-              href={`${pdfUrl}?download=1`}
-              style={{ display: "inline-flex", alignItems: "center", border: "none", background: "#2F80FF", color: "#fff", fontWeight: 700, fontSize: 13.5, padding: "9px 16px", borderRadius: 10, textDecoration: "none", boxShadow: "0 16px 40px -18px rgba(47,128,255,.8)" }}
+              {pdfLoading === "preview" ? <Spinner size={14} /> : null}
+              {pdfLoading === "preview" ? "Generating…" : "Preview PDF"}
+            </button>
+            <button
+              type="button"
+              onClick={() => openPdf(true)}
+              disabled={!!pdfLoading}
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, border: "none", cursor: pdfLoading ? "not-allowed" : "pointer", fontFamily: "inherit", background: "#2F80FF", color: "#fff", fontWeight: 700, fontSize: 13.5, padding: "9px 16px", borderRadius: 10, boxShadow: "0 16px 40px -18px rgba(47,128,255,.8)", opacity: pdfLoading ? 0.6 : 1 }}
             >
-              Download PDF
-            </a>
+              {pdfLoading === "download" ? <Spinner size={14} color="#fff" /> : null}
+              {pdfLoading === "download" ? "Generating…" : "Download PDF"}
+            </button>
           </div>
         </div>
+
+        {/* PDF error banner */}
+        {pdfError && (
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, background: "#FDECEC", border: "1px solid #F5C6C6", borderRadius: 12, padding: "13px 16px", marginTop: 16 }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C0392B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
+                <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <div>
+                <p style={{ fontSize: 13.5, fontWeight: 600, color: "#C0392B", margin: "0 0 3px" }}>PDF generation failed</p>
+                <p style={{ fontSize: 13, color: "#7B2020", margin: 0 }}>
+                  This is usually a temporary issue. Try again in a moment, or{" "}
+                  <Link href={`/clients/${params.id}`} style={{ color: "#C0392B", fontWeight: 600 }}>go back to the client</Link>.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setPdfError(null)}
+              aria-label="Dismiss"
+              style={{ background: "none", border: "none", cursor: "pointer", padding: 2, color: "#C0392B", flexShrink: 0, lineHeight: 1 }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+            </button>
+          </div>
+        )}
 
         {/* Metadata panel */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "14px 20px", background: "#F4F8FD", border: "1px solid #E3ECF7", borderRadius: 14, padding: "16px 18px", marginTop: 20 }}>
