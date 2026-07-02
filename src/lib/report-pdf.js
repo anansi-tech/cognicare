@@ -15,22 +15,25 @@ import { parseReportSections } from "@/lib/reports/sections";
 import { ageFromDob, genderLabel } from "@/lib/age";
 
 // ---------------------------------------------------------------------------
-// Font registration (WOFF files from public/fonts — included in Vercel deploy)
+// Font registration (TTF from public/fonts — included in Vercel deploy)
+// react-pdf needs TTF/OTF; WOFF silently falls back to Helvetica.
 // ---------------------------------------------------------------------------
 const FONTS = path.join(process.cwd(), "public", "fonts");
 
 Font.register({
   family: "Bricolage Grotesque",
-  src: path.join(FONTS, "BricolageGrotesque-700.woff"),
+  src: path.join(FONTS, "BricolageGrotesque-700.ttf"),
   fontWeight: 700,
 });
 Font.register({
   family: "Source Serif 4",
   fonts: [
-    { src: path.join(FONTS, "SourceSerif4-400.woff"), fontWeight: 400 },
-    { src: path.join(FONTS, "SourceSerif4-400-italic.woff"), fontWeight: 400, fontStyle: "italic" },
+    { src: path.join(FONTS, "SourceSerif4-400.ttf"), fontWeight: 400 },
+    { src: path.join(FONTS, "SourceSerif4-400-italic.ttf"), fontWeight: 400, fontStyle: "italic" },
   ],
 });
+// Prevent react-pdf from hyphenating justified serif prose.
+Font.registerHyphenationCallback((word) => [word]);
 
 // ---------------------------------------------------------------------------
 // Styles
@@ -103,7 +106,7 @@ const S = StyleSheet.create({
     borderBottomColor: C.navy,
     marginBottom: 20,
   },
-  logoRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  logoRow: { flexDirection: "row", alignItems: "center" },
   logoTile: {
     width: 44,
     height: 44,
@@ -111,6 +114,7 @@ const S = StyleSheet.create({
     backgroundColor: C.navy,
     alignItems: "center",
     justifyContent: "center",
+    marginRight: 10,
   },
   practiceName: {
     fontFamily: "Bricolage Grotesque",
@@ -146,9 +150,8 @@ const S = StyleSheet.create({
     padding: 16,
     marginBottom: 18,
     flexDirection: "row",
-    gap: 16,
   },
-  metaCell: { flex: 1 },
+  metaCell: { flex: 1, marginRight: 16 },
   metaLabel: {
     fontSize: 9.5,
     fontFamily: "Helvetica-Bold",
@@ -186,8 +189,8 @@ const S = StyleSheet.create({
   pillDraftText: { fontSize: 10.5, fontFamily: "Helvetica-Bold", color: C.amberText },
   // Section
   section: { marginTop: 20 },
-  sectionHeadRow: { flexDirection: "row", alignItems: "center", gap: 9, marginBottom: 7 },
-  accentBar: { width: 4, height: 15, borderRadius: 2, backgroundColor: C.blue },
+  sectionHeadRow: { flexDirection: "row", alignItems: "center", marginBottom: 7 },
+  accentBar: { width: 4, height: 15, borderRadius: 2, backgroundColor: C.blue, marginRight: 9 },
   sectionTitle: {
     fontFamily: "Bricolage Grotesque",
     fontWeight: 700,
@@ -219,7 +222,7 @@ const S = StyleSheet.create({
     borderBottomRightRadius: 8,
     padding: 14,
   },
-  riskHeadRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 },
+  riskHeadRow: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
   riskTitle: {
     fontFamily: "Bricolage Grotesque",
     fontWeight: 700,
@@ -235,12 +238,13 @@ const S = StyleSheet.create({
     marginBottom: 7,
   },
   // Signature block
-  sigBlock: { marginTop: 30, flexDirection: "row", gap: 32 },
+  sigBlock: { marginTop: 30, flexDirection: "row" },
   sigCol1: {
     flex: 1,
     borderTopWidth: 1.5,
     borderTopColor: C.navy,
     paddingTop: 7,
+    marginRight: 32,
   },
   sigCol2: {
     flex: 1,
@@ -292,7 +296,7 @@ function LogoTile() {
 
 function WarningIcon() {
   return (
-    <View style={{ marginTop: 1 }}>
+    <View style={{ marginTop: 1, marginRight: 8 }}>
       <Svg width="16" height="16" viewBox="0 0 24 24">
         <Path
           d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
@@ -309,7 +313,7 @@ function WarningIcon() {
 
 function SectionBlock({ title, body }) {
   return (
-    <View style={S.section} wrap={false}>
+    <View style={S.section}>
       <View style={S.sectionHeadRow}>
         <View style={S.accentBar} />
         <Text style={S.sectionTitle}>{title.toUpperCase()}</Text>
@@ -323,7 +327,7 @@ function SectionBlock({ title, body }) {
 
 function RiskCallout({ body }) {
   return (
-    <View style={S.riskOuter} wrap={false}>
+    <View style={S.riskOuter}>
       <View style={S.riskBar} />
       <View style={S.riskInner}>
         <View style={S.riskHeadRow}>
@@ -411,7 +415,7 @@ function ReportDocument({
               <Text style={S.metaSub}>{sourcesCount} source record{sourcesCount === 1 ? "" : "s"}</Text>
             ) : null}
           </View>
-          <View style={S.metaCell}>
+          <View style={[S.metaCell, { marginRight: 0 }]}>
             <Text style={S.metaLabel}>Status</Text>
             {isDraft ? (
               <View style={S.pillDraft}><Text style={S.pillDraftText}>Draft</Text></View>
