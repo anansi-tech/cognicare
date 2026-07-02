@@ -87,6 +87,6 @@ export async function GET(request, { params }) {
     });
   } catch (error) {
     console.error("Error generating report PDF:", error);
-    return NextResponse.json({ error: String(error?.stack || error) }, { status: 500 });
+    return NextResponse.json({ error: "Failed to generate PDF" }, { status: 500 });
   }
 }

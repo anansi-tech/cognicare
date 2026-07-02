@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  serverExternalPackages: ["@sparticuz/chromium", "puppeteer-core"],
   compiler: {
     reactRemoveProperties: true,
     removeConsole: process.env.NODE_ENV === "production",
