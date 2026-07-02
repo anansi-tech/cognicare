@@ -2,6 +2,11 @@
 const nextConfig = {
   reactStrictMode: true,
   serverExternalPackages: ["@sparticuz/chromium", "puppeteer-core"],
+  outputFileTracingIncludes: {
+    "/api/clients/[id]/reports/[reportId]/pdf": [
+      "./node_modules/@sparticuz/chromium/bin/**",
+    ],
+  },
   compiler: {
     reactRemoveProperties: true,
     removeConsole: process.env.NODE_ENV === "production",
