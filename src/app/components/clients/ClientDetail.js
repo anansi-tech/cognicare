@@ -693,13 +693,6 @@ export default function ClientDetail({ clientId }) {
           </div>
           {/* Right: action row */}
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-            <button
-              onClick={() => setLiamOpen(true)}
-              style={{ display: "inline-flex", alignItems: "center", gap: 6, borderRadius: 10, border: "1px solid #CBE0F8", background: "#EEF4FB", padding: "7px 14px", fontSize: 13, fontWeight: 600, color: "#2F80FF", cursor: "pointer" }}
-              className="hover:bg-[#E3ECF7] transition-colors"
-            >
-              Ask LIAM
-            </button>
             <ReassignControl
               client={client}
               onReassigned={({ counselorId, counselorName }) => {
@@ -1051,14 +1044,18 @@ export default function ClientDetail({ clientId }) {
         )}
 
         {activeTab === "progress" && (
-          <div className="space-y-8">
+          <div style={{ display: "flex", flexDirection: "column", gap: 26 }}>
             <MeasuresPanel clientId={client._id} sections hideHistory />
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-gray-900">Risk Over Time</h2>
+            <div>
+              <div style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: ".12em", color: "#2F80FF", textTransform: "uppercase", marginBottom: 12, paddingLeft: 2 }}>
+                Risk level over time
+              </div>
               <ClientAnalytics clientId={client._id} />
             </div>
-            <div className="space-y-3">
-              <h2 className="text-xl font-semibold text-gray-900">History</h2>
+            <div>
+              <div style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: ".12em", color: "#2F80FF", textTransform: "uppercase", marginBottom: 12, paddingLeft: 2 }}>
+                History
+              </div>
               <AdministrationHistory clientId={client._id} />
             </div>
           </div>
