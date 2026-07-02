@@ -2,192 +2,142 @@
 
 import { useState } from "react";
 
+const FIELD_STYLE = {
+  marginTop: 1,
+  display: "block",
+  width: "100%",
+  borderRadius: 10,
+  border: "1px solid var(--input, #E3ECF7)",
+  padding: "9px 12px",
+  fontSize: 14,
+  color: "#24344F",
+  outline: "none",
+  fontFamily: "inherit",
+};
+
+const LABEL_STYLE = { display: "block", fontSize: 13, fontWeight: 600, color: "#55698F", marginBottom: 4 };
+
 export default function InsuranceInfo({ client, onUpdate }) {
   const [showInsuranceModal, setShowInsuranceModal] = useState(false);
 
-  const handleEditInsurance = () => {
-    setShowInsuranceModal(true);
-  };
+  const handleEditInsurance = () => setShowInsuranceModal(true);
 
   const handleInsuranceUpdate = async (formData) => {
     try {
-      const updateData = {
-        insurance: {
-          provider: formData.provider,
-          policyNumber: formData.policyNumber,
-          groupNumber: formData.groupNumber,
-          coverage: formData.coverage,
-          notes: formData.notes,
-        },
-      };
-
       const response = await fetch(`/api/clients/${client._id}`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updateData),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          insurance: {
+            provider: formData.provider,
+            policyNumber: formData.policyNumber,
+            groupNumber: formData.groupNumber,
+            coverage: formData.coverage,
+            notes: formData.notes,
+          },
+        }),
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to update insurance information");
-      }
-
+      if (!response.ok) throw new Error("Failed to update insurance information");
       const updatedClient = await response.json();
       onUpdate(updatedClient);
       setShowInsuranceModal(false);
     } catch (error) {
       console.error("Error updating insurance:", error);
-      // Handle error (show toast, etc.)
     }
   };
 
+  const ins = client?.insurance;
+  const rows = [
+    { k: "Provider", v: ins?.provider },
+    { k: "Policy number", v: ins?.policyNumber },
+    { k: "Group number", v: ins?.groupNumber },
+    { k: "Coverage", v: ins?.coverage === "full" ? "Full coverage" : ins?.coverage === "partial" ? "Partial coverage" : ins?.coverage === "none" ? "No coverage" : ins?.coverage },
+    ins?.notes ? { k: "Notes", v: ins.notes } : null,
+  ].filter(Boolean);
+
   return (
     <>
-      <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-        <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
-          <h3 className="text-lg leading-6 font-medium text-gray-900">Insurance Information</h3>
+      {/* Card */}
+      <div style={{ background: "#fff", border: "1px solid #E9F0F9", borderRadius: 20, boxShadow: "0 22px 50px -40px rgba(11,43,107,.4)", padding: "22px 24px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginBottom: 16 }}>
+          <h2 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 17, letterSpacing: "-.01em", margin: 0, color: "#0B2B6B" }}>Insurance information</h2>
           <button
             onClick={handleEditInsurance}
-            className="text-sm text-primary hover:text-primary/80"
+            style={{ fontSize: 13, fontWeight: 600, color: "#2F80FF", background: "none", border: "none", cursor: "pointer", padding: 0 }}
           >
             Edit
           </button>
         </div>
-        <div className="border-t border-gray-200">
-          {client?.insurance ? (
-            <div className="px-4 py-5 sm:p-6">
-              <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
-                <div className="sm:col-span-1">
-                  <dt className="text-sm font-medium text-gray-500">Provider</dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    {client.insurance.provider || "Not set"}
-                  </dd>
-                </div>
-
-                <div className="sm:col-span-1">
-                  <dt className="text-sm font-medium text-gray-500">Policy Number</dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    {client.insurance.policyNumber || "Not set"}
-                  </dd>
-                </div>
-
-                <div className="sm:col-span-1">
-                  <dt className="text-sm font-medium text-gray-500">Group Number</dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    {client.insurance.groupNumber || "Not set"}
-                  </dd>
-                </div>
-
-                <div className="sm:col-span-1">
-                  <dt className="text-sm font-medium text-gray-500">Coverage</dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    {client.insurance.coverage === "full" && "Full Coverage"}
-                    {client.insurance.coverage === "partial" && "Partial Coverage"}
-                    {client.insurance.coverage === "none" && "No Coverage"}
-                  </dd>
-                </div>
-
-                {client.insurance.notes && (
-                  <div className="sm:col-span-2">
-                    <dt className="text-sm font-medium text-gray-500">Notes</dt>
-                    <dd className="mt-1 text-sm text-gray-900">{client.insurance.notes}</dd>
-                  </div>
-                )}
-              </dl>
-            </div>
-          ) : (
-            <div className="px-4 py-5 sm:p-6">
-              <p className="text-sm text-gray-500">No insurance information has been added yet.</p>
-            </div>
-          )}
-        </div>
+        {ins ? (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 40px" }}>
+            {rows.map((r) => (
+              <div key={r.k} style={{ display: "grid", gridTemplateColumns: "120px 1fr", gap: 12, padding: "9px 0", borderTop: "1px solid #F2F6FB" }}>
+                <span style={{ fontSize: 13, color: "#8298BC" }}>{r.k}</span>
+                <span style={{ fontSize: 13.5, color: "#24344F", fontWeight: 500 }}>{r.v || <span style={{ color: "#A6B8D4" }}>Not set</span>}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p style={{ fontSize: 13, color: "#8298BC", margin: 0 }}>No insurance information has been added yet.</p>
+        )}
       </div>
 
       {/* Insurance Modal */}
       {showInsuranceModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full">
-            <h2 className="text-xl font-semibold mb-4">Edit Insurance Information</h2>
+          <div style={{ background: "#fff", borderRadius: 20, padding: "28px 28px 24px", maxWidth: 520, width: "100%", maxHeight: "90vh", overflowY: "auto" }}>
+            <h2 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 20, color: "#0B2B6B", margin: "0 0 20px" }}>Edit insurance information</h2>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                const formData = new FormData(e.target);
+                const fd = new FormData(e.target);
                 handleInsuranceUpdate({
-                  provider: formData.get("provider"),
-                  policyNumber: formData.get("policyNumber"),
-                  groupNumber: formData.get("groupNumber"),
-                  coverage: formData.get("coverage"),
-                  notes: formData.get("notes"),
+                  provider: fd.get("provider"),
+                  policyNumber: fd.get("policyNumber"),
+                  groupNumber: fd.get("groupNumber"),
+                  coverage: fd.get("coverage"),
+                  notes: fd.get("notes"),
                 });
               }}
             >
-              <div className="space-y-4">
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Provider</label>
-                  <input
-                    type="text"
-                    name="provider"
-                    defaultValue={client.insurance?.provider}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-ring"
-                  />
+                  <label style={LABEL_STYLE}>Provider</label>
+                  <input type="text" name="provider" defaultValue={ins?.provider} className="focus:ring-2 focus:ring-ring" style={FIELD_STYLE} />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Policy Number</label>
-                  <input
-                    type="text"
-                    name="policyNumber"
-                    defaultValue={client.insurance?.policyNumber}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-ring"
-                  />
+                  <label style={LABEL_STYLE}>Policy number</label>
+                  <input type="text" name="policyNumber" defaultValue={ins?.policyNumber} className="focus:ring-2 focus:ring-ring" style={FIELD_STYLE} />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Group Number</label>
-                  <input
-                    type="text"
-                    name="groupNumber"
-                    defaultValue={client.insurance?.groupNumber}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-ring"
-                  />
+                  <label style={LABEL_STYLE}>Group number</label>
+                  <input type="text" name="groupNumber" defaultValue={ins?.groupNumber} className="focus:ring-2 focus:ring-ring" style={FIELD_STYLE} />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Coverage</label>
-                  <select
-                    name="coverage"
-                    defaultValue={client.insurance?.coverage}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-ring"
-                  >
-                    <option value="full">Full Coverage</option>
-                    <option value="partial">Partial Coverage</option>
-                    <option value="none">No Coverage</option>
+                  <label style={LABEL_STYLE}>Coverage</label>
+                  <select name="coverage" defaultValue={ins?.coverage} className="focus:ring-2 focus:ring-ring" style={FIELD_STYLE}>
+                    <option value="full">Full coverage</option>
+                    <option value="partial">Partial coverage</option>
+                    <option value="none">No coverage</option>
                   </select>
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Notes</label>
-                  <textarea
-                    name="notes"
-                    defaultValue={client.insurance?.notes}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-ring"
-                  />
+                  <label style={LABEL_STYLE}>Notes</label>
+                  <textarea name="notes" defaultValue={ins?.notes} rows={3} className="focus:ring-2 focus:ring-ring" style={{ ...FIELD_STYLE, resize: "vertical" }} />
                 </div>
-
-                <div className="flex justify-end space-x-2">
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 6 }}>
                   <button
                     type="button"
                     onClick={() => setShowInsuranceModal(false)}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                    style={{ padding: "9px 18px", fontSize: 14, fontWeight: 600, color: "#55698F", background: "#F2F6FB", border: "none", borderRadius: 10, cursor: "pointer" }}
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90"
+                    style={{ padding: "9px 18px", fontSize: 14, fontWeight: 700, color: "#fff", background: "#2F80FF", border: "none", borderRadius: 10, cursor: "pointer", boxShadow: "0 8px 20px -8px rgba(47,128,255,.7)" }}
                   >
-                    Save Changes
+                    Save changes
                   </button>
                 </div>
               </div>

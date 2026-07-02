@@ -894,152 +894,112 @@ export default function ClientDetail({ clientId }) {
         )}
 
         {activeTab === "sessions" && (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-medium text-gray-900">Therapy Sessions</h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <h2 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 20, color: "#0B2B6B", margin: 0 }}>Therapy sessions</h2>
               <button
                 onClick={() => router.push(`/sessions/new?clientId=${clientId}`)}
-                className="px-3 py-1 bg-primary text-white rounded hover:bg-primary/90"
+                style={{ border: "none", cursor: "pointer", fontFamily: "inherit", background: "#2F80FF", color: "#fff", fontWeight: 700, fontSize: 13.5, padding: "8px 16px", borderRadius: 10, boxShadow: "0 10px 28px -10px rgba(47,128,255,.8)", transition: "transform .16s, box-shadow .16s" }}
               >
-                New Session
+                New session
               </button>
             </div>
-            {sessions.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Date
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Duration
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Type
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {sessions.map((session) => (
-                      <tr key={session._id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {formatDate(session.date)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {session.duration} minutes
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {session.type}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          {{
-                            scheduled: <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">Scheduled</span>,
-                            completed: <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">Completed</span>,
-                            cancelled: <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">Cancelled</span>,
-                          }[session.status] ?? <span className="text-gray-400">{session.status}</span>}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <a
-                            href={`/sessions/${session._id}`}
-                            className="text-primary hover:text-primary/80 mr-4"
-                          >
-                            View
-                          </a>
-                        </td>
-                      </tr>
+            <div style={{ background: "#fff", border: "1px solid #E9F0F9", borderRadius: 18, boxShadow: "0 22px 50px -40px rgba(11,43,107,.4)", overflow: "hidden" }}>
+              {sessions.length > 0 ? (
+                <>
+                  {/* Header */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr 1fr 1fr 0.7fr", gap: 0, background: "#F6FAFE", padding: "10px 20px", borderBottom: "1px solid #E9F0F9" }}>
+                    {["Date", "Duration", "Type", "Status", "Actions"].map((h) => (
+                      <span key={h} style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: "#8298BC" }}>{h}</span>
                     ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-gray-500">No therapy sessions recorded yet.</p>
-                <p className="text-sm text-gray-400 mt-2">
-                  Add a new session to track your client&apos;s progress.
-                </p>
-              </div>
-            )}
+                  </div>
+                  {sessions.map((session, i) => {
+                    const statusPill = {
+                      completed: { bg: "#E7F6EC", color: "#3B9E57", label: "Completed" },
+                      scheduled: { bg: "#E2F4F2", color: "#158A98", label: "Scheduled" },
+                      cancelled: { bg: "#EEF1F5", color: "#6E7E97", label: "Cancelled" },
+                    }[session.status];
+                    return (
+                      <div
+                        key={session._id}
+                        style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr 1fr 1fr 0.7fr", gap: 0, padding: "13px 20px", borderBottom: i < sessions.length - 1 ? "1px solid #F2F6FB" : "none", fontSize: 14, color: "#24344F", alignItems: "center", transition: "background .13s" }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = "#F5F9FE"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                      >
+                        <span style={{ fontWeight: 500 }}>{formatDate(session.date)}</span>
+                        <span style={{ color: "#55698F" }}>{session.duration} min</span>
+                        <span style={{ color: "#55698F", textTransform: "capitalize" }}>{session.type}</span>
+                        <span>
+                          {statusPill ? (
+                            <span style={{ fontSize: 11.5, fontWeight: 700, padding: "3px 10px", borderRadius: 999, background: statusPill.bg, color: statusPill.color }}>{statusPill.label}</span>
+                          ) : (
+                            <span style={{ color: "#8298BC" }}>{session.status}</span>
+                          )}
+                        </span>
+                        <span style={{ textAlign: "right" }}>
+                          <a href={`/sessions/${session._id}`} style={{ fontSize: 13, fontWeight: 600, color: "#2F80FF", textDecoration: "none" }}>View</a>
+                        </span>
+                      </div>
+                    );
+                  })}
+                </>
+              ) : (
+                <div style={{ textAlign: "center", padding: "40px 20px" }}>
+                  <p style={{ fontSize: 14, color: "#55698F", margin: 0 }}>No therapy sessions recorded yet.</p>
+                  <p style={{ fontSize: 13, color: "#8298BC", marginTop: 6 }}>Add a new session to track your client&apos;s progress.</p>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
         {activeTab === "reports" && (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-medium text-gray-900">Reports</h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <h2 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 20, color: "#0B2B6B", margin: 0 }}>Reports</h2>
               <Link
                 href={`/clients/${clientId}/reports/new`}
-                className="px-3 py-1 bg-primary text-white rounded hover:bg-primary/90"
+                style={{ border: "none", cursor: "pointer", fontFamily: "inherit", background: "#2F80FF", color: "#fff", fontWeight: 700, fontSize: 13.5, padding: "8px 16px", borderRadius: 10, boxShadow: "0 10px 28px -10px rgba(47,128,255,.8)", textDecoration: "none", display: "inline-block" }}
               >
                 New report
               </Link>
             </div>
-            {recentReports.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Title
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Date
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Type
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {recentReports.map((report) => (
-                      <tr key={report._id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {getReportTitle(report)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {formatDate(report.createdAt)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {(report.agentType ?? "report").charAt(0).toUpperCase() +
-                            (report.agentType ?? "report").slice(1)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <button
-                            onClick={() => handleViewReport(report)}
-                            className="text-primary hover:text-primary/80 mr-4"
-                          >
-                            View
-                          </button>
-                          <button
-                            onClick={() => handleDeleteReport(report._id)}
-                            className="text-red-600 hover:text-red-900"
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
+            <div style={{ background: "#fff", border: "1px solid #E9F0F9", borderRadius: 18, boxShadow: "0 22px 50px -40px rgba(11,43,107,.4)", overflow: "hidden" }}>
+              {recentReports.length > 0 ? (
+                <>
+                  <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 0.9fr", gap: 0, background: "#F6FAFE", padding: "10px 20px", borderBottom: "1px solid #E9F0F9" }}>
+                    {["Title", "Date", "Type", "Actions"].map((h) => (
+                      <span key={h} style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: "#8298BC" }}>{h}</span>
                     ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-gray-500">No reports generated yet.</p>
-                <p className="text-sm text-gray-400 mt-2">
-                  Generate a new report to document assessment findings or treatment progress.
-                </p>
-              </div>
-            )}
-
+                  </div>
+                  {recentReports.map((report, i) => (
+                    <div
+                      key={report._id}
+                      style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 0.9fr", gap: 0, padding: "13px 20px", borderBottom: i < recentReports.length - 1 ? "1px solid #F2F6FB" : "none", fontSize: 14, color: "#24344F", alignItems: "center", transition: "background .13s" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = "#F5F9FE"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                    >
+                      <span style={{ fontWeight: 500 }}>{getReportTitle(report)}</span>
+                      <span style={{ color: "#55698F" }}>{formatDate(report.createdAt)}</span>
+                      <span>
+                        <span style={{ fontSize: 12, fontWeight: 600, padding: "3px 9px", borderRadius: 6, background: "#EEF1F5", color: "#6E7E97" }}>
+                          {(report.agentType ?? "report").charAt(0).toUpperCase() + (report.agentType ?? "report").slice(1)}
+                        </span>
+                      </span>
+                      <span style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
+                        <button onClick={() => handleViewReport(report)} style={{ fontSize: 13, fontWeight: 600, color: "#2F80FF", background: "none", border: "none", cursor: "pointer", padding: 0 }}>View</button>
+                        <button onClick={() => handleDeleteReport(report._id)} style={{ fontSize: 13, fontWeight: 600, color: "#C0392B", background: "none", border: "none", cursor: "pointer", padding: 0 }}>Delete</button>
+                      </span>
+                    </div>
+                  ))}
+                </>
+              ) : (
+                <div style={{ textAlign: "center", padding: "40px 20px" }}>
+                  <p style={{ fontSize: 14, color: "#55698F", margin: 0 }}>No reports generated yet.</p>
+                  <p style={{ fontSize: 13, color: "#8298BC", marginTop: 6 }}>Generate a new report to document assessment findings or treatment progress.</p>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -1062,50 +1022,52 @@ export default function ClientDetail({ clientId }) {
         )}
 
         {activeTab === "consent-billing" && (
-          <div className="space-y-8">
-            {/* Consent Forms Section */}
-            <div className="bg-white shadow rounded-lg p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-gray-900">Consent Forms</h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+            {/* Consent Forms Card */}
+            <div style={{ background: "#fff", border: "1px solid #E9F0F9", borderRadius: 20, boxShadow: "0 22px 50px -40px rgba(11,43,107,.4)", padding: "22px 24px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginBottom: 16 }}>
+                <div>
+                  <h2 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 17, letterSpacing: "-.01em", margin: 0, color: "#0B2B6B" }}>Consent forms</h2>
+                  <p style={{ fontSize: 12.5, color: "#8298BC", margin: "3px 0 0" }}>Request, track and review the client&apos;s signed agreements.</p>
+                </div>
                 <button
                   onClick={() => setShowConsentModal(true)}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
+                  style={{ border: "none", cursor: "pointer", fontFamily: "inherit", background: "#2F80FF", color: "#fff", fontWeight: 700, fontSize: 13.5, padding: "10px 16px", borderRadius: 10, boxShadow: "0 16px 40px -18px rgba(47,128,255,.8)", transition: "transform .16s, box-shadow .16s", flexShrink: 0 }}
                 >
-                  Request New Consent
+                  Request new consent
                 </button>
               </div>
-
-              <div className="space-y-4">
-                {consentForms.map((form) => (
-                  <div
-                    key={form._id}
-                    onClick={() => handleViewConsent(form)}
-                    className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer"
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-900">{form.type}</h4>
-                        <p className="text-sm text-gray-500">Version {form.version}</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {consentForms.map((form) => {
+                  const statusStyle = ({ signed: { bg: "#E7F6EC", color: "#3B9E57" }, pending: { bg: "#FBF2DA", color: "#A9821F" }, expired: { bg: "#FDECEC", color: "#C0392B" } }[form.status]) ?? { bg: "#EEF1F5", color: "#6E7E97" };
+                  const metaLine = form.dateSigned
+                    ? `Signed ${new Date(form.dateSigned).toLocaleDateString()}`
+                    : form.requestedAt
+                      ? `Sent ${new Date(form.requestedAt).toLocaleDateString()} · awaiting signature`
+                      : "";
+                  return (
+                    <div
+                      key={form._id}
+                      onClick={() => handleViewConsent(form)}
+                      style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, border: "1px solid #E7EEF7", borderRadius: 13, padding: "14px 16px", cursor: "pointer", transition: "background .13s" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = "#F5F9FE"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                    >
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: 14.5, fontWeight: 600, color: "#0B2B6B" }}>{form.type}</div>
+                        <div style={{ fontSize: 12.5, color: "#8298BC", marginTop: 2 }}>
+                          Version {form.version}{metaLine ? ` · ${metaLine}` : ""}
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            form.status === "signed"
-                              ? "bg-green-100 text-green-800"
-                              : form.status === "pending"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : form.status === "expired"
-                                  ? "bg-red-100 text-red-800"
-                                  : "bg-gray-100 text-gray-800"
-                          }`}
-                        >
-                          {form.status}
+                      <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+                        <span style={{ fontSize: 11.5, fontWeight: 700, padding: "4px 11px", borderRadius: 999, background: statusStyle.bg, color: statusStyle.color }}>
+                          {form.status.charAt(0).toUpperCase() + form.status.slice(1)}
                         </span>
                         {form.status !== "signed" && (
                           client?.contactInfo?.email ? (
                             <button
                               onClick={(e) => handleResendConsent(form._id, e)}
-                              className="text-xs text-primary hover:text-primary/80"
+                              style={{ fontSize: 13, fontWeight: 600, color: "#2F80FF", background: "none", border: "none", cursor: "pointer", padding: 0 }}
                               title="Email the client a fresh signing link"
                             >
                               Resend
@@ -1118,7 +1080,7 @@ export default function ClientDetail({ clientId }) {
                                 navigator.clipboard.writeText(link);
                                 toast.success("Signing link copied — share it with the client.");
                               }}
-                              className="text-xs text-primary hover:text-primary/80"
+                              style={{ fontSize: 13, fontWeight: 600, color: "#2F80FF", background: "none", border: "none", cursor: "pointer", padding: 0 }}
                               title="No email on file — copy the signing link to share manually"
                             >
                               Copy link
@@ -1127,38 +1089,27 @@ export default function ClientDetail({ clientId }) {
                         )}
                         <button
                           onClick={(e) => handleDeleteConsent(form._id, e)}
-                          className="text-red-600 hover:text-red-800"
+                          style={{ display: "grid", placeItems: "center", width: 30, height: 30, borderRadius: 8, color: "#A6B8D4", background: "none", border: "none", cursor: "pointer", transition: "all .13s" }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = "#EAF3FF"; e.currentTarget.style.color = "#2F80FF"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "#A6B8D4"; }}
                           title="Delete consent form"
                         >
-                          <TrashIcon className="h-5 w-5" />
+                          <TrashIcon style={{ width: 16, height: 16 }} />
                         </button>
                       </div>
                     </div>
-                    <div className="mt-2 text-sm text-gray-500">
-                      <p>
-                        Requested on{" "}
-                        {form.requestedAt ? new Date(form.requestedAt).toLocaleDateString() : "N/A"}
-                      </p>
-                      {form.dateSigned && (
-                        <p>Signed on {new Date(form.dateSigned).toLocaleDateString()}</p>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {consentForms.length === 0 && (
-                  <p className="text-sm text-gray-500">No consent forms yet</p>
+                  <p style={{ fontSize: 13, color: "#8298BC", margin: 0 }}>No consent forms yet.</p>
                 )}
               </div>
             </div>
 
-            {/* Billing Information Section */}
-            <BillingInfo
-              client={client}
-              onUpdate={handleClientUpdate}
-              onDelete={handleDeleteBilling}
-            />
+            {/* Billing Information */}
+            <BillingInfo client={client} onUpdate={handleClientUpdate} onDelete={handleDeleteBilling} />
 
-            {/* Insurance Information Section */}
+            {/* Insurance Information */}
             <InsuranceInfo client={client} onUpdate={handleClientUpdate} />
           </div>
         )}
@@ -1167,113 +1118,109 @@ export default function ClientDetail({ clientId }) {
       {/* Modals */}
       {showConsentModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <h2 className="text-2xl font-bold mb-4">
-              {selectedConsent ? "View Consent Form" : "Request New Consent"}
+          <div style={{ background: "#fff", borderRadius: 20, padding: "28px 28px 24px", maxWidth: 600, width: "100%", maxHeight: "90vh", overflowY: "auto" }}>
+            <h2 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 20, color: "#0B2B6B", margin: "0 0 20px" }}>
+              {selectedConsent ? "View consent form" : "Request new consent"}
             </h2>
 
             {selectedConsent ? (
               <div>
-                <div className="mb-4">
-                  <h3 className="font-semibold">{selectedConsent.type}</h3>
-                  <p className="text-sm text-gray-600">Version: {selectedConsent.version}</p>
-                  <p className="text-sm text-gray-600">Status: {selectedConsent.status}</p>
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: "#0B2B6B" }}>{selectedConsent.type}</div>
+                  <div style={{ fontSize: 13, color: "#8298BC", marginTop: 4 }}>
+                    Version {selectedConsent.version} · Status: {selectedConsent.status}
+                  </div>
                   {selectedConsent.dateSigned && (
-                    <p className="text-sm text-gray-600">
-                      Date Signed: {new Date(selectedConsent.dateSigned).toLocaleDateString()}
-                    </p>
+                    <div style={{ fontSize: 13, color: "#8298BC", marginTop: 2 }}>
+                      Signed {new Date(selectedConsent.dateSigned).toLocaleDateString()}
+                    </div>
                   )}
                 </div>
 
-                {/* Determine which document URL to show */}
                 {(selectedConsent.signedDocument || selectedConsent.document) && (
-                  <div className="mb-4">
+                  <div style={{ marginBottom: 16 }}>
                     <a
                       href={selectedConsent.signedDocument || selectedConsent.document}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-primary hover:underline"
+                      style={{ fontSize: 13.5, fontWeight: 600, color: "#2F80FF" }}
                     >
-                      {selectedConsent.signedDocument
-                        ? "View Signed Document"
-                        : "View Original Document"}
+                      {selectedConsent.signedDocument ? "View signed document" : "View original document"}
                     </a>
                   </div>
                 )}
 
-                {/* Conditionally show upload if pending? (Optional enhancement) */}
                 {selectedConsent.status === "pending" && !selectedConsent.signedDocument && (
-                  <p className="text-sm text-yellow-700">
+                  <p style={{ fontSize: 13, color: "#A9821F", background: "#FBF2DA", borderRadius: 10, padding: "10px 14px", margin: "0 0 16px" }}>
                     Waiting for client to upload signed document.
                   </p>
                 )}
 
-                {/* Add other actions like Revoke/Resend if needed */}
-
-                <div className="mt-4">
+                <div style={{ display: "flex", justifyContent: "flex-end" }}>
                   <button
-                    onClick={() => {
-                      setSelectedConsent(null);
-                      setShowConsentModal(false);
-                    }}
-                    className="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300"
+                    onClick={() => { setSelectedConsent(null); setShowConsentModal(false); }}
+                    style={{ padding: "9px 18px", fontSize: 14, fontWeight: 600, color: "#55698F", background: "#F2F6FB", border: "none", borderRadius: 10, cursor: "pointer" }}
                   >
                     Close
                   </button>
                 </div>
               </div>
             ) : (
-              <form onSubmit={handleRequestConsent} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Consent Type</label>
-                  <select
-                    value={selectedConsentType}
-                    onChange={handleConsentTypeChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-ring px-3 py-2"
-                    required
-                  >
-                    <option value="">Select a consent type</option>
-                    {availableTemplates.map((template) => (
-                      <option key={template.type} value={template.type}>
-                        {template.title} (v{template.version})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {consentFormContent && (
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700">Form Preview</label>
-                    <div className="mt-1 p-4 bg-gray-50 rounded-md max-h-60 overflow-y-auto">
-                      <ConsentMarkdown content={consentFormContent} />
-                    </div>
+              <form onSubmit={handleRequestConsent}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#55698F", marginBottom: 4 }}>Consent type</label>
+                    <select
+                      value={selectedConsentType}
+                      onChange={handleConsentTypeChange}
+                      className="focus:ring-2 focus:ring-ring"
+                      style={{ display: "block", width: "100%", borderRadius: 10, border: "1px solid var(--input, #E3ECF7)", padding: "9px 12px", fontSize: 14, color: "#24344F", outline: "none", fontFamily: "inherit" }}
+                      required
+                    >
+                      <option value="">Select a consent type</option>
+                      {availableTemplates.map((template) => (
+                        <option key={template.type} value={template.type}>
+                          {template.title} (v{template.version})
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                )}
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Notes</label>
-                  <textarea
-                    value={consentFormNotes}
-                    onChange={(e) => setConsentFormNotes(e.target.value)}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-ring px-3 py-2"
-                    rows="3"
-                  />
-                </div>
+                  {consentFormContent && (
+                    <div>
+                      <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#55698F", marginBottom: 4 }}>Form preview</label>
+                      <div style={{ border: "1px solid #E7EEF7", borderRadius: 10, padding: "12px 14px", background: "#F7FAFE", maxHeight: 220, overflowY: "auto" }}>
+                        <ConsentMarkdown content={consentFormContent} />
+                      </div>
+                    </div>
+                  )}
 
-                <div className="flex justify-end space-x-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowConsentModal(false)}
-                    className="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90"
-                  >
-                    Request Consent
-                  </button>
+                  <div>
+                    <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#55698F", marginBottom: 4 }}>Notes</label>
+                    <textarea
+                      value={consentFormNotes}
+                      onChange={(e) => setConsentFormNotes(e.target.value)}
+                      rows={3}
+                      className="focus:ring-2 focus:ring-ring"
+                      style={{ display: "block", width: "100%", borderRadius: 10, border: "1px solid var(--input, #E3ECF7)", padding: "9px 12px", fontSize: 14, color: "#24344F", outline: "none", fontFamily: "inherit", resize: "vertical" }}
+                    />
+                  </div>
+
+                  <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 6 }}>
+                    <button
+                      type="button"
+                      onClick={() => setShowConsentModal(false)}
+                      style={{ padding: "9px 18px", fontSize: 14, fontWeight: 600, color: "#55698F", background: "#F2F6FB", border: "none", borderRadius: 10, cursor: "pointer" }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      style={{ padding: "9px 18px", fontSize: 14, fontWeight: 700, color: "#fff", background: "#2F80FF", border: "none", borderRadius: 10, cursor: "pointer", boxShadow: "0 8px 20px -8px rgba(47,128,255,.7)" }}
+                    >
+                      Request consent
+                    </button>
+                  </div>
                 </div>
               </form>
             )}

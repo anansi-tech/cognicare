@@ -3,9 +3,24 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 
+const FIELD_STYLE = {
+  marginTop: 1,
+  display: "block",
+  width: "100%",
+  borderRadius: 10,
+  border: "1px solid var(--input, #E3ECF7)",
+  padding: "9px 12px",
+  fontSize: 14,
+  color: "#24344F",
+  outline: "none",
+  fontFamily: "inherit",
+};
+const LABEL_STYLE = { display: "block", fontSize: 13, fontWeight: 600, color: "#55698F", marginBottom: 4 };
+
+const PM_LABEL = { cash: "Cash", check: "Check", credit: "Credit Card", insurance: "Insurance", other: "Other" };
+
 export default function BillingInfo({ client, onUpdate, onDelete }) {
   const [showBillingModal, setShowBillingModal] = useState(false);
-  const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showSessionModal, setShowSessionModal] = useState(false);
   const [selectedSessions, setSelectedSessions] = useState([]);
@@ -14,8 +29,6 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
   const [showPaymentDropdown, setShowPaymentDropdown] = useState(null);
   const [invoices, setInvoices] = useState([]);
 
-  // Round 12: invoices live in their own model now. Fetch them from the
-  // billing GET endpoint instead of reading from client.billing.invoices.
   const refreshInvoices = async () => {
     try {
       const res = await fetch(`/api/clients/${client._id}/billing`);
@@ -32,31 +45,24 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [client?._id]);
 
-  const handleEditBilling = () => {
-    setSelectedInvoice(null);
-    setShowBillingModal(true);
-  };
+  const handleEditBilling = () => setShowBillingModal(true);
 
   const handleBillingUpdate = async (formData) => {
     try {
-      const updateData = {
-        paymentMethod: formData.paymentMethod,
-        rate: parseFloat(formData.rate) || 0,
-        initialRate: parseFloat(formData.initialRate) || 0,
-        groupRate: parseFloat(formData.groupRate) || 0,
-        notes: formData.notes,
-      };
-
       const response = await fetch(`/api/clients/${client._id}/billing`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updateData),
+        body: JSON.stringify({
+          paymentMethod: formData.paymentMethod,
+          rate: parseFloat(formData.rate) || 0,
+          initialRate: parseFloat(formData.initialRate) || 0,
+          groupRate: parseFloat(formData.groupRate) || 0,
+          notes: formData.notes,
+        }),
       });
       if (!response.ok) throw new Error("Failed to update billing information");
-
       const updatedBilling = await response.json();
       onUpdate({ ...client, billing: updatedBilling });
-      setSelectedInvoice(null);
       setShowBillingModal(false);
     } catch (error) {
       console.error("Error updating billing:", error);
@@ -65,17 +71,13 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
   };
 
   const handleViewInvoice = (invoice) => {
-    if (invoice.document) {
-      window.open(invoice.document, "_blank");
-    }
+    if (invoice.document) window.open(invoice.document, "_blank");
   };
 
   const handleDeleteInvoice = async (invoiceId) => {
     if (!confirm("Are you sure you want to delete this invoice?")) return;
     try {
-      const response = await fetch(`/api/clients/${client._id}/invoices/${invoiceId}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(`/api/clients/${client._id}/invoices/${invoiceId}`, { method: "DELETE" });
       if (!response.ok) throw new Error("Failed to delete invoice");
       await refreshInvoices();
     } catch (error) {
@@ -88,12 +90,10 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
     setIsLoadingSessions(true);
     try {
       const response = await fetch(`/api/sessions?clientId=${client._id}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch sessions");
-      }
-      const sessions = await response.json();
-      setSessions(sessions);
-      return sessions;
+      if (!response.ok) throw new Error("Failed to fetch sessions");
+      const s = await response.json();
+      setSessions(s);
+      return s;
     } catch (error) {
       console.error("Error fetching sessions:", error);
       alert("Failed to load sessions");
@@ -104,18 +104,11 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
   };
 
   const handleGenerateInvoice = async () => {
-    if (!client.billing?.rate) {
-      alert("Please set a session rate first");
-      return;
-    }
-
+    if (!client.billing?.rate) { alert("Please set a session rate first"); return; }
     setIsGenerating(true);
     try {
-      const sessions = await fetchSessions();
-      if (!sessions || sessions.length === 0) {
-        alert("No sessions available to invoice");
-        return;
-      }
+      const s = await fetchSessions();
+      if (!s || s.length === 0) { alert("No sessions available to invoice"); return; }
       setShowSessionModal(true);
     } catch (error) {
       console.error("Error generating invoice:", error);
@@ -126,36 +119,25 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
   };
 
   const handleSessionSelection = async () => {
-    if (selectedSessions.length === 0) {
-      alert("Please select at least one session");
-      return;
-    }
-
+    if (selectedSessions.length === 0) { alert("Please select at least one session"); return; }
     setIsGenerating(true);
     try {
       const response = await fetch(`/api/clients/${client._id}/invoices/generate`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sessions: selectedSessions.map((session) => ({
             ...session,
-            rate:
-              session.type === "initial"
-                ? client.billing.initialRate || client.billing.rate
-                : session.type === "group"
-                  ? client.billing.groupRate || client.billing.rate
-                  : client.billing.rate,
+            rate: session.type === "initial"
+              ? client.billing.initialRate || client.billing.rate
+              : session.type === "group"
+                ? client.billing.groupRate || client.billing.rate
+                : client.billing.rate,
           })),
           notes: "Automatically generated invoice",
         }),
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to generate invoice");
-      }
-
+      if (!response.ok) throw new Error("Failed to generate invoice");
       const data = await response.json();
       await refreshInvoices();
       if (data.documentUrl) window.open(data.documentUrl, "_blank");
@@ -174,11 +156,7 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
       const response = await fetch(`/api/clients/${client._id}/invoices/${invoiceId}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          status: "paid",
-          paymentDate: new Date().toISOString(),
-          paymentMethod,
-        }),
+        body: JSON.stringify({ status: "paid", paymentDate: new Date().toISOString(), paymentMethod }),
       });
       if (!response.ok) throw new Error("Failed to mark invoice as paid");
       await refreshInvoices();
@@ -190,15 +168,11 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
 
   const handleSendReminder = async (invoiceId) => {
     try {
-      const response = await fetch(`/api/clients/${client._id}/invoices/${invoiceId}/reminder`, {
-        method: "POST",
-      });
-
+      const response = await fetch(`/api/clients/${client._id}/invoices/${invoiceId}/reminder`, { method: "POST" });
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to send reminder");
+        const err = await response.json();
+        throw new Error(err.message || "Failed to send reminder");
       }
-
       alert("Reminder sent successfully");
     } catch (error) {
       console.error("Error sending reminder:", error);
@@ -206,355 +180,166 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
     }
   };
 
-  const renderInvoiceStatus = (invoice) => {
-    if (invoice.status === "paid") {
-      return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-          Paid
-        </span>
-      );
-    }
+  const renderPaymentDropdown = (invoice) => {
+    if (invoice.status === "paid") return null;
+    const methods = ["cash", "check", "credit", "insurance", "other"];
     return (
-      <div className="flex items-center space-x-2">
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-          Pending
-        </span>
+      <div style={{ position: "relative" }}>
         <button
-          onClick={() => handleSendReminder(invoice._id)}
-          className="text-xs text-primary hover:text-primary/80"
+          onClick={() => setShowPaymentDropdown(showPaymentDropdown === invoice._id ? null : invoice._id)}
+          style={{ fontSize: 12.5, fontWeight: 700, color: "#fff", background: "#2F80FF", padding: "5px 12px", borderRadius: 8, border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4, transition: "opacity .13s" }}
         >
-          Send Reminder
-        </button>
-      </div>
-    );
-  };
-
-  const renderPaymentOptions = (invoice) => {
-    if (invoice.status === "paid") {
-      return null;
-    }
-    return (
-      <div className="relative">
-        <button
-          onClick={() =>
-            setShowPaymentDropdown(showPaymentDropdown === invoice._id ? null : invoice._id)
-          }
-          className="px-3 py-1 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/90 flex items-center"
-        >
-          Mark as Paid
-          <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
+          Mark as paid ▾
         </button>
         {showPaymentDropdown === invoice._id && (
-          <div className="absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg z-10">
-            <div className="py-1">
+          <div style={{ position: "absolute", right: 0, top: "calc(100% + 4px)", width: 160, background: "#fff", border: "1px solid #E3ECF7", borderRadius: 12, boxShadow: "0 8px 24px -8px rgba(11,43,107,.3)", zIndex: 10, overflow: "hidden" }}>
+            {methods.map((m) => (
               <button
-                onClick={() => {
-                  handleMarkAsPaid(invoice._id, "cash");
-                  setShowPaymentDropdown(null);
-                }}
-                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                key={m}
+                onClick={() => { handleMarkAsPaid(invoice._id, m); setShowPaymentDropdown(null); }}
+                style={{ display: "block", width: "100%", textAlign: "left", padding: "9px 14px", fontSize: 13, color: "#24344F", border: "none", background: "transparent", cursor: "pointer" }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "#F5F9FE"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
               >
-                <span className="flex items-center">
-                  <svg
-                    className="w-4 h-4 mr-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-                    />
-                  </svg>
-                  Cash
-                </span>
+                {PM_LABEL[m]}
               </button>
-              <button
-                onClick={() => {
-                  handleMarkAsPaid(invoice._id, "check");
-                  setShowPaymentDropdown(null);
-                }}
-                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-              >
-                <span className="flex items-center">
-                  <svg
-                    className="w-4 h-4 mr-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                    />
-                  </svg>
-                  Check
-                </span>
-              </button>
-              <button
-                onClick={() => {
-                  handleMarkAsPaid(invoice._id, "credit");
-                  setShowPaymentDropdown(null);
-                }}
-                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-              >
-                <span className="flex items-center">
-                  <svg
-                    className="w-4 h-4 mr-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-                    />
-                  </svg>
-                  Credit Card
-                </span>
-              </button>
-              <button
-                onClick={() => {
-                  handleMarkAsPaid(invoice._id, "insurance");
-                  setShowPaymentDropdown(null);
-                }}
-                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-              >
-                <span className="flex items-center">
-                  <svg
-                    className="w-4 h-4 mr-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                    />
-                  </svg>
-                  Insurance
-                </span>
-              </button>
-              <button
-                onClick={() => {
-                  handleMarkAsPaid(invoice._id, "other");
-                  setShowPaymentDropdown(null);
-                }}
-                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-              >
-                <span className="flex items-center">
-                  <svg
-                    className="w-4 h-4 mr-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-                    />
-                  </svg>
-                  Other
-                </span>
-              </button>
-            </div>
+            ))}
           </div>
         )}
       </div>
     );
   };
 
+  const billing = client?.billing;
+  const rateCards = [
+    { label: "Payment method", value: billing ? (PM_LABEL[billing.paymentMethod] ?? billing.paymentMethod ?? "—") : null, isMoney: false },
+    { label: "Standard rate", value: billing?.rate ? `$${billing.rate}` : null, isMoney: true },
+    { label: "Initial rate", value: billing?.initialRate ? `$${billing.initialRate}` : null, isMoney: true },
+    { label: "Group rate", value: billing?.groupRate ? `$${billing.groupRate}` : null, isMoney: true },
+  ];
+
+  const hasInvoices = invoices.length > 0 && invoices.some((inv) => inv.amount);
+
   return (
-    <div>
-      <div className="px-4 py-5 sm:px-6">
-        <div className="flex justify-between items-center">
-          <h3 className="text-lg leading-6 font-medium text-gray-900">Billing Information</h3>
-          <div>
-            <button
-              onClick={handleEditBilling}
-              className="text-sm text-primary hover:text-primary/80 mr-4"
-            >
-              {client?.billing ? "Edit Billing" : "Add Billing Information"}
+    <>
+      {/* Card */}
+      <div style={{ background: "#fff", border: "1px solid #E9F0F9", borderRadius: 20, boxShadow: "0 22px 50px -40px rgba(11,43,107,.4)", padding: "22px 24px" }}>
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginBottom: 16, flexWrap: "wrap" }}>
+          <h2 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 17, letterSpacing: "-.01em", margin: 0, color: "#0B2B6B" }}>Billing information</h2>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <button onClick={handleEditBilling} style={{ fontSize: 13, fontWeight: 600, color: "#2F80FF", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+              {billing ? "Edit billing" : "Add billing information"}
             </button>
-            {client?.billing && (
+            {billing && (
               <>
-                <button
-                  onClick={handleGenerateInvoice}
-                  disabled={isGenerating}
-                  className="text-sm text-green-600 hover:text-green-800 mr-4"
-                >
-                  {isGenerating ? "Generating..." : "Generate Invoice"}
+                <button onClick={handleGenerateInvoice} disabled={isGenerating} style={{ fontSize: 13, fontWeight: 600, color: "#158A98", background: "none", border: "none", cursor: isGenerating ? "default" : "pointer", padding: 0, opacity: isGenerating ? 0.7 : 1 }}>
+                  {isGenerating ? "Generating…" : "Generate invoice"}
                 </button>
-                <button onClick={onDelete} className="text-sm text-red-600 hover:text-red-800">
-                  Delete Billing
+                <button onClick={onDelete} style={{ fontSize: 13, fontWeight: 600, color: "#C0392B", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                  Delete billing
                 </button>
               </>
             )}
           </div>
         </div>
-      </div>
 
-      {client?.billing ? (
-        <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
-              <div className="sm:col-span-1">
-                <dt className="text-sm font-medium text-gray-500">Payment Method</dt>
-                <dd className="mt-1 text-sm text-gray-900">
-                  {client.billing.paymentMethod === "cash" && "Cash"}
-                  {client.billing.paymentMethod === "check" && "Check"}
-                  {client.billing.paymentMethod === "credit" && "Credit Card"}
-                  {client.billing.paymentMethod === "insurance" && "Insurance"}
-                  {client.billing.paymentMethod === "other" && "Other"}
-                </dd>
-              </div>
-
-              <div className="sm:col-span-1">
-                <dt className="text-sm font-medium text-gray-500">Standard Session Rate</dt>
-                <dd className="mt-1 text-sm text-gray-900">
-                  {client.billing.rate ? `$${client.billing.rate}` : "Not set"}
-                </dd>
-              </div>
-
-              <div className="sm:col-span-1">
-                <dt className="text-sm font-medium text-gray-500">Initial Session Rate</dt>
-                <dd className="mt-1 text-sm text-gray-900">
-                  {client.billing.initialRate ? `$${client.billing.initialRate}` : "Not set"}
-                </dd>
-              </div>
-
-              <div className="sm:col-span-1">
-                <dt className="text-sm font-medium text-gray-500">Group Session Rate</dt>
-                <dd className="mt-1 text-sm text-gray-900">
-                  {client.billing.groupRate ? `$${client.billing.groupRate}` : "Not set"}
-                </dd>
-              </div>
-
-              {client.billing.notes && (
-                <div className="sm:col-span-2">
-                  <dt className="text-sm font-medium text-gray-500">Notes</dt>
-                  <dd className="mt-1 text-sm text-gray-900">{client.billing.notes}</dd>
+        {billing ? (
+          <>
+            {/* Rate grid */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+              {rateCards.map((c) => (
+                <div key={c.label} style={{ background: "#F7FAFE", border: "1px solid #EEF3FA", borderRadius: 13, padding: "14px 16px" }}>
+                  <div style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".05em", color: "#8298BC", textTransform: "uppercase" }}>{c.label}</div>
+                  {c.value ? (
+                    c.isMoney ? (
+                      <div style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontSize: 18, fontWeight: 700, color: "#0B2B6B", marginTop: 4 }}>{c.value}</div>
+                    ) : (
+                      <div style={{ fontSize: 15, fontWeight: 600, color: "#0B2B6B", marginTop: 5 }}>{c.value}</div>
+                    )
+                  ) : (
+                    <div style={{ fontSize: 13.5, color: "#A6B8D4", marginTop: 5 }}>Not set</div>
+                  )}
                 </div>
-              )}
+              ))}
+            </div>
 
-              {invoices.length > 0 && invoices.some((inv) => inv.amount) && (
-                  <div className="sm:col-span-2">
-                    <dt className="text-sm font-medium text-gray-500">Recent Invoices</dt>
-                    <dd className="mt-1">
-                      <div className="space-y-4">
-                        {invoices.map((invoice) => (
-                          <div key={invoice._id} className="border rounded-lg p-4">
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <p className="font-medium">
-                                  Invoice #
-                                  {invoice.invoiceNumber || invoice._id.toString().slice(-6)}
-                                </p>
-                                <p className="text-sm text-gray-600">
-                                  Date: {new Date(invoice.date).toLocaleDateString()}
-                                </p>
-                                <p className="text-sm text-gray-600">Amount: ${invoice.amount}</p>
-                                <div className="text-sm">
-                                  Status: {renderInvoiceStatus(invoice)}
-                                </div>
-                                <p className="text-sm text-gray-600">
-                                  Payment Method:{" "}
-                                  {invoice.paymentMethod ? (
-                                    <span className="capitalize">
-                                      {invoice.paymentMethod === "credit"
-                                        ? "Credit Card"
-                                        : invoice.paymentMethod}
-                                    </span>
-                                  ) : (
-                                    "Not specified"
-                                  )}
-                                </p>
-                                {invoice.status !== "paid" && invoice.paymentLink && (
-                                  <a
-                                    href={invoice.paymentLink}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-primary hover:text-primary/80 text-sm"
-                                  >
-                                    Pay Online
-                                  </a>
-                                )}
-                              </div>
-                              <div className="flex space-x-2">
-                                {renderPaymentOptions(invoice)}
-                                <div className="flex space-x-2">
-                                  <a
-                                    href={invoice.document}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="px-3 py-1 text-sm bg-primary text-white rounded hover:bg-primary/90"
-                                  >
-                                    View PDF
-                                  </a>
-                                  <button
-                                    onClick={() => handleDeleteInvoice(invoice._id)}
-                                    className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
-                                  >
-                                    Delete
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
+            {/* Invoices */}
+            {hasInvoices && (
+              <>
+                <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: ".06em", color: "#7C93B8", textTransform: "uppercase", margin: "20px 0 10px" }}>Recent invoices</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {invoices.map((invoice) => {
+                    const isPaid = invoice.status === "paid";
+                    return (
+                      <div
+                        key={invoice._id}
+                        style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, border: "1px solid #E7EEF7", borderRadius: 13, padding: "13px 16px", transition: "background .13s" }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = "#F5F9FE"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                      >
+                        <div style={{ display: "flex", alignItems: "baseline", gap: 14, flexWrap: "wrap" }}>
+                          <span style={{ fontSize: 14, fontWeight: 700, color: "#0B2B6B" }}>#{invoice.invoiceNumber || invoice._id.toString().slice(-6)}</span>
+                          <span style={{ fontSize: 12.5, color: "#8298BC" }}>{new Date(invoice.date).toLocaleDateString()}</span>
+                          <span style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontSize: 15, fontWeight: 700, color: "#0B2B6B" }}>${invoice.amount}</span>
+                          <span style={{ fontSize: 12, color: "#8298BC", textTransform: "capitalize" }}>
+                            {invoice.paymentMethod === "credit" ? "credit card" : invoice.paymentMethod || "not specified"}
+                          </span>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+                          <span style={{ fontSize: 11.5, fontWeight: 700, padding: "4px 11px", borderRadius: 999, background: isPaid ? "#E7F6EC" : "#FBF2DA", color: isPaid ? "#3B9E57" : "#A9821F" }}>
+                            {isPaid ? "Paid" : "Pending"}
+                          </span>
+                          {!isPaid && (
+                            <button onClick={() => handleSendReminder(invoice._id)} style={{ fontSize: 12, fontWeight: 600, color: "#8298BC", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                              Send reminder
+                            </button>
+                          )}
+                          {renderPaymentDropdown(invoice)}
+                          {invoice.document && (
+                            <a href={invoice.document} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, fontWeight: 600, color: "#2F80FF", textDecoration: "none" }}>
+                              View PDF
+                            </a>
+                          )}
+                          <button
+                            onClick={() => handleDeleteInvoice(invoice._id)}
+                            style={{ display: "grid", placeItems: "center", width: 30, height: 30, borderRadius: 8, color: "#A6B8D4", background: "none", border: "none", cursor: "pointer", transition: "all .13s" }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = "#EAF3FF"; e.currentTarget.style.color = "#2F80FF"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "#A6B8D4"; }}
+                          >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                            </svg>
+                          </button>
+                        </div>
                       </div>
-                    </dd>
-                  </div>
-                )}
-            </dl>
-          </div>
-        </div>
-      ) : (
-        <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <p className="text-sm text-gray-500">No billing information has been added yet.</p>
-          </div>
-        </div>
-      )}
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </>
+        ) : (
+          <p style={{ fontSize: 13, color: "#8298BC", margin: 0 }}>No billing information has been added yet.</p>
+        )}
+      </div>
 
       {/* Billing Modal */}
       {showBillingModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full">
-            <h2 className="text-xl font-semibold mb-4">Edit Billing Information</h2>
+          <div style={{ background: "#fff", borderRadius: 20, padding: "28px 28px 24px", maxWidth: 540, width: "100%", maxHeight: "90vh", overflowY: "auto" }}>
+            <h2 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 20, color: "#0B2B6B", margin: "0 0 20px" }}>Edit billing information</h2>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                const formData = new FormData(e.target);
-                handleBillingUpdate({
-                  paymentMethod: formData.get("paymentMethod"),
-                  rate: formData.get("rate"),
-                  initialRate: formData.get("initialRate"),
-                  groupRate: formData.get("groupRate"),
-                  notes: formData.get("notes"),
-                });
+                const fd = new FormData(e.target);
+                handleBillingUpdate({ paymentMethod: fd.get("paymentMethod"), rate: fd.get("rate"), initialRate: fd.get("initialRate"), groupRate: fd.get("groupRate"), notes: fd.get("notes") });
               }}
             >
-              <div className="space-y-4">
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Payment Method</label>
-                  <select
-                    name="paymentMethod"
-                    defaultValue={client.billing?.paymentMethod}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-ring px-3 py-2"
-                  >
+                  <label style={LABEL_STYLE}>Payment method</label>
+                  <select name="paymentMethod" defaultValue={billing?.paymentMethod} className="focus:ring-2 focus:ring-ring" style={FIELD_STYLE}>
                     <option value="cash">Cash</option>
                     <option value="check">Check</option>
                     <option value="credit">Credit Card</option>
@@ -562,69 +347,25 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
                     <option value="other">Other</option>
                   </select>
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Standard Session Rate
-                  </label>
-                  <input
-                    type="number"
-                    name="rate"
-                    defaultValue={client.billing?.rate}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-ring px-3 py-2"
-                    placeholder="Standard session rate"
-                  />
+                  <label style={LABEL_STYLE}>Standard session rate</label>
+                  <input type="number" name="rate" defaultValue={billing?.rate} placeholder="Standard session rate" className="focus:ring-2 focus:ring-ring" style={FIELD_STYLE} />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Initial Session Rate
-                  </label>
-                  <input
-                    type="number"
-                    name="initialRate"
-                    defaultValue={client.billing?.initialRate}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-ring px-3 py-2"
-                    placeholder="Initial consultation rate"
-                  />
+                  <label style={LABEL_STYLE}>Initial session rate</label>
+                  <input type="number" name="initialRate" defaultValue={billing?.initialRate} placeholder="Initial consultation rate" className="focus:ring-2 focus:ring-ring" style={FIELD_STYLE} />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Group Session Rate
-                  </label>
-                  <input
-                    type="number"
-                    name="groupRate"
-                    defaultValue={client.billing?.groupRate}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-ring px-3 py-2"
-                    placeholder="Group session rate"
-                  />
+                  <label style={LABEL_STYLE}>Group session rate</label>
+                  <input type="number" name="groupRate" defaultValue={billing?.groupRate} placeholder="Group session rate" className="focus:ring-2 focus:ring-ring" style={FIELD_STYLE} />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Billing Notes</label>
-                  <textarea
-                    name="notes"
-                    defaultValue={client.billing?.notes}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-ring px-3 py-2"
-                  />
+                  <label style={LABEL_STYLE}>Billing notes</label>
+                  <textarea name="notes" defaultValue={billing?.notes} rows={3} className="focus:ring-2 focus:ring-ring" style={{ ...FIELD_STYLE, resize: "vertical" }} />
                 </div>
-
-                <div className="flex justify-end space-x-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowBillingModal(false)}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90"
-                  >
-                    Save Changes
-                  </button>
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 6 }}>
+                  <button type="button" onClick={() => setShowBillingModal(false)} style={{ padding: "9px 18px", fontSize: 14, fontWeight: 600, color: "#55698F", background: "#F2F6FB", border: "none", borderRadius: 10, cursor: "pointer" }}>Cancel</button>
+                  <button type="submit" style={{ padding: "9px 18px", fontSize: 14, fontWeight: 700, color: "#fff", background: "#2F80FF", border: "none", borderRadius: 10, cursor: "pointer", boxShadow: "0 8px 20px -8px rgba(47,128,255,.7)" }}>Save changes</button>
                 </div>
               </div>
             </form>
@@ -635,100 +376,60 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
       {/* Session Selection Modal */}
       {showSessionModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full">
-            <h2 className="text-xl font-semibold mb-4">Select Sessions for Invoice</h2>
+          <div style={{ background: "#fff", borderRadius: 20, padding: "28px 28px 24px", maxWidth: 600, width: "100%", maxHeight: "90vh", display: "flex", flexDirection: "column" }}>
+            <h2 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 20, color: "#0B2B6B", margin: "0 0 16px" }}>Select sessions for invoice</h2>
             {isLoadingSessions ? (
-              <div className="flex justify-center items-center h-32">
-                <p className="text-gray-500">Loading sessions...</p>
-              </div>
+              <p style={{ fontSize: 13, color: "#8298BC", margin: "32px 0", textAlign: "center" }}>Loading sessions…</p>
             ) : (
-              <div className="space-y-4 max-h-96 overflow-y-auto">
-                {sessions.map((session) => (
-                  <div
-                    key={session._id}
-                    className="flex items-center space-x-4 p-2 hover:bg-gray-50 rounded border border-gray-200"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedSessions.some((s) => s._id === session._id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedSessions([...selectedSessions, session]);
-                        } else {
-                          setSelectedSessions(
-                            selectedSessions.filter((s) => s._id !== session._id)
-                          );
-                        }
-                      }}
-                      className="h-4 w-4 text-primary"
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2">
-                        <span className="font-medium">
-                          {new Date(session.date).toLocaleDateString()}
-                        </span>
-                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-accent text-accent-foreground">
-                          {session.type
-                            ? session.type.charAt(0).toUpperCase() + session.type.slice(1)
-                            : "Standard"}
-                        </span>
-                        <span className="text-sm text-gray-500">
-                          {session.duration || "60"} minutes
-                        </span>
+              <div style={{ overflowY: "auto", maxHeight: 360, display: "flex", flexDirection: "column", gap: 8 }}>
+                {sessions.map((session) => {
+                  const checked = selectedSessions.some((s) => s._id === session._id);
+                  const rate = session.type === "initial"
+                    ? billing?.initialRate || billing?.rate
+                    : session.type === "group"
+                      ? billing?.groupRate || billing?.rate
+                      : billing?.rate;
+                  return (
+                    <label
+                      key={session._id}
+                      style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", border: "1px solid #E7EEF7", borderRadius: 12, cursor: "pointer", background: checked ? "#EAF3FF" : "#fff", transition: "background .13s" }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={(e) => {
+                          if (e.target.checked) setSelectedSessions([...selectedSessions, session]);
+                          else setSelectedSessions(selectedSessions.filter((s) => s._id !== session._id));
+                        }}
+                        style={{ width: 16, height: 16, accentColor: "#2F80FF" }}
+                      />
+                      <div style={{ flex: 1 }}>
+                        <span style={{ fontSize: 14, fontWeight: 600, color: "#0B2B6B" }}>{new Date(session.date).toLocaleDateString()}</span>
+                        <span style={{ fontSize: 12, color: "#8298BC", marginLeft: 10 }}>{session.type ? session.type.charAt(0).toUpperCase() + session.type.slice(1) : "Standard"} · {session.duration || "60"} min</span>
                       </div>
-                      {session.notes && (
-                        <p className="text-sm text-gray-500 mt-1">{session.notes}</p>
-                      )}
-                    </div>
-                    <div className="text-right">
-                      <span className="font-medium">
-                        $
-                        {session.type === "initial"
-                          ? client.billing?.initialRate || client.billing?.rate
-                          : session.type === "group"
-                            ? client.billing?.groupRate || client.billing?.rate
-                            : client.billing?.rate}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                      <span style={{ fontSize: 14, fontWeight: 700, color: "#0B2B6B" }}>${rate}</span>
+                    </label>
+                  );
+                })}
               </div>
             )}
-            <div className="mt-4 flex justify-between items-center">
-              <p className="text-sm text-gray-600">
-                Total: $
-                {selectedSessions.reduce((sum, session) => {
-                  const rate =
-                    session.type === "initial"
-                      ? client.billing?.initialRate || client.billing?.rate
-                      : session.type === "group"
-                        ? client.billing?.groupRate || client.billing?.rate
-                        : client.billing?.rate;
-                  return sum + rate;
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 16, paddingTop: 16, borderTop: "1px solid #F2F6FB" }}>
+              <span style={{ fontSize: 14, fontWeight: 600, color: "#0B2B6B" }}>
+                Total: ${selectedSessions.reduce((sum, s) => {
+                  const r = s.type === "initial" ? billing?.initialRate || billing?.rate : s.type === "group" ? billing?.groupRate || billing?.rate : billing?.rate;
+                  return sum + (r || 0);
                 }, 0)}
-              </p>
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => {
-                    setShowSessionModal(false);
-                    setSelectedSessions([]);
-                  }}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSessionSelection}
-                  disabled={isGenerating || selectedSessions.length === 0}
-                  className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90 disabled:opacity-50"
-                >
-                  {isGenerating ? "Generating..." : "Generate Invoice"}
+              </span>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button type="button" onClick={() => { setShowSessionModal(false); setSelectedSessions([]); }} style={{ padding: "9px 18px", fontSize: 14, fontWeight: 600, color: "#55698F", background: "#F2F6FB", border: "none", borderRadius: 10, cursor: "pointer" }}>Cancel</button>
+                <button onClick={handleSessionSelection} disabled={isGenerating || selectedSessions.length === 0} style={{ padding: "9px 18px", fontSize: 14, fontWeight: 700, color: "#fff", background: "#2F80FF", border: "none", borderRadius: 10, cursor: isGenerating || selectedSessions.length === 0 ? "not-allowed" : "pointer", opacity: isGenerating || selectedSessions.length === 0 ? 0.6 : 1, boxShadow: "0 8px 20px -8px rgba(47,128,255,.7)" }}>
+                  {isGenerating ? "Generating…" : "Generate invoice"}
                 </button>
               </div>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
