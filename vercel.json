@@ -1,7 +1,14 @@
 {
   "functions": {
-    "src/app/api/clients/[id]/reports/[reportId]/pdf/route.js": { "memory": 3008, "maxDuration": 60 },
-    "src/app/api/**/route.js": { "maxDuration": 60 }
+    "src/app/api/**/route.js": {
+      "maxDuration": 60
+    },
+    "src/app/api/clients/[id]/reports/[reportId]/pdf/route.js": {
+      "memory": 1024,
+      "maxDuration": 30
+    }
   },
-  "crons": [{ "path": "/api/cron/appointment-reminders", "schedule": "0 14 * * *" }]
+  "crons": [
+    { "path": "/api/cron/appointment-reminders", "schedule": "0 14 * * *" }
+  ]
 }
