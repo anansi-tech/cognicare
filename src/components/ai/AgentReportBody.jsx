@@ -443,8 +443,8 @@ export function ProgressBody({ payload: p, editable = false, onChange }) {
           <Para>{p.treatmentEffectiveness}</Para>
         ) : null}
       </Field>
-      <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 10 }}>
-        <p style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: "#7C93B8", margin: 0 }}>Reassessment</p>
+      <div style={{ marginTop: 16 }}>
+        <p style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: "#7C93B8", margin: "0 0 6px" }}>Reassessment</p>
         {editable ? (
           <label className="flex items-center gap-2 text-sm">
             <input
