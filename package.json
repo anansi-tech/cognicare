@@ -18,7 +18,7 @@
     "@fontsource/source-serif-4": "^5.2.9",
     "@google-cloud/storage": "^7.21.0",
     "@heroicons/react": "^2.2.0",
-    "@react-pdf/renderer": "^4.5.1",
+    "@react-pdf/renderer": "3.4.5",
     "@stripe/stripe-js": "^7.1.0",
     "ai": "^5.0.0",
     "bcryptjs": "^3.0.2",
