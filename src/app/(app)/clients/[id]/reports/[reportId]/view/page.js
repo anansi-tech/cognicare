@@ -6,11 +6,8 @@ import Link from "next/link";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
 import { ageFromDob, genderLabel } from "@/lib/age";
-
-// Compiled report viewer (Round 14). Renders the synthesized narrative,
-// lets the clinician edit it while draft, marks it completed, and exports
-// the PDF deliverable. The raw source AIReports are listed at the bottom
-// for traceability.
+import { parseReportSections } from "@/lib/reports/sections";
+import { Spinner } from "@/components/ui/Spinner";
 
 const titleCase = (s) =>
   typeof s === "string" && s.length > 0 ? s.charAt(0).toUpperCase() + s.slice(1) : s;
@@ -51,7 +48,6 @@ export default function ReportViewPage() {
   const sources = useMemo(() => {
     if (!report?.content || typeof report.content !== "object") return [];
     if (Array.isArray(report.content.sources)) return report.content.sources;
-    // Legacy shape: report.content was itself the array of envelopes.
     if (Array.isArray(report.content)) return report.content;
     return [];
   }, [report]);
@@ -90,136 +86,178 @@ export default function ReportViewPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 280, gap: 14 }}>
+        <Spinner size={40} />
+        <span style={{ fontSize: 13.5, color: "#8298BC" }}>Loading report…</span>
       </div>
     );
   }
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-red-500">{error}</div>
+      <div style={{ maxWidth: 520, margin: "40px auto", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 14, padding: "18px 20px" }}>
+        <p style={{ fontSize: 14, fontWeight: 600, color: "#C0392B", margin: "0 0 6px" }}>Error</p>
+        <p style={{ fontSize: 13.5, color: "#7B2020", margin: 0 }}>{error}</p>
       </div>
     );
   }
   if (!report) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">Report not found</div>
+      <div style={{ maxWidth: 520, margin: "40px auto", background: "#FFFBF0", border: "1px solid #F5E0A0", borderRadius: 14, padding: "18px 20px" }}>
+        <p style={{ fontSize: 14, fontWeight: 600, color: "#A9821F", margin: "0 0 6px" }}>Report not found</p>
+        <p style={{ fontSize: 13.5, color: "#6D5100", margin: 0 }}>This report may have been deleted or you may not have access.</p>
       </div>
     );
   }
 
   const pdfUrl = `/api/clients/${params.id}/reports/${params.reportId}/pdf`;
+  const sections = parseReportSections(narrative);
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-4xl">
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex justify-between items-start mb-8 gap-4">
+    <div style={{ maxWidth: 880, margin: "0 auto", padding: "30px 32px 64px" }}>
+      {/* Back link */}
+      <Link
+        href={`/clients/${params.id}`}
+        style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13.5, fontWeight: 600, color: "#55698F", textDecoration: "none", marginBottom: 16 }}
+      >
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+        Back to client
+      </Link>
+
+      {/* Main card */}
+      <div style={{ background: "#fff", border: "1px solid #E9F0F9", borderRadius: 20, boxShadow: "0 22px 50px -40px rgba(11,43,107,.4)", padding: "26px 28px" }}>
+        {/* Card header row */}
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 20, flexWrap: "wrap" }}>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
+            <div style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: ".12em", color: "#2F80FF", textTransform: "uppercase" }}>Compiled report</div>
+            <h1 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 28, letterSpacing: "-.02em", margin: "6px 0 0", color: "#0B2B6B" }}>
               {titleCase(report.type)} Report
             </h1>
-            <p className="text-gray-600 mt-1">
+            <p style={{ fontSize: 14, color: "#55698F", margin: "6px 0 0" }}>
               Prepared by {report.createdBy?.name ?? "Unknown clinician"}
             </p>
           </div>
-          <div className="flex gap-2 flex-shrink-0">
-            <Link
-              href={`/clients/${params.id}`}
-              className="px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-md text-sm font-medium"
-            >
-              ← Back to client
-            </Link>
-            <a
-              href={`${pdfUrl}?download=1`}
-              className="px-4 py-2 bg-primary text-white hover:bg-primary/90 rounded-md text-sm font-medium"
-            >
-              Download PDF
-            </a>
+          <div style={{ display: "flex", gap: 8, flexShrink: 0, flexWrap: "wrap" }}>
             <a
               href={pdfUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-md text-sm font-medium"
+              style={{ display: "inline-flex", alignItems: "center", border: "1px solid #DCE6F3", background: "#fff", color: "#55698F", fontWeight: 600, fontSize: 13.5, padding: "9px 14px", borderRadius: 10, textDecoration: "none" }}
             >
               Preview PDF
+            </a>
+            <a
+              href={`${pdfUrl}?download=1`}
+              style={{ display: "inline-flex", alignItems: "center", border: "none", background: "#2F80FF", color: "#fff", fontWeight: 700, fontSize: 13.5, padding: "9px 16px", borderRadius: 10, textDecoration: "none", boxShadow: "0 16px 40px -18px rgba(47,128,255,.8)" }}
+            >
+              Download PDF
             </a>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6 p-5 bg-gray-50 rounded-lg">
+        {/* Metadata panel */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "14px 20px", background: "#F4F8FD", border: "1px solid #E3ECF7", borderRadius: 14, padding: "16px 18px", marginTop: 20 }}>
           <div>
-            <p className="text-xs uppercase tracking-wide text-gray-500">Client</p>
-            <p className="text-base font-semibold text-gray-900">
-              {client?.name || "Unknown"}
-            </p>
-            <p className="text-sm text-gray-600">
-              {ageFromDob(client?.dateOfBirth) ?? "—"} yrs · {genderLabel(client?.gender)}
+            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "#8298BC", margin: "0 0 4px" }}>Client</p>
+            <p style={{ fontSize: 13.5, fontWeight: 600, color: "#0B2B6B", margin: "0 0 1px" }}>{client?.name || "Unknown"}</p>
+            <p style={{ fontSize: 11.5, color: "#55698F", margin: 0 }}>
+              {[ageFromDob(client?.dateOfBirth) ? `${ageFromDob(client.dateOfBirth)} yrs` : null, genderLabel(client?.gender)].filter(Boolean).join(" · ")}
             </p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-wide text-gray-500">Period</p>
-            <p className="text-base font-semibold text-gray-900">
-              {format(new Date(report.startDate), "MMM d, yyyy")}
-            </p>
-            <p className="text-sm text-gray-600">
-              to {format(new Date(report.endDate), "MMM d, yyyy")}
-            </p>
+            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "#8298BC", margin: "0 0 4px" }}>Period</p>
+            <p style={{ fontSize: 13.5, fontWeight: 600, color: "#0B2B6B", margin: "0 0 1px" }}>{format(new Date(report.startDate), "MMM d, yyyy")}</p>
+            <p style={{ fontSize: 11.5, color: "#55698F", margin: 0 }}>to {format(new Date(report.endDate), "MMM d, yyyy")}</p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-wide text-gray-500">Generated</p>
-            <p className="text-base font-semibold text-gray-900">
-              {format(new Date(report.createdAt), "MMM d, yyyy")}
-            </p>
-            <p className="text-sm text-gray-600">
-              {format(new Date(report.createdAt), "p")}
-            </p>
+            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "#8298BC", margin: "0 0 4px" }}>Generated</p>
+            <p style={{ fontSize: 13.5, fontWeight: 600, color: "#0B2B6B", margin: "0 0 1px" }}>{format(new Date(report.createdAt), "MMM d, yyyy")}</p>
+            <p style={{ fontSize: 11.5, color: "#55698F", margin: 0 }}>{format(new Date(report.createdAt), "p")}</p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-wide text-gray-500">Status</p>
-            <span
-              className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                isDraft
-                  ? "bg-yellow-100 text-yellow-800"
-                  : "bg-green-100 text-green-800"
-              }`}
-            >
+            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "#8298BC", margin: "0 0 4px" }}>Status</p>
+            <span style={{ display: "inline-block", fontSize: 11, fontWeight: 700, padding: "3px 11px", borderRadius: 999, background: isDraft ? "#FBF2DA" : "#E7F6EC", color: isDraft ? "#A9821F" : "#3B9E57", marginTop: 5 }}>
               {isDraft ? "Draft" : "Completed"}
             </span>
-            <p className="text-sm text-gray-600 mt-1">
-              {sources.length} source record{sources.length === 1 ? "" : "s"}
-            </p>
+            <p style={{ fontSize: 11.5, color: "#8298BC", margin: "5px 0 0" }}>{sources.length} source record{sources.length === 1 ? "" : "s"}</p>
           </div>
         </div>
 
+        {/* Draft banner */}
         {isDraft && (
-          <div className="mb-4 rounded-md bg-yellow-50 border border-yellow-200 p-3 text-sm text-yellow-900">
-            This narrative is an AI-generated draft. Please review and edit
-            before marking it completed. Drafts export with a watermark.
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 11, background: "#FEF9EC", border: "1px solid #F6E6BC", borderRadius: 12, padding: "13px 16px", marginTop: 16 }}>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#A9821F" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
+              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            <p style={{ fontSize: 13, lineHeight: 1.55, color: "#8A7328", margin: 0 }}>
+              This narrative is an AI-generated draft. Please review and edit before marking it completed. Drafts export with a watermark.
+            </p>
           </div>
         )}
 
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Narrative</h2>
+        {/* Narrative section */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "24px 0 12px" }}>
+          <h2 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 17, margin: 0, color: "#0B2B6B" }}>Narrative</h2>
+          {isDraft && <span style={{ fontSize: 12, color: "#8298BC" }}>Editing draft</span>}
         </div>
-        <textarea
-          value={narrative}
-          onChange={(e) => setNarrative(e.target.value)}
-          rows={18}
-          readOnly={!isDraft}
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary read-only:bg-gray-50 read-only:cursor-default"
-          placeholder="Narrative will appear here…"
-        />
 
-        <div className="mt-4 flex justify-end gap-2">
+        {isDraft ? (
+          /* Draft edit mode — serif textarea */
+          <textarea
+            value={narrative}
+            onChange={(e) => setNarrative(e.target.value)}
+            rows={18}
+            className="focus:ring-2 focus:ring-ring"
+            style={{
+              width: "100%", minHeight: 300, resize: "vertical",
+              border: "1px solid #DCE6F3", borderRadius: 12, padding: "16px",
+              fontFamily: "'Source Serif 4', Georgia, serif", fontSize: 14,
+              lineHeight: 1.65, color: "#33465F", outline: "none",
+              boxSizing: "border-box",
+            }}
+            placeholder="Narrative will appear here…"
+          />
+        ) : (
+          /* Completed read mode — formatted prose */
+          <div style={{ background: "#FBFDFF", border: "1px solid #EEF3FA", borderRadius: 14, padding: "22px 24px" }}>
+            {sections.length === 0 ? (
+              <p style={{ fontFamily: "'Source Serif 4', Georgia, serif", fontSize: 14, lineHeight: 1.65, color: "#33465F", margin: 0 }}>
+                {narrative || "(No narrative content)"}
+              </p>
+            ) : (
+              sections.map((sec, i) => (
+                <div key={i} style={{ marginTop: i === 0 ? 0 : 18 }}>
+                  {sec.title && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                      <div style={{ width: 4, height: 14, borderRadius: 2, background: "#2F80FF", flexShrink: 0 }} />
+                      <h3 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 13, letterSpacing: ".01em", textTransform: "uppercase", color: "#0B2B6B", margin: 0 }}>
+                        {sec.title}
+                      </h3>
+                    </div>
+                  )}
+                  {sec.body.split(/\n\n+/).filter(Boolean).map((para, j) => (
+                    <p key={j} style={{ fontFamily: "'Source Serif 4', Georgia, serif", fontSize: 14, lineHeight: 1.65, color: "#33465F", margin: j === 0 ? 0 : "8px 0 0" }}>
+                      {para.replace(/\n/g, " ").trim()}
+                    </p>
+                  ))}
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {/* Action row */}
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
           {isDraft && (
             <>
               <button
                 type="button"
                 onClick={() => save()}
                 disabled={saving || finalizing}
-                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-md text-sm font-medium disabled:opacity-60"
+                style={{ border: "1px solid #DCE6F3", cursor: "pointer", fontFamily: "inherit", background: "#fff", color: "#55698F", fontWeight: 600, fontSize: 13.5, padding: "9px 16px", borderRadius: 10, opacity: (saving || finalizing) ? 0.6 : 1 }}
               >
                 {saving ? "Saving…" : "Save draft"}
               </button>
@@ -227,7 +265,7 @@ export default function ReportViewPage() {
                 type="button"
                 onClick={() => save("completed")}
                 disabled={saving || finalizing || !narrative.trim()}
-                className="px-4 py-2 bg-primary text-white hover:bg-primary/90 rounded-md text-sm font-medium disabled:opacity-60"
+                style={{ border: "none", cursor: "pointer", fontFamily: "inherit", background: "#2F80FF", color: "#fff", fontWeight: 700, fontSize: 13.5, padding: "9px 18px", borderRadius: 10, boxShadow: "0 16px 40px -18px rgba(47,128,255,.8)", opacity: (saving || finalizing || !narrative.trim()) ? 0.6 : 1 }}
               >
                 {finalizing ? "Finalizing…" : "Mark as completed"}
               </button>
@@ -238,41 +276,38 @@ export default function ReportViewPage() {
               type="button"
               onClick={() => save("draft")}
               disabled={saving || finalizing}
-              className="px-4 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-md text-sm font-medium disabled:opacity-60"
+              style={{ border: "1px solid #DCE6F3", cursor: "pointer", fontFamily: "inherit", background: "#fff", color: "#55698F", fontWeight: 600, fontSize: 13.5, padding: "9px 16px", borderRadius: 10, opacity: (saving || finalizing) ? 0.6 : 1 }}
             >
               Re-open as draft
             </button>
           )}
         </div>
 
+        {/* Source records */}
         {sources.length > 0 && (
-          <div className="mt-10">
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">
-              Source records
-            </h2>
-            <p className="text-sm text-gray-600 mb-3">
-              The narrative was synthesized from {sources.length} agent record
-              {sources.length === 1 ? "" : "s"} in the chart:
+          <div style={{ marginTop: 30 }}>
+            <h2 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 15, margin: "0 0 4px", color: "#0B2B6B" }}>Source records</h2>
+            <p style={{ fontSize: 13, color: "#8298BC", margin: "0 0 12px" }}>
+              The narrative was synthesized from {sources.length} agent record{sources.length === 1 ? "" : "s"} in the chart:
             </p>
-            <ul className="divide-y divide-gray-100 border border-gray-100 rounded-md">
+            <div style={{ border: "1px solid #E9F0F9", borderRadius: 13, overflow: "hidden" }}>
               {sources.map((s, i) => (
-                <li key={s.id ?? s._id ?? i} className="px-4 py-3">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium text-gray-800">
-                      {titleCase(s.agentType)}
-                    </span>
+                <div
+                  key={s.id ?? s._id ?? i}
+                  style={{ padding: "14px 18px", borderBottom: i < sources.length - 1 ? "1px solid #F2F6FB" : "none" }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <span style={{ fontSize: 13.5, fontWeight: 600, color: "#0B2B6B" }}>{titleCase(s.agentType)}</span>
                     {s.createdAt && (
-                      <span className="text-gray-500">
-                        {format(new Date(s.createdAt), "PPp")}
-                      </span>
+                      <span style={{ fontSize: 12, color: "#8298BC" }}>{format(new Date(s.createdAt), "PPp")}</span>
                     )}
                   </div>
                   {s.summary && (
-                    <p className="mt-1 text-sm text-gray-600">{s.summary}</p>
+                    <p style={{ fontSize: 12.5, color: "#55698F", lineHeight: 1.5, margin: "4px 0 0" }}>{s.summary}</p>
                   )}
-                </li>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
         )}
       </div>
@@ -283,7 +318,7 @@ export default function ReportViewPage() {
 function extractNarrative(report) {
   if (!report?.content) return "";
   if (typeof report.content === "string") return report.content;
-  if (Array.isArray(report.content)) return ""; // legacy: prior reports stored an array of envelopes
+  if (Array.isArray(report.content)) return "";
   if (typeof report.content === "object" && report.content !== null) {
     return report.content.narrative || "";
   }

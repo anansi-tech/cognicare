@@ -22,7 +22,9 @@ export async function GET(request, { params }) {
 
     await connectDB();
     const scope = await clientScope(user);
-    const client = await Client.findOne({ _id: id, ...scope }).select("name").lean();
+    const client = await Client.findOne({ _id: id, ...scope })
+      .select("name dateOfBirth gender")
+      .lean();
     if (!client) {
       return NextResponse.json({ error: "Report not found" }, { status: 404 });
     }
@@ -32,14 +34,14 @@ export async function GET(request, { params }) {
       clientId: id,
       practiceId: user.practiceId,
     })
-      .populate("createdBy", "name")
+      .populate("createdBy", "name licenseNumber")
       .lean();
     if (!report) {
       return NextResponse.json({ error: "Report not found" }, { status: 404 });
     }
 
     const practice = user.practiceId
-      ? await Practice.findById(user.practiceId).select("name").lean()
+      ? await Practice.findById(user.practiceId).select("name address phone").lean()
       : null;
 
     // Narrative was stored as { narrative, sources } in Round 14. Fall back
@@ -48,16 +50,28 @@ export async function GET(request, { params }) {
       typeof report.content === "object" && report.content !== null && !Array.isArray(report.content)
         ? report.content.narrative || ""
         : "";
+    const sources = Array.isArray(report.content?.sources) ? report.content.sources : [];
+
+    const practiceAddress =
+      practice?.address
+        ? [practice.address, practice.phone].filter(Boolean).join(" · ")
+        : null;
 
     const bytes = await buildReportPdf({
       practiceName: practice?.name || "CogniCare",
+      practiceAddress,
       clientName: client.name || "Unknown client",
+      clientDob: client.dateOfBirth,
+      clientGender: client.gender,
       reportType: report.type,
       startDate: report.startDate,
       endDate: report.endDate,
       narrative,
       clinicianName: report.createdBy?.name || "",
+      clinicianLicense: report.createdBy?.licenseNumber || null,
+      sourcesCount: sources.length,
       status: report.status,
+      generatedAt: report.createdAt,
     });
 
     const filename = `${report.type}-report-${reportId}.pdf`;
