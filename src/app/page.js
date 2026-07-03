@@ -64,7 +64,6 @@ function SectionH2({ children, style }) {
 // ── page ──────────────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
-  const [annual, setAnnual] = useState(false);
   const [showAnnouncement, setShowAnnouncement] = useState(true);
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -76,10 +75,10 @@ export default function LandingPage() {
 
   if (isAuthed) return <div className="p-6 text-sm text-muted-foreground">Loading…</div>;
 
-  const soloPrice     = annual ? "$55" : "$69";
-  const practicePrice = annual ? "$47" : "$59";
-  const soloNote      = annual ? "billed annually" : "billed monthly";
-  const practiceNote  = annual ? "per seat · billed annually" : "per seat · billed monthly";
+  const soloPrice     = "$69";
+  const practicePrice = "$59";
+  const soloNote      = "billed monthly";
+  const practiceNote  = "per seat · billed monthly";
 
   return (
     <div
@@ -513,8 +512,8 @@ export default function LandingPage() {
               </p>
               <div className="grid gap-3">
                 {[
-                  { initials: "DR", bg: "#2F80FF", name: "Dr. Reyes · Owner", sub: "Sees all 4 clinicians", access: "Full access", ac: "#54C8D6" },
-                  { initials: "JL", bg: "#158A98", name: "J. Lin · Clinician",  sub: "Own caseload only",    access: "Scoped",      ac: "#8FA8CE" },
+                  { initials: "DR", bg: "#2F80FF", name: "Dr. Taylor · Owner", sub: "Sees all 4 clinicians", access: "Full access", ac: "#54C8D6" },
+                  { initials: "JL", bg: "#158A98", name: "S. Noel · Clinician",  sub: "Own caseload only",    access: "Scoped",      ac: "#8FA8CE" },
                 ].map(({ initials, bg, name, sub, access, ac }) => (
                   <div key={initials} className="flex items-center gap-3 rounded-[13px]" style={{ background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.1)", padding: "13px 15px" }}>
                     <span className="grid place-items-center rounded-[9px] text-white font-extrabold text-[12px] flex-shrink-0" style={{ width: 30, height: 30, background: bg, fontFamily: "var(--font-bricolage, sans-serif)" }}>{initials}</span>
@@ -539,25 +538,6 @@ export default function LandingPage() {
             <SectionH2 style={{ marginTop: 14 }}>Simple plans, 14-day trial</SectionH2>
             <p style={{ fontSize: 17, color: "#54678A", marginTop: 14 }}>Start free. No card games — cancel anytime from the customer portal.</p>
 
-            {/* billing toggle */}
-            <div
-              className="inline-flex items-center gap-1 mt-7 rounded-full p-1"
-              style={{ background: "#EEF4FC", border: "1px solid #E0EBF8" }}
-            >
-              {[
-                { label: "Monthly", active: !annual, onClick: () => setAnnual(false) },
-                { label: <>Annual <span style={{ color: "#4DBB6A" }}>−20%</span></>, active: annual, onClick: () => setAnnual(true) },
-              ].map(({ label, active, onClick }, i) => (
-                <button
-                  key={i}
-                  onClick={onClick}
-                  className="font-bold rounded-full border-0 cursor-pointer transition-all duration-200"
-                  style={{ fontFamily: "inherit", fontSize: 13.5, padding: "9px 20px", background: active ? "#fff" : "transparent", color: active ? "#0B2B6B" : "#6E83A6", boxShadow: active ? "0 2px 8px -2px rgba(11,43,107,.2)" : "none" }}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
           </div>
 
           <div className="grid mx-auto mt-11" style={{ maxWidth: 840, gridTemplateColumns: "1fr 1fr", gap: 22 }}>
@@ -673,7 +653,9 @@ export default function LandingPage() {
               Start 14-day free trial
             </Link>
             <a
-              href="#pipeline"
+              href="https://calendly.com/cognicare-anansi/30min"
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center gap-2 font-semibold no-underline rounded-full transition-all duration-200 hover:bg-white/10"
               style={{ fontSize: 16, padding: "14px 26px", color: "#EAF1FB", background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.24)" }}
             >

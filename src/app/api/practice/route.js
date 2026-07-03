@@ -14,7 +14,7 @@ export async function GET() {
 
   await connectDB();
   const practice = await Practice.findById(user.practiceId)
-    .select("name ownerId seats stripeSubscriptionStatus timezone")
+    .select("name address phone ownerId seats stripeSubscriptionStatus timezone")
     .lean();
   if (!practice) return NextResponse.json({ error: "No practice" }, { status: 404 });
   return NextResponse.json({
@@ -31,13 +31,17 @@ export async function PATCH(req) {
       { status: 403 }
     );
   }
-  const { name, timezone } = await req.json();
-  if (!name?.trim() && !timezone) return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
+  const { name, timezone, address, phone } = await req.json();
+  if (!name?.trim() && !timezone && address === undefined && phone === undefined) {
+    return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
+  }
 
   await connectDB();
   const update = {};
   if (name?.trim()) update.name = name.trim();
   if (timezone) update.timezone = timezone;
+  if (address !== undefined) update.address = address.trim();
+  if (phone !== undefined) update.phone = phone.trim();
   await Practice.updateOne({ _id: user.practiceId }, { $set: update });
   await logAuditEvent({
     userId: user.id,

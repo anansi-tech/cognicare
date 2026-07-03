@@ -5,6 +5,8 @@ import mongoose from "mongoose";
 const practiceSchema = new mongoose.Schema(
   {
     name: { type: String, required: true }, // e.g. "Jane Doe Counseling" or a group name
+    address: { type: String, default: "" },
+    phone: { type: String, default: "" },
     ownerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     // Subscription lives at the practice level (the practice pays).
     stripeCustomerId: { type: String },

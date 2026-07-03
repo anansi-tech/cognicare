@@ -11,6 +11,8 @@ export default function SettingsPage() {
 
   const [practice, setPractice] = useState(null);
   const [practiceName, setPracticeName] = useState("");
+  const [practiceAddress, setPracticeAddress] = useState("");
+  const [practicePhone, setPracticePhone] = useState("");
   const [practiceTimezone, setPracticeTimezone] = useState("");
   const [saving, setSaving] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
@@ -51,6 +53,8 @@ export default function SettingsPage() {
         const data = await res.json();
         setPractice(data.practice);
         setPracticeName(data.practice?.name || "");
+        setPracticeAddress(data.practice?.address || "");
+        setPracticePhone(data.practice?.phone || "");
         setPracticeTimezone(data.practice?.timezone || "America/New_York");
       } catch {
         // Non-fatal — Practice card stays hidden until we can load it.
@@ -62,13 +66,17 @@ export default function SettingsPage() {
     e.preventDefault();
     const nameChanged = practiceName.trim() && practiceName.trim() !== practice?.name;
     const tzChanged = practiceTimezone && practiceTimezone !== practice?.timezone;
-    if (!nameChanged && !tzChanged) return;
+    const addressChanged = practiceAddress.trim() !== (practice?.address || "");
+    const phoneChanged = practicePhone.trim() !== (practice?.phone || "");
+    if (!nameChanged && !tzChanged && !addressChanged && !phoneChanged) return;
     setSaving(true);
     setSaveError("");
     try {
       const body = {};
       if (nameChanged) body.name = practiceName.trim();
       if (tzChanged) body.timezone = practiceTimezone;
+      if (addressChanged) body.address = practiceAddress.trim();
+      if (phoneChanged) body.phone = practicePhone.trim();
       const res = await fetch("/api/practice", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -143,6 +151,32 @@ export default function SettingsPage() {
                     type="text"
                     value={practiceName}
                     onChange={(e) => setPracticeName(e.target.value)}
+                    style={INPUT_STYLE}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="practiceAddress" style={{ fontSize: 13.5, fontWeight: 500, color: "#55698F" }}>
+                    Address
+                  </label>
+                  <input
+                    id="practiceAddress"
+                    type="text"
+                    value={practiceAddress}
+                    onChange={(e) => setPracticeAddress(e.target.value)}
+                    placeholder="123 Main St, Suite 4, City, ST 00000"
+                    style={INPUT_STYLE}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="practicePhone" style={{ fontSize: 13.5, fontWeight: 500, color: "#55698F" }}>
+                    Phone
+                  </label>
+                  <input
+                    id="practicePhone"
+                    type="tel"
+                    value={practicePhone}
+                    onChange={(e) => setPracticePhone(e.target.value)}
+                    placeholder="(555) 000-0000"
                     style={INPUT_STYLE}
                   />
                 </div>

@@ -35,10 +35,8 @@ export default function ContactPage() {
 
         {/* Email + Address cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <a
-            href="mailto:cognicare@anansi.xyz"
-            className="border border-[#E3ECF7] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_22px_50px_-38px_rgba(11,43,107,0.4)] hover:border-[#C7DCF5]"
-            style={{ display: "block", background: "#fff", borderRadius: 18, padding: 22, boxShadow: "0 22px 50px -38px rgba(11,43,107,.25)", textDecoration: "none" }}
+          <div
+            style={{ background: "#fff", border: "1px solid #E3ECF7", borderRadius: 18, padding: 22, boxShadow: "0 22px 50px -38px rgba(11,43,107,.25)" }}
           >
             <div style={{ display: "grid", placeItems: "center", width: 44, height: 44, borderRadius: 13, background: "#EAF3FF" }}>
               <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="#2F80FF" strokeWidth={2}>
@@ -47,8 +45,10 @@ export default function ContactPage() {
             </div>
             <h3 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 16, margin: "14px 0 0", color: "#0B2B6B" }}>Email us</h3>
             <p style={{ fontSize: 13.5, lineHeight: 1.5, color: "#54678A", margin: "5px 0 0" }}>For general questions and support. Drop us a line anytime.</p>
-            <div style={{ fontSize: 14, fontWeight: 600, color: "#2F80FF", marginTop: 8 }}>cognicare@anansi.xyz</div>
-          </a>
+            <a href="mailto:cognicare@anansi.xyz" style={{ display: "inline-block", fontSize: 14, fontWeight: 600, color: "#2F80FF", marginTop: 8, textDecoration: "none" }}>
+              cognicare@anansi.xyz
+            </a>
+          </div>
 
           <div
             style={{ background: "#fff", border: "1px solid #E3ECF7", borderRadius: 18, padding: 22, boxShadow: "0 22px 50px -38px rgba(11,43,107,.25)" }}
