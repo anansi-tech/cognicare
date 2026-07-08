@@ -126,4 +126,5 @@ export const EntityTypes = {
   DOCUMENT: "document",
   REPORT: "report",
   SETTINGS: "settings",
+  MEASURE: "measure",
 };

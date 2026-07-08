@@ -3,3 +3,4 @@
 // that touch DB/network mock those calls explicitly.
 process.env.MONGODB_URI = "mongodb://localhost:27017/test";
 process.env.STRIPE_SECRET_KEY = "sk_test_stub00000000000000000";
+process.env.PHI_ENCRYPTION_KEY = "test-phi-key-for-vitest-only";

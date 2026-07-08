@@ -1,12 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
 
-export function AdministrationHistory({ clientId, refreshKey }) {
+export function AdministrationHistory({ clientId, refreshKey, onDeleted }) {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(new Set());
   const [instCache, setInstCache] = useState({});
   const [shortNameById, setShortNameById] = useState({});
+  const [internalRefreshKey, setInternalRefreshKey] = useState(0);
 
   useEffect(() => {
     fetch("/api/instruments")
@@ -26,7 +27,22 @@ export function AdministrationHistory({ clientId, refreshKey }) {
     fetch(`/api/clients/${clientId}/measures?history=1`)
       .then((r) => r.json())
       .then((data) => { setHistory(Array.isArray(data) ? data : []); setLoading(false); });
-  }, [clientId, refreshKey]);
+  }, [clientId, refreshKey, internalRefreshKey]);
+
+  async function handleDelete(adm) {
+    const id = adm._id?.toString() ?? adm.id;
+    const date = new Date(adm.administeredAt).toLocaleDateString();
+    const name = shortNameById[adm.instrumentId] ?? adm.instrumentId;
+    const confirmed = window.confirm(
+      `Delete this ${name} administration from ${date}? This can't be undone. If it was the baseline, the oldest remaining administration becomes the new baseline.`
+    );
+    if (!confirmed) return;
+    const res = await fetch(`/api/clients/${clientId}/measures/${id}`, { method: "DELETE" });
+    if (!res.ok) return;
+    setExpanded((prev) => { const n = new Set(prev); n.delete(id); return n; });
+    setInternalRefreshKey((k) => k + 1);
+    onDeleted?.();
+  }
 
   const toggle = async (id, instrumentId) => {
     const next = new Set(expanded);
@@ -105,20 +121,32 @@ export function AdministrationHistory({ clientId, refreshKey }) {
           <p style={{ padding: "8px 18px 12px", fontSize: 12, color: "#8298BC", margin: 0 }}>Loading…</p>
         )}
         {isOpen && inst && (
-          <ul style={{ margin: 0, padding: "10px 18px 14px", listStyle: "none", borderTop: "1px solid #F2F6FB", display: "flex", flexDirection: "column", gap: 6 }}>
-            {inst.items.map((item, i) => {
-              const resp = adm.responses?.find((r) => r.itemId === item.id);
-              const optLabel = inst.responseOptions.find(
-                (o) => o.value === Number(resp?.value)
-              )?.label ?? "—";
-              return (
-                <li key={item.id} style={{ fontSize: 12, color: "#41557A" }}>
-                  <span style={{ fontWeight: 600 }}>Q{i + 1}.</span> {item.text}{" "}
-                  <span style={{ color: "#8298BC" }}>— {optLabel} ({resp?.value ?? "—"})</span>
-                </li>
-              );
-            })}
-          </ul>
+          <div style={{ borderTop: "1px solid #F2F6FB" }}>
+            <ul style={{ margin: 0, padding: "10px 18px 10px", listStyle: "none", display: "flex", flexDirection: "column", gap: 6 }}>
+              {inst.items.map((item, i) => {
+                const resp = adm.responses?.find((r) => r.itemId === item.id);
+                const optLabel = inst.responseOptions.find(
+                  (o) => o.value === Number(resp?.value)
+                )?.label ?? "—";
+                return (
+                  <li key={item.id} style={{ fontSize: 12, color: "#41557A" }}>
+                    <span style={{ fontWeight: 600 }}>Q{i + 1}.</span> {item.text}{" "}
+                    <span style={{ color: "#8298BC" }}>— {optLabel} ({resp?.value ?? "—"})</span>
+                  </li>
+                );
+              })}
+            </ul>
+            <div style={{ padding: "0 18px 12px", display: "flex", justifyContent: "flex-end" }}>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); handleDelete(adm); }}
+                style={{ fontSize: 12, color: "#C0392B", background: "none", border: "none", cursor: "pointer", padding: 0, opacity: 0.6 }}
+                className="hover:opacity-100 transition-opacity"
+              >
+                Delete administration
+              </button>
+            </div>
+          </div>
         )}
       </li>
     );

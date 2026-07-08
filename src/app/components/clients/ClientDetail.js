@@ -119,6 +119,7 @@ export default function ClientDetail({ clientId }) {
   const [administeredInstruments, setAdministeredInstruments] = useState([]);
   const [assessmentExists, setAssessmentExists] = useState(null); // null = loading
   const [latestAssessmentAt, setLatestAssessmentAt] = useState(null);
+  const [latestMeasureAt, setLatestMeasureAt] = useState(null);
   const [counselor, setCounselor] = useState(null);
   const [attendance, setAttendance] = useState(null);
   const router = useRouter();
@@ -232,6 +233,9 @@ export default function ClientDetail({ clientId }) {
       setAdministeredInstruments(
         all.map((i) => i.id).filter((_, idx) => (trends[idx].points?.length ?? 0) > 0)
       );
+      const allPoints = trends.flatMap((t) => t.points ?? []);
+      const maxMs = allPoints.reduce((m, p) => Math.max(m, new Date(p.date).getTime()), 0);
+      setLatestMeasureAt(maxMs > 0 ? new Date(maxMs).toISOString() : null);
     } catch {}
   }, [clientId]);
 
@@ -758,6 +762,7 @@ export default function ClientDetail({ clientId }) {
           assessmentExists={assessmentExists}
           latestAssessmentAt={latestAssessmentAt}
           notesUpdatedAt={client?.initialAssessmentUpdatedAt}
+          latestMeasureAt={latestMeasureAt}
           onDone={() => { setAiRefreshKey((k) => k + 1); refreshAssessment(); }}
           onConsentOverridden={() => setConsentStatus((prev) => ({ ...prev, overridden: true }))}
         />
@@ -1016,7 +1021,7 @@ export default function ClientDetail({ clientId }) {
               <div style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: ".12em", color: "#2F80FF", textTransform: "uppercase", marginBottom: 12, paddingLeft: 2 }}>
                 History
               </div>
-              <AdministrationHistory clientId={client._id} />
+              <AdministrationHistory clientId={client._id} onDeleted={refreshAdministeredInstruments} />
             </div>
           </div>
         )}
