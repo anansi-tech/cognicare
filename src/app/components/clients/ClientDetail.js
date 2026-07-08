@@ -119,7 +119,7 @@ export default function ClientDetail({ clientId }) {
   const [administeredInstruments, setAdministeredInstruments] = useState([]);
   const [assessmentExists, setAssessmentExists] = useState(null); // null = loading
   const [latestAssessmentAt, setLatestAssessmentAt] = useState(null);
-  const [latestMeasureAt, setLatestMeasureAt] = useState(null);
+  const [latestBaselineAt, setLatestBaselineAt] = useState(null);
   const [counselor, setCounselor] = useState(null);
   const [attendance, setAttendance] = useState(null);
   const router = useRouter();
@@ -233,9 +233,11 @@ export default function ClientDetail({ clientId }) {
       setAdministeredInstruments(
         all.map((i) => i.id).filter((_, idx) => (trends[idx].points?.length ?? 0) > 0)
       );
-      const allPoints = trends.flatMap((t) => t.points ?? []);
-      const maxMs = allPoints.reduce((m, p) => Math.max(m, new Date(p.date).getTime()), 0);
-      setLatestMeasureAt(maxMs > 0 ? new Date(maxMs).toISOString() : null);
+      const baselineMs = trends
+        .flatMap((t) => t.points ?? [])
+        .filter((p) => p.isBaseline)
+        .reduce((m, p) => Math.max(m, new Date(p.date).getTime()), 0);
+      setLatestBaselineAt(baselineMs > 0 ? new Date(baselineMs).toISOString() : null);
     } catch {}
   }, [clientId]);
 
@@ -762,7 +764,7 @@ export default function ClientDetail({ clientId }) {
           assessmentExists={assessmentExists}
           latestAssessmentAt={latestAssessmentAt}
           notesUpdatedAt={client?.initialAssessmentUpdatedAt}
-          latestMeasureAt={latestMeasureAt}
+          latestBaselineAt={latestBaselineAt}
           onDone={() => { setAiRefreshKey((k) => k + 1); refreshAssessment(); }}
           onConsentOverridden={() => setConsentStatus((prev) => ({ ...prev, overridden: true }))}
         />

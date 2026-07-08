@@ -11,7 +11,7 @@ export function IntakeAssessment({
   assessmentExists,
   latestAssessmentAt,
   notesUpdatedAt,
-  latestMeasureAt,
+  latestBaselineAt,
   onDone,
   onConsentOverridden,
 }) {
@@ -78,17 +78,17 @@ export function IntakeAssessment({
 
   const measuresStale =
     assessmentExists &&
-    latestMeasureAt &&
+    latestBaselineAt &&
     latestAssessmentAt &&
-    new Date(latestMeasureAt) > new Date(latestAssessmentAt);
+    new Date(latestBaselineAt) > new Date(latestAssessmentAt);
 
   if (notesStale || measuresStale) {
     const reason =
       notesStale && measuresStale
-        ? "Intake notes and new measures were added since the last assessment."
+        ? "Intake notes and new baseline measures were added since the last assessment."
         : notesStale
           ? "Intake notes changed since the last assessment."
-          : "New measures administered since the last assessment.";
+          : "New baseline measures administered since the last assessment.";
     return (
       <div style={{ background: "#FEF9EC", border: "1px solid #F6E6BC", borderRadius: 14, padding: "14px 16px" }}>
         <p style={{ fontSize: 14, fontWeight: 700, color: "#A9821F", margin: "0 0 10px" }}>
