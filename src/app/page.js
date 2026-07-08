@@ -64,7 +64,6 @@ function SectionH2({ children, style }) {
 // ── page ──────────────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
-  const [showAnnouncement, setShowAnnouncement] = useState(true);
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -84,23 +83,6 @@ export default function LandingPage() {
     <div
       style={{ fontFamily: "var(--font-hanken, system-ui, sans-serif)", color: "#0B2B6B", background: "#FCFEFF" }}
     >
-
-      {/* ── ANNOUNCEMENT BAR ───────────────────────────────────────────────── */}
-      {showAnnouncement && (
-        <div
-          className="flex items-center justify-center gap-3 py-2 px-5 text-center text-[13.5px] font-medium"
-          style={{ background: "#081f54", color: "#BBD3F7", letterSpacing: ".01em" }}
-        >
-          <span>Pre-launch · HIPAA-aligned, hardening in progress — explore with synthetic data and a 14-day trial.</span>
-          <button
-            onClick={() => setShowAnnouncement(false)}
-            className="text-base leading-none opacity-60 hover:opacity-100 transition-opacity"
-            aria-label="Dismiss"
-          >
-            ×
-          </button>
-        </div>
-      )}
 
       {/* ── STICKY NAV ─────────────────────────────────────────────────────── */}
       <header
