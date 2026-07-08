@@ -42,5 +42,7 @@ export async function PATCH(req, { params }) {
   if (soap) note.payload = { ...note.payload, soap };
   if (status === "approved") note.status = "approved";
   await note.save();
-  return NextResponse.json({ id: note._id, status: note.status, payload: note.payload });
+  // Re-fetch so post("init") decrypts payload — pre("save") encrypts it in-place.
+  const fresh = await AIReport.findById(note._id);
+  return NextResponse.json({ id: fresh._id, status: fresh.status, payload: fresh.payload });
 }

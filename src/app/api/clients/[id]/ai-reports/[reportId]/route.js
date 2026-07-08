@@ -61,5 +61,7 @@ export async function PATCH(req, { params }) {
     ...auditMetaFromRequest(req),
   });
 
-  return NextResponse.json({ id: report._id, status: report.status, version: report.version, payload: report.payload });
+  // Re-fetch so post("init") decrypts payload — pre("save") encrypts it in-place.
+  const fresh = await AIReport.findById(report._id);
+  return NextResponse.json({ id: fresh._id, status: fresh.status, version: fresh.version, payload: fresh.payload });
 }
