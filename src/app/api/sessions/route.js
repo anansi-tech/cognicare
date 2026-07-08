@@ -40,8 +40,7 @@ export const GET = requireAuth(async (req) => {
 
     const sessions = await Session.find(query)
       .populate("clientId", "name")
-      .sort({ date: -1 })
-      .lean();
+      .sort({ date: -1 });
 
     return NextResponse.json(sessions);
   } catch (error) {
@@ -104,8 +103,7 @@ export const POST = requireAuth(async (req) => {
 
     const createdSession = await Session.create(base);
     const populatedSession = await Session.findById(createdSession._id)
-      .populate("clientId", "name")
-      .lean();
+      .populate("clientId", "name");
 
     await logAuditEvent({
       userId: user.id,

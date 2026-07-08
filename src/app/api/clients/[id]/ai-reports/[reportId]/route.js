@@ -22,8 +22,7 @@ export async function GET(_req, { params }) {
     clientId,
     practiceId: user.practiceId,
   })
-    .populate("counselorId", "name")
-    .lean();
+    .populate("counselorId", "name");
   if (!report) return NextResponse.json({ error: "Report not found" }, { status: 404 });
   return NextResponse.json({ report });
 }

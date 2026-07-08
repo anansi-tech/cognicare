@@ -17,11 +17,11 @@ export async function GET(request) {
     await connectDB();
 
     // Export is practice-scoped — everything the practice owns.
-    const clients = await Client.find({ practiceId: user.practiceId }).lean();
+    const clients = await Client.find({ practiceId: user.practiceId });
     const clientIds = clients.map((client) => client._id);
 
-    const sessions = await Session.find({ clientId: { $in: clientIds } }).lean();
-    const aiReports = await AIReport.find({ clientId: { $in: clientIds } }).lean();
+    const sessions = await Session.find({ clientId: { $in: clientIds } });
+    const aiReports = await AIReport.find({ clientId: { $in: clientIds } });
     const reports = await Report.find({ clientId: { $in: clientIds } }).lean();
 
     // Structure the data
@@ -35,7 +35,7 @@ export async function GET(request) {
         totalAIReports: aiReports.length,
       },
       clients: clients.map((client) => ({
-        ...client,
+        ...client.toObject(),
         sessions: sessions.filter(
           (session) => session.clientId.toString() === client._id.toString()
         ),

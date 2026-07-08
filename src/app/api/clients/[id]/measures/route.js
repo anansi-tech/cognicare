@@ -54,10 +54,9 @@ export async function GET(req, { params }) {
   if (req.nextUrl.searchParams.get("history") === "1") {
     const instNameMap = new Map(listInstruments().map((i) => [i.id, i.name]));
     const docs = await MeasureAdministration.find({ clientId })
-      .sort({ administeredAt: -1 })
-      .lean();
+      .sort({ administeredAt: -1 });
     return NextResponse.json(
-      docs.map((d) => ({ ...d, instrumentName: instNameMap.get(d.instrumentId) ?? d.instrumentId }))
+      docs.map((d) => ({ ...d.toObject(), instrumentName: instNameMap.get(d.instrumentId) ?? d.instrumentId }))
     );
   }
 

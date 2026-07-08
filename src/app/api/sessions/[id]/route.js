@@ -25,8 +25,7 @@ export const GET = requireAuth(async (req) => {
       practiceId: user.practiceId,
       clientId: { $in: allowedClientIds },
     })
-      .populate("clientId", "name")
-      .lean();
+      .populate("clientId", "name");
 
     if (!sessionData) {
       return NextResponse.json({ message: "Session not found" }, { status: 404 });
@@ -133,9 +132,9 @@ export const PATCH = requireAuth(async (req) => {
     });
 
     // Return the updated session with populated fields
-    const updatedSession = await Session.findById(id).populate("clientId", "name").lean();
+    const updatedSession = await Session.findById(id).populate("clientId", "name");
 
-    return NextResponse.json({ ...updatedSession, bulkAffected });
+    return NextResponse.json({ ...updatedSession.toObject(), bulkAffected });
   } catch (error) {
     console.error("Session PATCH error:", error);
     return NextResponse.json({ message: "Error updating session" }, { status: 500 });

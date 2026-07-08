@@ -45,8 +45,7 @@ export async function GET(req, { params }) {
       sessionId: mostRecentSession._id,
       agentType: "progress",
     })
-      .sort({ createdAt: -1 })
-      .lean();
+      .sort({ createdAt: -1 });
 
     if (!progressReport || !progressReport.payload) {
       return NextResponse.json({

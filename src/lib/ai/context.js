@@ -10,11 +10,11 @@ const j = (label, obj) => `## ${label}\n${JSON.stringify(obj, null, 2)}`;
 /** Semi-static per-client block: identity, history, recent reports, measure trends. */
 export async function buildClientBlock(clientId) {
   await connectDB();
-  const client = await Client.findById(clientId).lean();
+  const client = await Client.findById(clientId);
   if (!client) throw new Error("Client not found");
 
-  const recentSessions = await Session.find({ clientId }).sort({ date: -1 }).limit(8).lean();
-  const recentReports = await AIReport.find({ clientId }).sort({ createdAt: -1 }).limit(8).lean();
+  const recentSessions = await Session.find({ clientId }).sort({ date: -1 }).limit(8);
+  const recentReports = await AIReport.find({ clientId }).sort({ createdAt: -1 }).limit(8);
 
   // Pull trends for every registered instrument; skip ones with no data so
   // the prompt isn't padded with "insufficient-data" for unused instruments.

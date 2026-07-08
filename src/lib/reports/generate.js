@@ -15,5 +15,5 @@ export async function gatherAgentReports(agentType, clientId, from, to, practice
     createdAt: { $gte: start, $lte: end },
   };
   if (practiceId) query.practiceId = practiceId;
-  return AIReport.find(query).sort({ createdAt: -1 }).lean();
+  return AIReport.find(query).sort({ createdAt: -1 });
 }

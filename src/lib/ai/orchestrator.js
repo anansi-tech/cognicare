@@ -11,8 +11,7 @@ import { connectDB } from "@/lib/mongodb";
 async function latestTreatment(clientId) {
   await connectDB();
   return AIReport.findOne({ clientId, agentType: "treatment" })
-    .sort({ version: -1, createdAt: -1 })
-    .lean();
+    .sort({ version: -1, createdAt: -1 });
 }
 
 // Each workflow runs in-process, sequentially, passing prior outputs forward, persisting each.
@@ -41,7 +40,7 @@ export async function runWorkflow({ type, clientId, sessionId, userId, practiceI
     // Load the just-completed session so agents see the clinician's notes.
     // Server-authoritative — don't rely on the client sending sessionData.
     await connectDB();
-    const dbSession = await Session.findById(sessionId).lean();
+    const dbSession = await Session.findById(sessionId);
     const sd = sessionData ?? (dbSession ? {
       notes: dbSession.notes ?? "",
       date: dbSession.date,

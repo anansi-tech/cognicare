@@ -39,7 +39,7 @@ export async function GET(req, context) {
     // assigned to; owner sees the whole practice. 404 (not 403) when the
     // user can't see it, so existence doesn't leak.
     const scope = await clientScope(user);
-    const client = await Client.findOne({ _id: id, ...scope }).lean();
+    const client = await Client.findOne({ _id: id, ...scope });
 
     if (!client) {
       return NextResponse.json({ message: "Client not found" }, { status: 404 });
@@ -77,8 +77,7 @@ export async function GET(req, context) {
       practiceId: user.practiceId,
     })
       .sort({ date: -1 })
-      .limit(5)
-      .lean();
+      .limit(5);
 
     const recentReports = await Report.find({
       clientId: id,

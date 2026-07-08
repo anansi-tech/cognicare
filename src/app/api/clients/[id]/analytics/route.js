@@ -23,8 +23,7 @@ export async function GET(_req, { params }) {
     practiceId: user.practiceId,
     agentType: "assessment",
   })
-    .sort({ createdAt: 1 })
-    .lean();
+    .sort({ createdAt: 1 });
 
   const riskTimeline = assessments.map((r) => ({
     date: r.createdAt,

@@ -24,7 +24,7 @@ export async function GET(_req, { params }) {
     return NextResponse.json({ error: "Session not found" }, { status: 404 });
   }
   const note = await AIReport.findOne({ sessionId, agentType: "documentation", practiceId: user.practiceId })
-    .sort({ createdAt: -1 }).lean();
+    .sort({ createdAt: -1 });
   return NextResponse.json(note ?? null);
 }
 

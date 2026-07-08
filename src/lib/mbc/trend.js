@@ -16,7 +16,7 @@ export function computeDirection(delta, inst) {
 export async function getTrend(clientId, instrumentId, limit = 6) {
   await connectDB();
   const docs = await MeasureAdministration.find({ clientId, instrumentId })
-    .sort({ administeredAt: -1 }).limit(limit).lean();
+    .sort({ administeredAt: -1 }).limit(limit);
   docs.reverse();
   if (docs.length === 0) return { instrumentId, points: [], direction: "insufficient-data" };
 

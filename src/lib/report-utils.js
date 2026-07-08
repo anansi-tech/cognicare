@@ -59,7 +59,7 @@ export async function getClientReports(clientId, startDate, endDate, agentTypes 
     ...(agentTypes.length > 0 && { agentType: { $in: agentTypes } }),
   };
 
-  return await AIReport.find(query).sort({ createdAt: -1 }).lean();
+  return await AIReport.find(query).sort({ createdAt: -1 });
 }
 
 /**
@@ -73,14 +73,14 @@ export async function getClientSessions(clientId, startDate, endDate) {
     status: "completed",
   };
 
-  return await Session.find(query).sort({ date: -1 }).lean();
+  return await Session.find(query).sort({ date: -1 });
 }
 
 /**
  * Get client information
  */
 export async function getClientInfo(clientId) {
-  return await Client.findById(clientId).lean();
+  return await Client.findById(clientId);
 }
 
 /**
