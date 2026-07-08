@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { fieldEncryption } from "mongoose-field-encryption";
 
 const clientSchema = new mongoose.Schema({
   // Ownership root — which practice owns this client. Drives visibility / list
@@ -123,6 +124,11 @@ const clientSchema = new mongoose.Schema({
 clientSchema.pre("save", function (next) {
   this.updatedAt = new Date();
   next();
+});
+
+clientSchema.plugin(fieldEncryption, {
+  fields: ["initialAssessment"],
+  secret: process.env.PHI_ENCRYPTION_KEY,
 });
 
 export default mongoose.models.Client || mongoose.model("Client", clientSchema);

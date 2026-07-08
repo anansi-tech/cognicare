@@ -1,5 +1,6 @@
 // LiamThread: per-(userId, clientId) conversation memory for the in-session copilot.
 import mongoose from "mongoose";
+import { fieldEncryption } from "mongoose-field-encryption";
 
 const liamThreadSchema = new mongoose.Schema(
   {
@@ -17,5 +18,10 @@ const liamThreadSchema = new mongoose.Schema(
 );
 
 liamThreadSchema.index({ userId: 1, clientId: 1 }, { unique: true });
+
+liamThreadSchema.plugin(fieldEncryption, {
+  fields: ["turns", "rollingSummary"],
+  secret: process.env.PHI_ENCRYPTION_KEY,
+});
 
 export default mongoose.models.LiamThread || mongoose.model("LiamThread", liamThreadSchema);

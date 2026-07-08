@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { fieldEncryption } from "mongoose-field-encryption";
 
 const sessionSchema = new mongoose.Schema(
   {
@@ -73,6 +74,11 @@ const sessionSchema = new mongoose.Schema(
 sessionSchema.pre("save", function (next) {
   this.updatedAt = new Date();
   next();
+});
+
+sessionSchema.plugin(fieldEncryption, {
+  fields: ["notes"],
+  secret: process.env.PHI_ENCRYPTION_KEY,
 });
 
 export default mongoose.models.Session || mongoose.model("Session", sessionSchema);

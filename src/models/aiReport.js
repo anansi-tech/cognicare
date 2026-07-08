@@ -1,5 +1,6 @@
 // AIReport: one raw output from a single AI agent run.
 import mongoose from "mongoose";
+import { fieldEncryption } from "mongoose-field-encryption";
 
 const aiReportSchema = new mongoose.Schema(
   {
@@ -21,5 +22,10 @@ const aiReportSchema = new mongoose.Schema(
 );
 
 aiReportSchema.index({ clientId: 1, agentType: 1, createdAt: -1 });
+
+aiReportSchema.plugin(fieldEncryption, {
+  fields: ["summary", "payload"],
+  secret: process.env.PHI_ENCRYPTION_KEY,
+});
 
 export default mongoose.models.AIReport || mongoose.model("AIReport", aiReportSchema);

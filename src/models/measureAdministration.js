@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { fieldEncryption } from "mongoose-field-encryption";
 
 const measureAdministrationSchema = new mongoose.Schema(
   {
@@ -18,6 +19,11 @@ const measureAdministrationSchema = new mongoose.Schema(
 );
 
 measureAdministrationSchema.index({ clientId: 1, instrumentId: 1, administeredAt: -1 });
+
+measureAdministrationSchema.plugin(fieldEncryption, {
+  fields: ["responses", "flags"],
+  secret: process.env.PHI_ENCRYPTION_KEY,
+});
 
 export default mongoose.models.MeasureAdministration ||
   mongoose.model("MeasureAdministration", measureAdministrationSchema);
