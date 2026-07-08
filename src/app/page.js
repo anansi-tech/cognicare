@@ -602,7 +602,7 @@ export default function LandingPage() {
               Designed HIPAA-aligned, built on a foundation of trust
             </h3>
             <p style={{ fontSize: 15, lineHeight: 1.55, color: "#54678A", margin: "8px 0 0" }}>
-              Audit logging on every PHI access, assignment-based access control, session timeouts, and TLS in transit are live today. Full HIPAA readiness (OpenAI BAA + field-level PHI encryption) is in active hardening — until then, explore with synthetic data.
+              Your clients&apos; data is protected end to end: encrypted at rest, never retained by our AI partners, and never used to train models. Every access is logged. Built for HIPAA-covered practices from day one.
             </p>
           </div>
           <div className="grid gap-2 text-right whitespace-nowrap">
@@ -624,7 +624,7 @@ export default function LandingPage() {
             Give your practice an AI clinical team
           </h2>
           <p style={{ fontSize: 18, color: "#B7CBE8", marginTop: 18 }}>
-            Spend your hours on clients, not paperwork. Start free — synthetic data, no risk, 14 days.
+            Spend your hours on clients, not paperwork. Start free for 14 days.
           </p>
           <div className="flex gap-3.5 justify-center mt-8 flex-wrap">
             <Link

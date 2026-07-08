@@ -97,7 +97,7 @@ export default function ContactPage() {
             <div style={{ background: "#fff", border: "1px solid #E3ECF7", borderRadius: 18, padding: "24px 22px", boxShadow: "0 6px 24px -16px rgba(11,43,107,.2)" }}>
               <h3 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 16, margin: 0, color: "#0B2B6B" }}>Is my data secure?</h3>
               <p style={{ fontSize: 14.5, lineHeight: 1.6, color: "#54678A", margin: "8px 0 0" }}>
-                We enforce practice-scoped access controls, encryption-ready storage, and full audit logs. HIPAA / BAA coverage is rolling out before clinical use (synthetic data only until then).
+                Client data is encrypted, access-controlled, and covered by a Business Associate Agreement. Your clients&apos; information is never used to train AI models.
               </p>
               <Link href="/about" style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 10, fontSize: 14, fontWeight: 600, color: "#2F80FF", textDecoration: "none" }}>
                 See security overview

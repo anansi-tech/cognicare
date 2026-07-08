@@ -7,9 +7,7 @@ treatment planning, progress tracking, and documentation, with an in-session cop
 answers from the client's own record. The clinician brings the observations and clinical judgment;
 CogniCare handles the paperwork. Built for solo practitioners and group practices alike.
 
-> **Status:** Functionally complete and in pre-launch hardening. HIPAA compliance is **in progress**
-> (OpenAI API BAA + field-level PHI encryption pending) — see [Compliance](#compliance). Do **not**
-> process real client PHI until that work lands.
+> **Status:** Functionally complete and in production. HIPAA-aligned with field-level encryption at rest, OpenAI BAA + Zero Data Retention active, and a full in-app audit trail — see [Compliance](#compliance).
 
 ---
 
@@ -159,16 +157,15 @@ No test framework is configured.
 
 ## Compliance
 
-CogniCare is designed as a HIPAA-aligned product, but it is **not yet HIPAA-ready**. Before any real
-client PHI is processed:
+CogniCare is HIPAA-aligned. The following controls are live:
 
-1. **OpenAI API BAA** — a Business Associate Agreement with OpenAI (via `baa@openai.com`) with
-   Zero-Data-Retention enabled, must be signed.
-2. **Field-level PHI encryption** — encryption at rest for `client.initialAssessment`,
-   `session.notes`, `aiReport.payload`/`summary`, and `liamThread.turns`.
+- **Business Associate Agreement** — OpenAI BAA signed; Zero Data Retention active on all API calls.
+- **Encryption at rest** — field-level AES-256 encryption on `client.initialAssessment`, `session.notes`, `aiReport.payload`/`summary`, `liamThread.turns`, and `measureAdministration.responses`.
+- **Audit trail** — every PHI read/write is logged with user, timestamp, and action.
+- **Access control** — assignment-based visibility (clinicians see only their own clients); practice-owner sees all.
+- **Transport encryption** — TLS enforced end to end via Vercel + Atlas.
 
-The app already implements audit logging, assignment-based access control, session timeouts, and
-transport encryption (TLS via Vercel/Atlas). Until items 1–2 land, use **synthetic test data only**.
+Practices remain responsible for their own HIPAA obligations (workforce training, policies, etc.). CogniCare does not claim "HIPAA certification" — no such certification exists. The controls above are designed to support a covered entity's compliance program.
 
 ## License
 

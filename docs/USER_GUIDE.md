@@ -2,8 +2,7 @@
 
 A plain-language guide for therapists using CogniCare. No technical knowledge needed.
 
-> **Note:** While CogniCare is in pre-launch, use only **made-up practice clients** for testing — not
-> real client information — until your practice confirms HIPAA compliance is in place.
+CogniCare operates under a Business Associate Agreement and encrypts client data at rest.
 
 ---
 
