@@ -62,6 +62,7 @@ export default function BillingPage() {
   const [busy, setBusy] = useState(null);
   const [seats, setSeats] = useState(2);
   const [selectedPlan, setSelectedPlan] = useState("solo");
+  const [liveStatus, setLiveStatus] = useState(null);
 
   const isAuthed = status === "authenticated" && !!session?.user?.id;
   const isOwner = !!session?.user?.isPracticeOwner;
@@ -71,6 +72,15 @@ export default function BillingPage() {
       router.replace("/");
     }
   }, [status, session?.user?.id, router]);
+
+  // Reconcile against Stripe on every page open — heals missed webhooks silently.
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    fetch("/api/billing/status")
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (d?.status) setLiveStatus(d.status); })
+      .catch(() => {});
+  }, [status]);
 
   if (!isAuthed) {
     return <div className="p-6 text-sm text-muted-foreground">Loading…</div>;
@@ -94,7 +104,8 @@ export default function BillingPage() {
     );
   }
 
-  const subStatus = session?.user?.stripeSubscriptionStatus;
+  // Use live Stripe status once fetched; fall back to JWT for instant render.
+  const subStatus = liveStatus ?? session?.user?.stripeSubscriptionStatus;
   const isActive = ACTIVE.has(subStatus);
 
   const subscribe = async (priceId, quantity = 1) => {

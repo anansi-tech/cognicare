@@ -30,6 +30,7 @@ export async function POST(request) {
       {
         $set: {
           stripeSubscriptionStatus: nextStatus,
+          stripeSubscriptionId: sub.id,
           ...(typeof seats === "number" ? { seats } : {}),
         },
       }
