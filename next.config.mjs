@@ -6,6 +6,9 @@ const nextConfig = {
     "/api/clients/[id]/reports/[reportId]/pdf": [
       "./node_modules/@sparticuz/chromium/bin/**",
     ],
+    "/api/consent-forms/sign": [
+      "./node_modules/@sparticuz/chromium/bin/**",
+    ],
   },
   compiler: {
     reactRemoveProperties: true,

@@ -6,6 +6,10 @@
     "src/app/api/clients/[id]/reports/[reportId]/pdf/route.js": {
       "memory": 1024,
       "maxDuration": 30
+    },
+    "src/app/api/consent-forms/sign/route.js": {
+      "memory": 1024,
+      "maxDuration": 30
     }
   },
   "crons": [
