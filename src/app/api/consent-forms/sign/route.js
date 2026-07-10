@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import ConsentForm from "@/models/consentForm";
+import Practice from "@/models/practice";
 import { uploadFile, generateFileKey } from "@/lib/storage";
 import { getConsentFormTemplate } from "@/lib/templates/consentFormTemplate";
 import { buildSignedConsentPdf } from "@/lib/consent-pdf";
@@ -35,6 +36,10 @@ export async function POST(request) {
     const { ipAddress: ip, userAgent: ua } = auditMetaFromRequest(request);
     const agreedAt = new Date();
 
+    // Letterhead identity. Missing practice/address/phone degrade cleanly —
+    // buildSignedConsentPdf falls back to "CogniCare" and omits the address line.
+    const practice = await Practice.findById(form.practiceId).select("name address phone").lean();
+
     const template = getConsentFormTemplate(form.type);
     const pdfBytes = await buildSignedConsentPdf({
       title: template.title,
@@ -45,6 +50,8 @@ export async function POST(request) {
       ip,
       guardianRelationship:
         form.type === "minor" ? guardianRelationship || undefined : undefined,
+      practiceName: practice?.name,
+      practiceAddress: [practice?.address, practice?.phone].filter(Boolean).join(" · "),
     });
 
     const key = generateFileKey("signed-consent-forms", `${form._id}.pdf`);
