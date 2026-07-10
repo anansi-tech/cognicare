@@ -120,7 +120,7 @@ The `/sessions` page filters and sorts client-side. The `filteredSessions` memo 
 - **MongoDB connection**: `src/lib/mongodb.js` — cached global singleton, always import this, never instantiate directly.
 - **MongoDB aggregation**: `aggregate()` does NOT auto-cast strings to ObjectId (unlike `find()`). Always wrap practiceId/counselorId with `new mongoose.Types.ObjectId(id)` in pipeline `$match` stages.
 - **Audit logging**: `src/lib/audit.js` — call `logAudit()` for any PHI read/write. The `AuditLog` model enforces a closed enum for `action` and `entityType`; check those before adding new values.
-- **PDF generation**: `src/lib/consent-pdf.js` and `src/lib/report-pdf.js` use `pdf-lib`. pdf-lib only supports WinAnsi encoding — run all LLM-generated text through `sanitizeWinAnsi()` in `report-pdf.js` before `drawText()` to avoid crashes on smart quotes/em-dashes.
+- **PDF generation**: `src/lib/report-pdf.js` and `src/lib/consent-pdf.js` render HTML through headless Chrome (`puppeteer-core` + `@sparticuz/chromium`, both declared in `serverExternalPackages`). Shared fonts, letterhead, `esc()`, and the `htmlToPdfBuffer()` driver live in `src/lib/pdf/shared.js`. Fonts are base64 TTFs embedded as `@font-face` data URIs, so `page.pdf()` must be preceded by `await page.evaluateHandle("document.fonts.ready")` or Chrome silently renders fallback fonts. Escape all user/clinical data with `esc()`; full Unicode is supported (no WinAnsi limitation). Invoice PDFs (`api/clients/[id]/invoices/*`) still use `pdf-lib` and draw text directly.
 - **File storage**: `src/lib/storage.js` wraps Google Cloud Storage — no local disk writes for documents.
 - **Plans/pricing**: `src/config/plans.js` is the source of truth for subscription tier limits.
 
