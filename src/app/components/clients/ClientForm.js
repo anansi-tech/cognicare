@@ -203,7 +203,7 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
       errors.initialAssessment = "Fill at least one section of the initial assessment.";
 
     setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
+    return errors;
   };
 
   const handleSubmit = async (e) => {
