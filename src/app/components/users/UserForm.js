@@ -27,7 +27,8 @@ export default function UserForm({ user, onSuccess, onCancel }) {
     `profile-draft-${user?._id ?? "loading"}`,
     draftData,
     applyDraft,
-    !!user
+    !!user,
+    { serverUpdatedAt: user?.updatedAt }
   );
 
   useEffect(() => {

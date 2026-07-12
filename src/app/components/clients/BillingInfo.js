@@ -43,7 +43,8 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
     `billing-draft-${client?._id}`,
     billingDraft,
     setBillingDraft,
-    !!client?._id
+    !!client?._id,
+    { serverUpdatedAt: client?.updatedAt }
   );
 
   const refreshInvoices = async () => {

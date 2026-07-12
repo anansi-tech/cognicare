@@ -3,7 +3,8 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { SaveIndicator } from "@/components/ai/editable";
 
 export default function SettingsPage() {
   const { data: session, status } = useSession();
@@ -14,9 +15,8 @@ export default function SettingsPage() {
   const [practiceAddress, setPracticeAddress] = useState("");
   const [practicePhone, setPracticePhone] = useState("");
   const [practiceTimezone, setPracticeTimezone] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [savedFlash, setSavedFlash] = useState(false);
-  const [saveError, setSaveError] = useState("");
+  const [saveState, setSaveState] = useState("idle");
+  const inFlight = useRef(false);
 
   const TZ_OPTIONS = [
     { value: "America/New_York", label: "Eastern (ET)" },
@@ -62,15 +62,18 @@ export default function SettingsPage() {
     })();
   }, [status]);
 
-  const savePracticeSettings = async (e) => {
-    e?.preventDefault();
+  // Autosave owns persistence — there is no Save button. It must whisper: a
+  // quiet SaveIndicator, never a toast, consistent with every other surface.
+  // Only changed fields are PATCHed, so a settled form is a no-op.
+  const persistPracticeSettings = useCallback(async () => {
+    if (inFlight.current) return;
     const nameChanged = practiceName.trim() && practiceName.trim() !== practice?.name;
     const tzChanged = practiceTimezone && practiceTimezone !== practice?.timezone;
     const addressChanged = practiceAddress.trim() !== (practice?.address || "");
     const phoneChanged = practicePhone.trim() !== (practice?.phone || "");
     if (!nameChanged && !tzChanged && !addressChanged && !phoneChanged) return;
-    setSaving(true);
-    setSaveError("");
+
+    inFlight.current = true;
     try {
       const body = {};
       if (nameChanged) body.name = practiceName.trim();
@@ -85,28 +88,28 @@ export default function SettingsPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Could not save");
       setPractice((p) => ({ ...p, ...data }));
-      setSavedFlash(true);
-      setTimeout(() => setSavedFlash(false), 2000);
-    } catch (err) {
-      setSaveError(err.message);
+      setSaveState("saved");
+    } catch {
+      // The next keystroke re-arms the debounce, so a transient failure
+      // retries on its own. Nothing to recover here.
+      setSaveState("error");
     } finally {
-      setSaving(false);
+      inFlight.current = false;
     }
-  };
+  }, [practice, practiceName, practiceAddress, practicePhone, practiceTimezone]);
 
   useEffect(() => {
-    if (!practice?.isOwner || saving) return;
+    if (!practice?.isOwner) return;
     const changed =
       (practiceName.trim() && practiceName.trim() !== practice.name) ||
       practiceTimezone !== practice.timezone ||
       practiceAddress.trim() !== (practice.address || "") ||
       practicePhone.trim() !== (practice.phone || "");
     if (!changed) return;
-    const timer = setTimeout(() => savePracticeSettings(), 800);
+    setSaveState("saving");
+    const timer = setTimeout(persistPracticeSettings, 800);
     return () => clearTimeout(timer);
-    // savePracticeSettings uses the same render's field values.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [practice, practiceName, practiceAddress, practicePhone, practiceTimezone, saving]);
+  }, [practice, practiceName, practiceAddress, practicePhone, practiceTimezone, persistPracticeSettings]);
 
   if (status === "loading") {
     return <div className="text-center p-4 text-muted-foreground">Loading...</div>;
@@ -151,11 +154,14 @@ export default function SettingsPage() {
         {/* Card A — Practice */}
         {practice && (
           <div style={CARD_STYLE}>
-            <h3 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 18, margin: 0, color: "#0B2B6B" }}>
-              Practice
-            </h3>
+            <div className="flex items-center justify-between gap-3">
+              <h3 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 18, margin: 0, color: "#0B2B6B" }}>
+                Practice
+              </h3>
+              {practice.isOwner && <SaveIndicator state={saveState} />}
+            </div>
             {practice.isOwner ? (
-              <form onSubmit={savePracticeSettings} className="mt-5 space-y-4">
+              <form onSubmit={(e) => e.preventDefault()} className="mt-5 space-y-4">
                 <div>
                   <label htmlFor="practiceName" style={{ fontSize: 13.5, fontWeight: 500, color: "#55698F" }}>
                     Practice name
@@ -209,17 +215,11 @@ export default function SettingsPage() {
                     ))}
                   </select>
                 </div>
-                {saveError && <p className="text-sm text-destructive">{saveError}</p>}
-                <div className="flex items-center gap-3">
-                  <button
-                    type="submit"
-                    disabled={saving}
-                    className="inline-flex items-center rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60 transition-colors"
-                  >
-                    {saving ? "Saving..." : "Save"}
-                  </button>
-                  {savedFlash && <span className="text-sm text-muted-foreground">Saved.</span>}
-                </div>
+                {saveState === "error" && (
+                  <p className="text-xs text-destructive">
+                    Couldn&apos;t save — retrying on next change.
+                  </p>
+                )}
               </form>
             ) : (
               <p className="mt-4 text-sm text-muted-foreground">

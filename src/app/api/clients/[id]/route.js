@@ -227,7 +227,11 @@ export async function PATCH(req, context) {
         insuranceUpdate["insurance.notes"] = body.insurance.notes;
       }
 
-      // Update just the insurance fields using findOneAndUpdate
+      // Update just the insurance fields using findOneAndUpdate.
+      // findOneAndUpdate bypasses the pre("save") hook that maintains
+      // updatedAt, so set it explicitly — the stale-draft guard reads it to
+      // decide whether a local draft has been overtaken by a newer save.
+      insuranceUpdate.updatedAt = new Date();
       const updatedClient = await Client.findOneAndUpdate(
         { _id: id, ...scope },
         { $set: insuranceUpdate },

@@ -15,12 +15,14 @@ const DEFAULT_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 //
 //   const { draftRestored, dismissRestored, clearDraft, saveState } =
 //     useFormDraft(key, form, setForm, enabled);
+//
+// Edit-mode callers must pass `serverUpdatedAt` — see the stale check below.
 export function useFormDraft(
   key,
   formData,
   setFormData,
   enabled = true,
-  { maxAgeMs = DEFAULT_MAX_AGE_MS } = {}
+  { maxAgeMs = DEFAULT_MAX_AGE_MS, serverUpdatedAt = null } = {}
 ) {
   const { data: session, status } = useSession();
   const ownerKey = session?.user
@@ -75,7 +77,14 @@ export function useFormDraft(
       const isEnvelope = parsed?.version !== undefined && parsed?.data !== undefined;
       const expired = isEnvelope && Date.now() - parsed.savedAt > maxAgeMs;
       const incompatible = isEnvelope && parsed.version !== DRAFT_VERSION;
-      if (expired || incompatible) {
+      // The record was saved elsewhere after this draft was written, so the
+      // draft is a stale fork. Restoring it would let a later submit silently
+      // overwrite the newer server state — drop it and keep what the server has.
+      const stale =
+        isEnvelope &&
+        serverUpdatedAt &&
+        new Date(serverUpdatedAt).getTime() > parsed.savedAt;
+      if (expired || incompatible || stale) {
         window.localStorage.removeItem(storageKey);
         return;
       }
@@ -87,7 +96,7 @@ export function useFormDraft(
       // Corrupt draft — drop it rather than trapping the user in a broken form.
       try { window.localStorage.removeItem(storageKey); } catch {}
     }
-  }, [active, storageKey, formData, maxAgeMs, setFormData]);
+  }, [active, storageKey, formData, maxAgeMs, serverUpdatedAt, setFormData]);
 
   // Debounced save on change. Skips the first pass so mounting an empty form
   // doesn't immediately write an empty draft.

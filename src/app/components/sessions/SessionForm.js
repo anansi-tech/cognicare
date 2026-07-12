@@ -72,7 +72,8 @@ export default function SessionForm({
     `session-draft-${session?._id ?? "new"}`,
     draftValue,
     applyDraft,
-    true
+    true,
+    { serverUpdatedAt: session?.updatedAt }
   );
 
   // Fetch all clients for the dropdown

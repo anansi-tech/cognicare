@@ -34,7 +34,8 @@ export default function InsuranceInfo({ client, onUpdate }) {
     `insurance-draft-${client?._id}`,
     insuranceDraft,
     setInsuranceDraft,
-    !!client?._id
+    !!client?._id,
+    { serverUpdatedAt: client?.updatedAt }
   );
 
   const handleEditInsurance = () => setShowInsuranceModal(true);

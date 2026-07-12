@@ -88,7 +88,8 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
     `client-draft-${client?._id ?? "new"}`,
     draftValue,
     applyDraft,
-    true
+    true,
+    { serverUpdatedAt: client?.updatedAt }
   );
 
   useEffect(() => {
