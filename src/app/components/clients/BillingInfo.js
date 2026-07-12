@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import { useFormDraft } from "@/hooks/useFormDraft";
+import { DraftRestoredNotice, DraftSaveIndicator } from "@/components/ui/DraftRestoredNotice";
 
 const FIELD_STYLE = {
   marginTop: 1,
@@ -19,6 +21,14 @@ const LABEL_STYLE = { display: "block", fontSize: 13, fontWeight: 600, color: "#
 
 const PM_LABEL = { cash: "Cash", check: "Check", credit: "Credit Card", insurance: "Insurance", other: "Other" };
 
+const billingDraftValue = (billing) => ({
+  paymentMethod: billing?.paymentMethod || "cash",
+  rate: billing?.rate ?? "",
+  initialRate: billing?.initialRate ?? "",
+  groupRate: billing?.groupRate ?? "",
+  notes: billing?.notes || "",
+});
+
 export default function BillingInfo({ client, onUpdate, onDelete }) {
   const [showBillingModal, setShowBillingModal] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -28,6 +38,13 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
   const [showPaymentDropdown, setShowPaymentDropdown] = useState(null);
   const [invoices, setInvoices] = useState([]);
+  const [billingDraft, setBillingDraft] = useState(() => billingDraftValue(client?.billing));
+  const { draftRestored, dismissRestored, clearDraft, saveState } = useFormDraft(
+    `billing-draft-${client?._id}`,
+    billingDraft,
+    setBillingDraft,
+    !!client?._id
+  );
 
   const refreshInvoices = async () => {
     try {
@@ -62,6 +79,7 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
       });
       if (!response.ok) throw new Error("Failed to update billing information");
       const updatedBilling = await response.json();
+      clearDraft();
       onUpdate({ ...client, billing: updatedBilling });
       setShowBillingModal(false);
     } catch (error) {
@@ -332,14 +350,19 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                const fd = new FormData(e.target);
-                handleBillingUpdate({ paymentMethod: fd.get("paymentMethod"), rate: fd.get("rate"), initialRate: fd.get("initialRate"), groupRate: fd.get("groupRate"), notes: fd.get("notes") });
+                handleBillingUpdate(billingDraft);
               }}
             >
               <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                {draftRestored && (
+                  <DraftRestoredNotice
+                    onDismiss={dismissRestored}
+                    onDiscard={() => { const next = billingDraftValue(client?.billing); clearDraft(next); setBillingDraft(next); }}
+                  />
+                )}
                 <div>
                   <label style={LABEL_STYLE}>Payment method</label>
-                  <select name="paymentMethod" defaultValue={billing?.paymentMethod} className="focus:ring-2 focus:ring-ring" style={FIELD_STYLE}>
+                  <select name="paymentMethod" value={billingDraft.paymentMethod} onChange={(e) => setBillingDraft((d) => ({ ...d, paymentMethod: e.target.value }))} className="focus:ring-2 focus:ring-ring" style={FIELD_STYLE}>
                     <option value="cash">Cash</option>
                     <option value="check">Check</option>
                     <option value="credit">Credit Card</option>
@@ -349,22 +372,23 @@ export default function BillingInfo({ client, onUpdate, onDelete }) {
                 </div>
                 <div>
                   <label style={LABEL_STYLE}>Standard session rate</label>
-                  <input type="number" name="rate" defaultValue={billing?.rate} placeholder="Standard session rate" className="focus:ring-2 focus:ring-ring" style={FIELD_STYLE} />
+                  <input type="number" name="rate" value={billingDraft.rate} onChange={(e) => setBillingDraft((d) => ({ ...d, rate: e.target.value }))} placeholder="Standard session rate" className="focus:ring-2 focus:ring-ring" style={FIELD_STYLE} />
                 </div>
                 <div>
                   <label style={LABEL_STYLE}>Initial session rate</label>
-                  <input type="number" name="initialRate" defaultValue={billing?.initialRate} placeholder="Initial consultation rate" className="focus:ring-2 focus:ring-ring" style={FIELD_STYLE} />
+                  <input type="number" name="initialRate" value={billingDraft.initialRate} onChange={(e) => setBillingDraft((d) => ({ ...d, initialRate: e.target.value }))} placeholder="Initial consultation rate" className="focus:ring-2 focus:ring-ring" style={FIELD_STYLE} />
                 </div>
                 <div>
                   <label style={LABEL_STYLE}>Group session rate</label>
-                  <input type="number" name="groupRate" defaultValue={billing?.groupRate} placeholder="Group session rate" className="focus:ring-2 focus:ring-ring" style={FIELD_STYLE} />
+                  <input type="number" name="groupRate" value={billingDraft.groupRate} onChange={(e) => setBillingDraft((d) => ({ ...d, groupRate: e.target.value }))} placeholder="Group session rate" className="focus:ring-2 focus:ring-ring" style={FIELD_STYLE} />
                 </div>
                 <div>
                   <label style={LABEL_STYLE}>Billing notes</label>
-                  <textarea name="notes" defaultValue={billing?.notes} rows={3} className="focus:ring-2 focus:ring-ring" style={{ ...FIELD_STYLE, resize: "vertical" }} />
+                  <textarea name="notes" value={billingDraft.notes} onChange={(e) => setBillingDraft((d) => ({ ...d, notes: e.target.value }))} rows={3} className="focus:ring-2 focus:ring-ring" style={{ ...FIELD_STYLE, resize: "vertical" }} />
                 </div>
                 <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 6 }}>
-                  <button type="button" onClick={() => setShowBillingModal(false)} style={{ padding: "9px 18px", fontSize: 14, fontWeight: 600, color: "#55698F", background: "#F2F6FB", border: "none", borderRadius: 10, cursor: "pointer" }}>Cancel</button>
+                  <DraftSaveIndicator state={saveState} />
+                  <button type="button" onClick={() => { const next = billingDraftValue(client?.billing); clearDraft(next); setBillingDraft(next); setShowBillingModal(false); }} style={{ padding: "9px 18px", fontSize: 14, fontWeight: 600, color: "#55698F", background: "#F2F6FB", border: "none", borderRadius: 10, cursor: "pointer" }}>Cancel</button>
                   <button type="submit" style={{ padding: "9px 18px", fontSize: 14, fontWeight: 700, color: "#fff", background: "#2F80FF", border: "none", borderRadius: 10, cursor: "pointer", boxShadow: "0 8px 20px -8px rgba(47,128,255,.7)" }}>Save changes</button>
                 </div>
               </div>

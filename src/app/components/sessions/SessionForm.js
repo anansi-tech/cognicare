@@ -1,21 +1,27 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { useFormDraft } from "@/hooks/useFormDraft";
-import { DraftRestoredNotice } from "@/components/ui/DraftRestoredNotice";
+import { DraftRestoredNotice, DraftSaveIndicator } from "@/components/ui/DraftRestoredNotice";
 
-export default function SessionForm({
-  session,
-  onSuccess,
-  onCancel,
-  initialClientId,
-  initialDate,
-}) {
-  const [clients, setClients] = useState([]);
-  const [loadingClients, setLoadingClients] = useState(true);
-  const [formData, setFormData] = useState({
+function sessionFormValue(session, initialClientId, initialDate) {
+  if (session) {
+    return {
+      clientId: session.clientId._id || session.clientId,
+      date: session.date,
+      duration: session.duration,
+      type: session.type,
+      format: session.format,
+      status: session.status,
+      notes: session.notes || "",
+      concerns: session.concerns || "",
+      progress: session.progress || "",
+      nextSteps: session.nextSteps || "",
+    };
+  }
+  return {
     clientId: initialClientId || "",
     date: initialDate || new Date().toISOString(),
     duration: 50,
@@ -26,22 +32,48 @@ export default function SessionForm({
     concerns: "",
     progress: "",
     nextSteps: "",
-  });
+  };
+}
+
+export default function SessionForm({
+  session,
+  onSuccess,
+  onCancel,
+  initialClientId,
+  initialDate,
+}) {
+  const [clients, setClients] = useState([]);
+  const [loadingClients, setLoadingClients] = useState(true);
+  const [formData, setFormData] = useState(() =>
+    sessionFormValue(session, initialClientId, initialDate)
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
   // Recurrence (Round 15) — only meaningful on create.
   const isEditing = !!session?._id;
 
-  // Local draft — new sessions only; an existing session has server state.
-  const { draftRestored, dismissRestored, clearDraft } = useFormDraft(
-    `session-draft-${session?._id ?? "new"}`,
-    formData,
-    setFormData,
-    !isEditing
-  );
   const [recurrenceFrequency, setRecurrenceFrequency] = useState("none");
   const [recurrenceOccurrences, setRecurrenceOccurrences] = useState(8);
+  const draftValue = useMemo(() => ({
+    formData,
+    recurrenceFrequency,
+    recurrenceOccurrences,
+  }), [formData, recurrenceFrequency, recurrenceOccurrences]);
+  const applyDraft = useCallback((updater) => {
+    const next = typeof updater === "function"
+      ? updater({ formData: {}, recurrenceFrequency: "none", recurrenceOccurrences: 8 })
+      : updater;
+    if (next.formData) setFormData((prev) => ({ ...prev, ...next.formData }));
+    if (next.recurrenceFrequency !== undefined) setRecurrenceFrequency(next.recurrenceFrequency);
+    if (next.recurrenceOccurrences !== undefined) setRecurrenceOccurrences(next.recurrenceOccurrences);
+  }, []);
+  const { draftRestored, dismissRestored, clearDraft, saveState } = useFormDraft(
+    `session-draft-${session?._id ?? "new"}`,
+    draftValue,
+    applyDraft,
+    true
+  );
 
   // Fetch all clients for the dropdown
   useEffect(() => {
@@ -64,20 +96,12 @@ export default function SessionForm({
   // If editing, populate the form with existing session data
   useEffect(() => {
     if (session) {
-      setFormData({
-        clientId: session.clientId._id || session.clientId,
-        date: session.date,
-        duration: session.duration,
-        type: session.type,
-        format: session.format,
-        status: session.status,
-        notes: session.notes || "",
-        concerns: session.concerns || "",
-        progress: session.progress || "",
-        nextSteps: session.nextSteps || "",
-      });
+      setFormData(sessionFormValue(session, initialClientId, initialDate));
     }
-  }, [session]);
+    // Re-seed only when opening a different session; background refreshes must
+    // not overwrite an in-progress local draft.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?._id]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -177,7 +201,16 @@ export default function SessionForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {draftRestored && (
-        <DraftRestoredNotice onDismiss={dismissRestored} onDiscard={clearDraft} />
+        <DraftRestoredNotice
+          onDismiss={dismissRestored}
+          onDiscard={() => {
+            const nextForm = sessionFormValue(session, initialClientId, initialDate);
+            clearDraft({ formData: nextForm, recurrenceFrequency: "none", recurrenceOccurrences: 8 });
+            setFormData(nextForm);
+            setRecurrenceFrequency("none");
+            setRecurrenceOccurrences(8);
+          }}
+        />
       )}
       {error && (
         <div
@@ -379,6 +412,7 @@ export default function SessionForm({
       )}
 
       <div className="flex justify-end space-x-4 pt-4">
+        <DraftSaveIndicator state={saveState} />
         <button
           type="button"
           onClick={() => { clearDraft(); onCancel?.(); }}

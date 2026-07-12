@@ -8,7 +8,7 @@ import { useState, useEffect } from "react";
 export function useEditableReport({ clientId, report, onUpdated }) {
   const [isEditing, setIsEditing] = useState(false);
   const [edited, setEdited] = useState(null);
-  const [saveState, setSaveState] = useState("idle"); // idle | saving | saved
+  const [saveState, setSaveState] = useState("idle"); // idle | saving | saved | error
 
   // Seed edited payload whenever the report identity changes (new report loaded).
   // Does NOT re-seed on payload-only updates so in-flight edits are preserved.
@@ -35,10 +35,10 @@ export function useEditableReport({ clientId, report, onUpdated }) {
           onUpdated?.({ ...report, payload: data.payload, editedAt: data.editedAt });
           setSaveState("saved");
         } else {
-          setSaveState("idle");
+          setSaveState("error");
         }
       } catch {
-        setSaveState("idle");
+        setSaveState("error");
       }
     }, 800);
     return () => clearTimeout(t);

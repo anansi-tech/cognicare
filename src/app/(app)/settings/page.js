@@ -63,7 +63,7 @@ export default function SettingsPage() {
   }, [status]);
 
   const savePracticeSettings = async (e) => {
-    e.preventDefault();
+    e?.preventDefault();
     const nameChanged = practiceName.trim() && practiceName.trim() !== practice?.name;
     const tzChanged = practiceTimezone && practiceTimezone !== practice?.timezone;
     const addressChanged = practiceAddress.trim() !== (practice?.address || "");
@@ -93,6 +93,20 @@ export default function SettingsPage() {
       setSaving(false);
     }
   };
+
+  useEffect(() => {
+    if (!practice?.isOwner || saving) return;
+    const changed =
+      (practiceName.trim() && practiceName.trim() !== practice.name) ||
+      practiceTimezone !== practice.timezone ||
+      practiceAddress.trim() !== (practice.address || "") ||
+      practicePhone.trim() !== (practice.phone || "");
+    if (!changed) return;
+    const timer = setTimeout(() => savePracticeSettings(), 800);
+    return () => clearTimeout(timer);
+    // savePracticeSettings uses the same render's field values.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [practice, practiceName, practiceAddress, practicePhone, practiceTimezone, saving]);
 
   if (status === "loading") {
     return <div className="text-center p-4 text-muted-foreground">Loading...</div>;

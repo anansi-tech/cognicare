@@ -61,8 +61,10 @@ export async function PATCH(request, { params }) {
     }
 
     const previousStatus = report.status;
+    let narrativeChanged = false;
     if (typeof body.narrative === "string") {
       const existing = report.content && typeof report.content === "object" ? report.content : {};
+      narrativeChanged = existing.narrative !== body.narrative;
       report.content = { ...existing, narrative: body.narrative };
       report.markModified("content");
     }
@@ -71,14 +73,19 @@ export async function PATCH(request, { params }) {
     }
     await report.save();
 
-    if (previousStatus !== report.status) {
+    if (narrativeChanged || previousStatus !== report.status) {
       await logAuditEvent({
         userId: user.id,
         practiceId: user.practiceId,
         action: AuditActions.UPDATE,
         entityType: EntityTypes.REPORT,
         entityId: report._id,
-        details: { clientId: id, previousStatus, newStatus: report.status },
+        details: {
+          clientId: id,
+          fields: narrativeChanged ? ["narrative"] : [],
+          previousStatus,
+          newStatus: report.status,
+        },
         ...auditMetaFromRequest(request),
       });
     }

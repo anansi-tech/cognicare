@@ -23,3 +23,10 @@ export function DraftRestoredNotice({ onDismiss, onDiscard }) {
     </div>
   );
 }
+
+export function DraftSaveIndicator({ state }) {
+  if (state === "saving") return <span className="text-xs text-muted-foreground">Saving draft…</span>;
+  if (state === "saved") return <span className="text-xs text-muted-foreground">Draft saved</span>;
+  if (state === "error") return <span className="text-xs text-destructive">Draft couldn&apos;t be saved</span>;
+  return null;
+}

@@ -4,6 +4,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { MeasureResult } from "./MeasureResult";
+import { useFormDraft } from "@/hooks/useFormDraft";
+import { DraftRestoredNotice, DraftSaveIndicator } from "@/components/ui/DraftRestoredNotice";
 
 export function MeasureForm({ clientId, instrumentId, sessionId, onSaved }) {
   const [inst, setInst] = useState(null);
@@ -11,6 +13,11 @@ export function MeasureForm({ clientId, instrumentId, sessionId, onSaved }) {
   const [result, setResult] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const { draftRestored, dismissRestored, clearDraft, saveState } = useFormDraft(
+    `measure-draft-${clientId}-${instrumentId}-${sessionId ?? "none"}`,
+    responses,
+    setResponses
+  );
 
   useEffect(() => {
     fetch(`/api/instruments/${instrumentId}`).then((r) => r.json()).then(setInst);
@@ -34,12 +41,19 @@ export function MeasureForm({ clientId, instrumentId, sessionId, onSaved }) {
     setSubmitting(false);
     if (!res.ok) { setError((await res.json()).error ?? "Failed to save"); return; }
     const saved = await res.json();
+    clearDraft();
     setResult(saved);
     onSaved?.(saved);
   };
 
   return (
     <div className="space-y-4">
+      {draftRestored && (
+        <DraftRestoredNotice
+          onDismiss={dismissRestored}
+          onDiscard={() => { clearDraft({}); setResponses({}); }}
+        />
+      )}
       <p className="text-sm text-muted-foreground">{inst.stem}</p>
       {inst.items.map((it, i) => (
         <div key={it.id} className="space-y-2 border-b pb-3">
@@ -59,6 +73,7 @@ export function MeasureForm({ clientId, instrumentId, sessionId, onSaved }) {
         </div>
       ))}
       {error && <p className="text-sm text-destructive">{error}</p>}
+      <DraftSaveIndicator state={saveState} />
       <Button onClick={submit} disabled={!answered || submitting}>
         {submitting ? "Scoring…" : "Submit"}
       </Button>
