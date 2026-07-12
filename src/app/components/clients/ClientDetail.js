@@ -818,7 +818,11 @@ export default function ClientDetail({ clientId }) {
             )}
 
             {/* AI clinical picture */}
-            <ClientInsights clientId={client._id} refreshKey={aiRefreshKey} />
+            <ClientInsights
+              clientId={client._id}
+              refreshKey={aiRefreshKey}
+              onRegenerated={refreshAssessment}
+            />
 
             {/* Basic + Contact info cards */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>

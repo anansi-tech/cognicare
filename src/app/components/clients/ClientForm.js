@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { toDateInputValue } from "@/lib/age";
+import { useFormDraft } from "@/hooks/useFormDraft";
+import { DraftRestoredNotice } from "@/components/ui/DraftRestoredNotice";
 
 // Inverse of composeInitialAssessment — splits the stored text back into fields.
 function parseInitialAssessment(text = "") {
@@ -21,6 +23,26 @@ function parseInitialAssessment(text = "") {
   if (!result.presentingConcerns && text.trim()) result.presentingConcerns = text.trim();
   return result;
 }
+
+const EMPTY_FORM = {
+  name: "",
+  dateOfBirth: "",
+  gender: "prefer-not-to-say",
+  pronouns: "",
+  contactInfo: {
+    email: "",
+    phone: "",
+    emergencyContact: { name: "", relationship: "", phone: "" },
+  },
+  status: "active",
+};
+
+const EMPTY_INTAKE = {
+  presentingConcerns: "",
+  relevantHistory: "",
+  riskIndicators: "",
+  currentStressors: "",
+};
 
 export default function ClientForm({ client, onSuccess, onCancel }) {
   const [formData, setFormData] = useState({
@@ -59,6 +81,22 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
+
+  // Local draft — new clients only. An existing client already has server state,
+  // and the form is seeded from it.
+  const isNew = !client;
+  const draftValue = useMemo(() => ({ formData, intake }), [formData, intake]);
+  const applyDraft = useCallback((updater) => {
+    const next = typeof updater === "function" ? updater({ formData: {}, intake: {} }) : updater;
+    if (next.formData) setFormData((prev) => ({ ...prev, ...next.formData }));
+    if (next.intake) setIntake((prev) => ({ ...prev, ...next.intake }));
+  }, []);
+  const { draftRestored, dismissRestored, clearDraft } = useFormDraft(
+    "client-draft-new",
+    draftValue,
+    applyDraft,
+    isNew
+  );
 
   useEffect(() => {
     if (client) {
@@ -221,6 +259,8 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
 
       const savedClient = await response.json();
 
+      clearDraft();
+
       if (onSuccess) {
         onSuccess(savedClient);
       }
@@ -234,6 +274,16 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {draftRestored && (
+        <DraftRestoredNotice
+          onDismiss={dismissRestored}
+          onDiscard={() => {
+            clearDraft();
+            setFormData(EMPTY_FORM);
+            setIntake(EMPTY_INTAKE);
+          }}
+        />
+      )}
       {error && (
         <div
           className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative"
@@ -494,7 +544,7 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
       <div className="flex items-center justify-between">
         <button
           type="button"
-          onClick={onCancel}
+          onClick={() => { clearDraft(); onCancel?.(); }}
           className="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
           disabled={loading}
         >

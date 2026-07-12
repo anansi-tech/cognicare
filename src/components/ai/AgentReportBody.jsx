@@ -145,6 +145,17 @@ export function AssessmentBody({ payload: p, editable = false, onChange }) {
 export function DiagnosticBody({ payload: p, editable = false, onChange }) {
   if (!p) return null;
   const set = (k, v) => onChange?.({ ...p, [k]: v });
+  // Swap a differential into the primary slot. The displaced primary stays a
+  // differential — a hypothesis you've ranked lower, not one you've discarded.
+  const promote = (i) => {
+    const next = p.differentials[i];
+    const rest = p.differentials.filter((_, j) => j !== i);
+    onChange?.({
+      ...p,
+      primaryDiagnosis: next,
+      differentials: p.primaryDiagnosis ? [...rest, p.primaryDiagnosis] : rest,
+    });
+  };
   const Dx = ({ d }) =>
     d ? (
       <div style={{ border: "1px solid #E7EEF7", background: "#F9FBFE", borderRadius: 12, padding: "12px 14px" }}>
@@ -187,6 +198,7 @@ export function DiagnosticBody({ payload: p, editable = false, onChange }) {
           <DiagnosisCandidateList
             value={p.differentials ?? []}
             onChange={(v) => set("differentials", v)}
+            onPromote={promote}
           />
         ) : p.differentials?.length ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>

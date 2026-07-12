@@ -17,13 +17,41 @@ function pickLatest(reports, agentType) {
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
 }
 
-export default function ClientInsights({ clientId, refreshKey = 0 }) {
+// Was `upstream` edited by a human after `downstream` was derived from it?
+// Keys off editedAt, not updatedAt — approving without editing must not count.
+function editedSince(upstream, downstream) {
+  if (!upstream?.editedAt || !downstream?.createdAt) return false;
+  return new Date(upstream.editedAt) > new Date(downstream.createdAt);
+}
+
+// The offer to re-derive downstream artifacts. Never fires on its own.
+function CascadeOffer({ text, buttonLabel, busy, onRun }) {
+  return (
+    <div style={{ marginTop: 12, background: "#FEF9EC", border: "1px solid #F6E6BC", borderRadius: 12, padding: "12px 14px" }}>
+      <p style={{ fontSize: 13.5, color: "#7A6020", margin: 0 }}>{text}</p>
+      <button
+        type="button"
+        onClick={onRun}
+        disabled={busy}
+        style={{ marginTop: 9, borderRadius: 9, background: "#A9821F", color: "#fff", padding: "6px 14px", fontSize: 13, fontWeight: 600, border: "none", cursor: busy ? "default" : "pointer", opacity: busy ? 0.6 : 1 }}
+        className="hover:opacity-90 transition-opacity"
+      >
+        {busy ? "Regenerating…" : buttonLabel}
+      </button>
+    </div>
+  );
+}
+
+export default function ClientInsights({ clientId, refreshKey = 0, onRegenerated }) {
   const [assessment, setAssessment] = useState(null);
   const [diagnostic, setDiagnostic] = useState(null);
   const [treatment, setTreatment] = useState(null);
   const [progress, setProgress] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [cascadeAllowed, setCascadeAllowed] = useState(false);
+  const [regenerating, setRegenerating] = useState(null); // "assessment" | "diagnostic"
+  const [localRefresh, setLocalRefresh] = useState(0);
   const { setOpen: setLiamOpen } = useLiam();
 
   useEffect(() => {
@@ -50,7 +78,40 @@ export default function ClientInsights({ clientId, refreshKey = 0 }) {
     };
     fetchAll();
     return () => { cancelled = true; };
-  }, [clientId, refreshKey]);
+  }, [clientId, refreshKey, localRefresh]);
+
+  // Whether the intake chain may still be re-derived (pre-session only).
+  useEffect(() => {
+    if (!clientId) return;
+    let cancelled = false;
+    fetch(`/api/clients/${clientId}/regenerate`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!cancelled) setCascadeAllowed(!!d?.cascadeAllowed); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [clientId, refreshKey, localRefresh]);
+
+  const runCascade = async (from) => {
+    const message = from === "assessment"
+      ? "Regenerate the diagnosis and treatment plan from your edited assessment?\n\nThis replaces the current drafts."
+      : "Regenerate the treatment plan from your edited diagnosis?\n\nThis replaces the current draft.";
+    if (!window.confirm(message)) return;
+    setRegenerating(from);
+    try {
+      const res = await fetch(`/api/clients/${clientId}/regenerate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "intake-cascade", from }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error ?? "Regeneration failed");
+      setLocalRefresh((k) => k + 1);
+      onRegenerated?.();
+    } catch (e) {
+      setError(e.message ?? "Regeneration failed");
+    } finally {
+      setRegenerating(null);
+    }
+  };
 
   const ax = useEditableReport({ clientId, report: assessment, onUpdated: setAssessment });
   const dx = useEditableReport({ clientId, report: diagnostic, onUpdated: setDiagnostic });
@@ -124,6 +185,14 @@ export default function ClientInsights({ clientId, refreshKey = 0 }) {
                 </button>
               </>
             )}
+            {cascadeAllowed && editedSince(assessment, diagnostic) && (
+              <CascadeOffer
+                text="You've edited the assessment. Regenerate the diagnosis and treatment plan from your corrections? This replaces the current drafts."
+                buttonLabel="Regenerate downstream"
+                busy={regenerating === "assessment"}
+                onRun={() => runCascade("assessment")}
+              />
+            )}
           </>
         ) : (
           <Empty>Assessment generates automatically when a client is created.</Empty>
@@ -151,6 +220,14 @@ export default function ClientInsights({ clientId, refreshKey = 0 }) {
                   Edit diagnosis
                 </button>
               </>
+            )}
+            {cascadeAllowed && editedSince(diagnostic, treatment) && (
+              <CascadeOffer
+                text="You've edited the diagnosis. Regenerate the treatment plan from it? This replaces the current draft."
+                buttonLabel="Regenerate treatment"
+                busy={regenerating === "diagnostic"}
+                onRun={() => runCascade("diagnostic")}
+              />
             )}
           </>
         ) : (

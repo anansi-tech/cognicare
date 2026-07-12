@@ -122,7 +122,7 @@ const CONFIDENCE_OPTIONS = [
 const INPUT = "w-full rounded-md border border-input bg-background px-2.5 py-1.5 text-sm";
 
 // One editable diagnosis candidate: code + name + confidence + criteriaMet list + rationale.
-export function DiagnosisCandidateEditor({ value = {}, onChange, onRemove }) {
+export function DiagnosisCandidateEditor({ value = {}, onChange, onRemove, onPromote }) {
   const set = (k, v) => onChange({ ...value, [k]: v });
   return (
     <div className="rounded-md border border-gray-200 bg-gray-50/50 p-3 space-y-2">
@@ -154,19 +154,32 @@ export function DiagnosisCandidateEditor({ value = {}, onChange, onRemove }) {
         <label className="text-xs text-gray-500">Rationale</label>
         <EditText value={value.rationale ?? ""} onChange={(v) => set("rationale", v)} rows={3} />
       </div>
+      {onPromote && (
+        <button type="button" onClick={onPromote}
+          className="text-xs font-semibold text-primary hover:text-primary/80">
+          Make primary
+        </button>
+      )}
     </div>
   );
 }
 
-// List of DiagnosisCandidateEditors with add/remove.
-export function DiagnosisCandidateList({ value = [], onChange, addLabel = "+ Add diagnosis" }) {
+// List of DiagnosisCandidateEditors with add/remove. `onPromote(i)` — when given,
+// each candidate can be swapped into the primary slot.
+export function DiagnosisCandidateList({ value = [], onChange, onPromote, addLabel = "+ Add diagnosis" }) {
   const update = (i, v) => onChange(value.map((x, j) => (j === i ? v : x)));
   const remove = (i) => onChange(value.filter((_, j) => j !== i));
   const add = () => onChange([...value, { code: "", name: "", confidence: "moderate", criteriaMet: [], rationale: "" }]);
   return (
     <div className="space-y-2">
       {value.map((c, i) => (
-        <DiagnosisCandidateEditor key={i} value={c} onChange={(v) => update(i, v)} onRemove={() => remove(i)} />
+        <DiagnosisCandidateEditor
+          key={i}
+          value={c}
+          onChange={(v) => update(i, v)}
+          onRemove={() => remove(i)}
+          onPromote={onPromote ? () => onPromote(i) : undefined}
+        />
       ))}
       <button type="button" onClick={add} className="text-xs text-primary hover:text-primary/80">{addLabel}</button>
     </div>

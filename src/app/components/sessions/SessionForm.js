@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { useFormDraft } from "@/hooks/useFormDraft";
+import { DraftRestoredNotice } from "@/components/ui/DraftRestoredNotice";
 
 export default function SessionForm({
   session,
@@ -30,6 +32,14 @@ export default function SessionForm({
   const [validationErrors, setValidationErrors] = useState({});
   // Recurrence (Round 15) — only meaningful on create.
   const isEditing = !!session?._id;
+
+  // Local draft — new sessions only; an existing session has server state.
+  const { draftRestored, dismissRestored, clearDraft } = useFormDraft(
+    `session-draft-${session?._id ?? "new"}`,
+    formData,
+    setFormData,
+    !isEditing
+  );
   const [recurrenceFrequency, setRecurrenceFrequency] = useState("none");
   const [recurrenceOccurrences, setRecurrenceOccurrences] = useState(8);
 
@@ -150,6 +160,8 @@ export default function SessionForm({
       const savedSession = await response.json();
       console.log("Session saved successfully:", savedSession);
 
+      clearDraft();
+
       // Call the success callback with the saved session
       if (onSuccess) {
         onSuccess(savedSession);
@@ -164,6 +176,9 @@ export default function SessionForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {draftRestored && (
+        <DraftRestoredNotice onDismiss={dismissRestored} onDiscard={clearDraft} />
+      )}
       {error && (
         <div
           className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative"
@@ -366,7 +381,7 @@ export default function SessionForm({
       <div className="flex justify-end space-x-4 pt-4">
         <button
           type="button"
-          onClick={onCancel}
+          onClick={() => { clearDraft(); onCancel?.(); }}
           className="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
           disabled={loading}
         >

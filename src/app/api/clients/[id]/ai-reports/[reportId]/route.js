@@ -47,7 +47,12 @@ export async function PATCH(req, { params }) {
   });
   if (!report) return NextResponse.json({ error: "Report not found" }, { status: 404 });
 
-  if (payload) report.payload = { ...report.payload, ...payload };
+  // `editedAt` tracks human edits only. Approving without editing bumps
+  // `updatedAt`, so downstream-regeneration offers key off this instead.
+  if (payload) {
+    report.payload = { ...report.payload, ...payload };
+    report.editedAt = new Date();
+  }
   if (status && ["draft", "approved"].includes(status)) report.status = status;
   await report.save();
 
@@ -63,5 +68,11 @@ export async function PATCH(req, { params }) {
 
   // Re-fetch so post("init") decrypts payload — pre("save") encrypts it in-place.
   const fresh = await AIReport.findById(report._id);
-  return NextResponse.json({ id: fresh._id, status: fresh.status, version: fresh.version, payload: fresh.payload });
+  return NextResponse.json({
+    id: fresh._id,
+    status: fresh.status,
+    version: fresh.version,
+    payload: fresh.payload,
+    editedAt: fresh.editedAt,
+  });
 }

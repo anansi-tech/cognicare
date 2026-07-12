@@ -17,6 +17,9 @@ const aiReportSchema = new mongoose.Schema(
     status:      { type: String, enum: ["draft", "approved"] }, // documentation + treatment use draft/approved; others leave unset
     version:     { type: Number, default: 1 },
     supersedes:  { type: mongoose.Schema.Types.ObjectId, ref: "AIReport" },
+    // Set only when a human edits the payload — approving without editing bumps
+    // `updatedAt` but not this. Downstream-regeneration offers compare against it.
+    editedAt:    { type: Date },
   },
   { timestamps: true }
 );

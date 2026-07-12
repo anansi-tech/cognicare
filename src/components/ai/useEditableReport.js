@@ -32,7 +32,7 @@ export function useEditableReport({ clientId, report, onUpdated }) {
         });
         if (res.ok) {
           const data = await res.json();
-          onUpdated?.({ ...report, payload: data.payload });
+          onUpdated?.({ ...report, payload: data.payload, editedAt: data.editedAt });
           setSaveState("saved");
         } else {
           setSaveState("idle");
@@ -52,7 +52,7 @@ export function useEditableReport({ clientId, report, onUpdated }) {
     });
     if (res.ok) {
       const data = await res.json();
-      onUpdated?.({ ...report, payload: data.payload, status: "approved" });
+      onUpdated?.({ ...report, payload: data.payload, status: "approved", editedAt: data.editedAt });
       setIsEditing(false);
       setSaveState("idle");
     }

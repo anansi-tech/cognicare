@@ -173,13 +173,17 @@ export async function PATCH(req, context) {
     }
 
     // Update other fields
+    const priorInitialAssessment = existingClient.initialAssessment;
     const updateableFields = ["name", "dateOfBirth", "gender", "pronouns", "initialAssessment", "status"];
     updateableFields.forEach((field) => {
       if (body[field] !== undefined) {
         existingClient[field] = body[field];
       }
     });
-    if (body.initialAssessment !== undefined) {
+    // Only a real change to the notes counts. ClientForm submits the whole body,
+    // so a status-only edit would otherwise bump this and falsely surface the
+    // "Intake notes changed" re-run banner.
+    if (body.initialAssessment !== undefined && body.initialAssessment !== priorInitialAssessment) {
       existingClient.initialAssessmentUpdatedAt = new Date();
     }
 
