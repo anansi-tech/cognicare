@@ -113,6 +113,31 @@ export default function ClientInsights({ clientId, refreshKey = 0, onRegenerated
     }
   };
 
+  // Post-session counterpart: revise rather than replace. Non-destructive — the
+  // current plan is kept as v(n) in the version chain.
+  const reviseTreatment = async () => {
+    const v = treatment?.version ?? 1;
+    const confirmed = window.confirm(
+      `Generate a revised treatment plan (v${v + 1}) based on the latest diagnosis, progress, and measures?\n\nYour current plan is kept as v${v}.`
+    );
+    if (!confirmed) return;
+    setRegenerating("treatment");
+    try {
+      const res = await fetch(`/api/clients/${clientId}/regenerate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "revise-treatment" }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error ?? "Revision failed");
+      setLocalRefresh((k) => k + 1);
+      onRegenerated?.();
+    } catch (e) {
+      setError(e.message ?? "Revision failed");
+    } finally {
+      setRegenerating(null);
+    }
+  };
+
   const ax = useEditableReport({ clientId, report: assessment, onUpdated: setAssessment });
   const dx = useEditableReport({ clientId, report: diagnostic, onUpdated: setDiagnostic });
   const tx = useEditableReport({ clientId, report: treatment, onUpdated: setTreatment });
@@ -157,6 +182,22 @@ export default function ClientInsights({ clientId, refreshKey = 0, onRegenerated
   const treatmentVersion = treatment?.version;
   const treatmentTitle = `Treatment Plan${treatmentVersion ? ` v${treatmentVersion}` : ""}`;
 
+  // Post-session, the intake chain is history — an upstream edit prompts a plan
+  // REVISION (new version, prior kept) rather than R51's replace. Exactly one
+  // nudge; the diagnosis is the closer input to the plan, so it wins if both
+  // were edited. Pre-session this is inert and the R51 offers show instead, so
+  // the two modes can never appear together.
+  const reviseNudge = cascadeAllowed
+    ? null
+    : editedSince(diagnostic, treatment)
+      ? "diagnostic"
+      : editedSince(assessment, treatment)
+        ? "assessment"
+        : null;
+
+  const reviseNudgeText = (label) =>
+    `You've updated the ${label} since the current plan (v${treatmentVersion ?? 1}) was created. Revise the treatment plan in light of it? Your current plan is preserved.`;
+
   const fmtDate = (iso) =>
     iso ? new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : null;
 
@@ -191,6 +232,14 @@ export default function ClientInsights({ clientId, refreshKey = 0, onRegenerated
                 buttonLabel="Regenerate downstream"
                 busy={regenerating === "assessment"}
                 onRun={() => runCascade("assessment")}
+              />
+            )}
+            {reviseNudge === "assessment" && (
+              <CascadeOffer
+                text={reviseNudgeText("assessment")}
+                buttonLabel="Revise plan"
+                busy={regenerating === "treatment"}
+                onRun={reviseTreatment}
               />
             )}
           </>
@@ -229,6 +278,14 @@ export default function ClientInsights({ clientId, refreshKey = 0, onRegenerated
                 onRun={() => runCascade("diagnostic")}
               />
             )}
+            {reviseNudge === "diagnostic" && (
+              <CascadeOffer
+                text={reviseNudgeText("diagnosis")}
+                buttonLabel="Revise plan"
+                busy={regenerating === "treatment"}
+                onRun={reviseTreatment}
+              />
+            )}
           </>
         ) : (
           <Empty>Generated automatically after the assessment.</Empty>
@@ -261,6 +318,20 @@ export default function ClientInsights({ clientId, refreshKey = 0, onRegenerated
                 </button>
               </>
             )}
+            {/* Periodic plan review — no trigger condition; the prior version is kept. */}
+            <div className="mt-3 pt-3 border-t border-border/60 flex items-center justify-between gap-3">
+              <p className="text-xs text-muted-foreground m-0">
+                Revising generates v{(treatmentVersion ?? 1) + 1} from the latest diagnosis, progress, and measures. v{treatmentVersion ?? 1} is kept.
+              </p>
+              <button
+                type="button"
+                onClick={reviseTreatment}
+                disabled={regenerating === "treatment"}
+                className="flex-shrink-0 text-xs font-semibold text-primary hover:text-primary/80 disabled:opacity-60"
+              >
+                {regenerating === "treatment" ? "Revising…" : "Revise plan"}
+              </button>
+            </div>
           </>
         ) : (
           <Empty>Generated automatically at intake or when you open a scheduled session.</Empty>

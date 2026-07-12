@@ -59,6 +59,10 @@ export async function POST(req, { params }) {
     return intakeCascade({ req, user, clientId, from: body.from });
   }
 
+  if (body?.type === "revise-treatment") {
+    return reviseTreatment({ req, user, clientId });
+  }
+
   const { sessionId } = body;
   if (!sessionId) return NextResponse.json({ error: "sessionId required" }, { status: 400 });
 
@@ -84,6 +88,49 @@ export async function POST(req, { params }) {
     entityType: EntityTypes.REPORT,
     entityId: clientId,
     details: { sessionId, type: "post-session" },
+    ...auditMetaFromRequest(req),
+  });
+
+  return NextResponse.json(result);
+}
+
+// Revise the treatment plan: v(n+1) superseding the current plan, which is kept.
+// This is the post-session counterpart to the intake cascade — where that one
+// REPLACES hypothetical drafts, this one REVISES, preserving the version chain
+// because a plan that has informed a real session is clinical history.
+//
+// Deliberately reuses the pre-session workflow rather than reimplementing the
+// versioning: it takes no sessionId and already does load-prior → plan → save
+// v(n+1) with the supersedes link. buildClientBlock feeds it the latest reports,
+// so an edited diagnosis or assessment informs the revision with no new inputs.
+async function reviseTreatment({ req, user, clientId }) {
+  const prior = await AIReport.findOne({
+    clientId,
+    practiceId: user.practiceId,
+    agentType: "treatment",
+  }).sort({ version: -1, createdAt: -1 });
+
+  if (!prior) {
+    return NextResponse.json(
+      { error: "No treatment plan to revise" },
+      { status: 404 }
+    );
+  }
+
+  const result = await runWorkflow({
+    type: "pre-session",
+    clientId,
+    userId: user.id,
+    practiceId: user.practiceId,
+  });
+
+  logAuditEvent({
+    userId: user.id,
+    practiceId: user.practiceId,
+    action: AuditActions.REGENERATE,
+    entityType: EntityTypes.REPORT,
+    entityId: clientId,
+    details: { type: "revise-treatment", supersededVersion: prior.version },
     ...auditMetaFromRequest(req),
   });
 
