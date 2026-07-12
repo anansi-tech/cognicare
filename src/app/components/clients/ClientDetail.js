@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ConsentMarkdown } from "@/components/ai/ConsentMarkdown";
@@ -30,6 +30,8 @@ import {
 import { createPortal } from "react-dom";
 import { Spinner } from "@/components/ui/Spinner";
 import { avatarColors, initials } from "@/lib/avatar";
+import { useFormDraft } from "@/hooks/useFormDraft";
+import { DraftRestoredNotice, DraftSaveIndicator } from "@/components/ui/DraftRestoredNotice";
 
 /** Compact one-line score summary per instrument, shown on Overview post-intake. */
 function MeasureGlance({ clientId, onViewAssessments }) {
@@ -111,6 +113,27 @@ export default function ClientDetail({ clientId }) {
   const [selectedConsentType, setSelectedConsentType] = useState("");
   const [consentFormContent, setConsentFormContent] = useState("");
   const [consentFormNotes, setConsentFormNotes] = useState("");
+  const consentDraft = useMemo(() => ({
+    selectedConsentType,
+    consentFormNotes,
+  }), [selectedConsentType, consentFormNotes]);
+  const applyConsentDraft = useCallback((updater) => {
+    const next = typeof updater === "function"
+      ? updater({ selectedConsentType: "", consentFormNotes: "" })
+      : updater;
+    if (next.selectedConsentType !== undefined) setSelectedConsentType(next.selectedConsentType);
+    if (next.consentFormNotes !== undefined) setConsentFormNotes(next.consentFormNotes);
+  }, []);
+  const {
+    draftRestored: consentDraftRestored,
+    dismissRestored: dismissConsentDraft,
+    clearDraft: clearConsentDraft,
+    saveState: consentDraftSaveState,
+  } = useFormDraft(
+    `consent-request-draft-${clientId}`,
+    consentDraft,
+    applyConsentDraft
+  );
   const [availableTemplates, setAvailableTemplates] = useState([]);
   const [showNewClientReminder, setShowNewClientReminder] = useState(false);
   const [aiRefreshKey, setAiRefreshKey] = useState(0);
@@ -169,6 +192,18 @@ export default function ClientDetail({ clientId }) {
   useEffect(() => {
     setAvailableTemplates(getAvailableTemplates());
   }, []);
+
+  useEffect(() => {
+    if (!selectedConsentType) {
+      setConsentFormContent("");
+      return;
+    }
+    try {
+      setConsentFormContent(getConsentFormTemplate(selectedConsentType).content);
+    } catch {
+      setConsentFormContent("");
+    }
+  }, [selectedConsentType]);
 
   // Consent forms now live in their own model (Round 12). Fetch them
   // separately from the client doc.
@@ -473,6 +508,7 @@ export default function ClientDetail({ clientId }) {
       setSelectedConsentType("");
       setConsentFormContent("");
       setConsentFormNotes("");
+      clearConsentDraft();
       setShowConsentModal(false);
 
       // Show success toast with the link and copy button
@@ -1179,6 +1215,16 @@ export default function ClientDetail({ clientId }) {
             ) : (
               <form onSubmit={handleRequestConsent}>
                 <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  {consentDraftRestored && (
+                    <DraftRestoredNotice
+                      onDismiss={dismissConsentDraft}
+                      onDiscard={() => {
+                        clearConsentDraft({ selectedConsentType: "", consentFormNotes: "" });
+                        setSelectedConsentType("");
+                        setConsentFormNotes("");
+                      }}
+                    />
+                  )}
                   <div>
                     <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#55698F", marginBottom: 4 }}>Consent type</label>
                     <select
@@ -1218,9 +1264,15 @@ export default function ClientDetail({ clientId }) {
                   </div>
 
                   <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 6 }}>
+                    <DraftSaveIndicator state={consentDraftSaveState} />
                     <button
                       type="button"
-                      onClick={() => setShowConsentModal(false)}
+                      onClick={() => {
+                        clearConsentDraft({ selectedConsentType: "", consentFormNotes: "" });
+                        setSelectedConsentType("");
+                        setConsentFormNotes("");
+                        setShowConsentModal(false);
+                      }}
                       style={{ padding: "9px 18px", fontSize: 14, fontWeight: 600, color: "#55698F", background: "#F2F6FB", border: "none", borderRadius: 10, cursor: "pointer" }}
                     >
                       Cancel

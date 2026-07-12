@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -8,6 +8,9 @@ import toast from "react-hot-toast";
 import { ageFromDob, genderLabel } from "@/lib/age";
 import { parseReportSections } from "@/lib/reports/sections";
 import { Spinner } from "@/components/ui/Spinner";
+import { SaveIndicator } from "@/components/ai/editable";
+import { useFormDraft } from "@/hooks/useFormDraft";
+import { DraftRestoredNotice } from "@/components/ui/DraftRestoredNotice";
 
 const titleCase = (s) =>
   typeof s === "string" && s.length > 0 ? s.charAt(0).toUpperCase() + s.slice(1) : s;
@@ -22,6 +25,23 @@ export default function ReportViewPage() {
   const [narrative, setNarrative] = useState("");
   const [saving, setSaving] = useState(false);
   const [finalizing, setFinalizing] = useState(false);
+  const [saveState, setSaveState] = useState("idle");
+  const saveRequest = useRef(0);
+  const localDraft = useMemo(() => ({ narrative }), [narrative]);
+  const applyLocalDraft = useCallback((updater) => {
+    const next = typeof updater === "function" ? updater({ narrative: "" }) : updater;
+    if (next.narrative !== undefined) setNarrative(next.narrative);
+  }, []);
+  const {
+    draftRestored,
+    dismissRestored,
+    clearDraft,
+  } = useFormDraft(
+    `compiled-report-draft-${params.id}-${params.reportId}`,
+    localDraft,
+    applyLocalDraft,
+    !!report && report.status !== "completed"
+  );
 
   const [pdfLoading, setPdfLoading] = useState(null); // "preview" | "download" | null
   const [pdfError, setPdfError] = useState(null);
@@ -57,6 +77,31 @@ export default function ReportViewPage() {
 
   const isDraft = report?.status !== "completed";
 
+  useEffect(() => {
+    if (!report || !isDraft || saving || finalizing) return;
+    if (narrative === extractNarrative(report)) return;
+    setSaveState("saving");
+    const timer = setTimeout(async () => {
+      const request = ++saveRequest.current;
+      try {
+        const res = await fetch(`/api/clients/${params.id}/reports/${params.reportId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ narrative }),
+        });
+        if (!res.ok) throw new Error("Autosave failed");
+        const data = await res.json();
+        if (request !== saveRequest.current) return;
+        setReport(data.report);
+        clearDraft();
+        setSaveState("saved");
+      } catch {
+        if (request === saveRequest.current) setSaveState("error");
+      }
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [narrative, report, isDraft, saving, finalizing, params.id, params.reportId, clearDraft]);
+
   const save = async (nextStatus) => {
     const setBusy = nextStatus === "completed" ? setFinalizing : setSaving;
     setBusy(true);
@@ -79,6 +124,8 @@ export default function ReportViewPage() {
       const data = await res.json();
       setReport(data.report);
       setNarrative(extractNarrative(data.report));
+      clearDraft();
+      setSaveState("saved");
       toast.success(nextStatus === "completed" ? "Report finalized." : "Draft saved.");
     } catch (err) {
       toast.error(err.message);
@@ -258,25 +305,37 @@ export default function ReportViewPage() {
         {/* Narrative section */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "24px 0 12px" }}>
           <h2 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 17, margin: 0, color: "#0B2B6B" }}>Narrative</h2>
-          {isDraft && <span style={{ fontSize: 12, color: "#8298BC" }}>Editing draft</span>}
+          {isDraft && <SaveIndicator state={saveState} />}
         </div>
 
         {isDraft ? (
           /* Draft edit mode — serif textarea */
-          <textarea
-            value={narrative}
-            onChange={(e) => setNarrative(e.target.value)}
-            rows={18}
-            className="focus:ring-2 focus:ring-ring"
-            style={{
-              width: "100%", minHeight: 300, resize: "vertical",
-              border: "1px solid #DCE6F3", borderRadius: 12, padding: "16px",
-              fontFamily: "'Source Serif 4', Georgia, serif", fontSize: 14,
-              lineHeight: 1.65, color: "#33465F", outline: "none",
-              boxSizing: "border-box",
-            }}
-            placeholder="Narrative will appear here…"
-          />
+          <div>
+            {draftRestored && (
+              <DraftRestoredNotice
+                onDismiss={dismissRestored}
+                onDiscard={() => {
+                  const next = extractNarrative(report);
+                  clearDraft({ narrative: next });
+                  setNarrative(next);
+                }}
+              />
+            )}
+            <textarea
+              value={narrative}
+              onChange={(e) => setNarrative(e.target.value)}
+              rows={18}
+              className="focus:ring-2 focus:ring-ring"
+              style={{
+                width: "100%", minHeight: 300, resize: "vertical",
+                border: "1px solid #DCE6F3", borderRadius: 12, padding: "16px",
+                fontFamily: "'Source Serif 4', Georgia, serif", fontSize: 14,
+                lineHeight: 1.65, color: "#33465F", outline: "none",
+                boxSizing: "border-box",
+              }}
+              placeholder="Narrative will appear here…"
+            />
+          </div>
         ) : (
           /* Completed read mode — formatted prose */
           <div style={{ background: "#FBFDFF", border: "1px solid #EEF3FA", borderRadius: 14, padding: "22px 24px" }}>

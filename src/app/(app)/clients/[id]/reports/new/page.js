@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { use } from "react";
+import { useFormDraft } from "@/hooks/useFormDraft";
+import { DraftRestoredNotice, DraftSaveIndicator } from "@/components/ui/DraftRestoredNotice";
 
 // Single entry point for compiling a report (Round 14). Submitting kicks
 // off the synthesis agent, which can take several seconds; on success we
@@ -17,17 +19,24 @@ const REPORT_TYPES = [
   { value: "documentation", label: "Documentation Report" },
 ];
 
+const initialReportForm = () => ({
+  type: "progress",
+  startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+  endDate: new Date().toISOString().split("T")[0],
+});
+
 export default function NewReportPage({ params }) {
   const resolvedParams = use(params);
   const { id } = resolvedParams;
   const router = useRouter();
-  const [formData, setFormData] = useState({
-    type: "progress",
-    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-    endDate: new Date().toISOString().split("T")[0],
-  });
+  const [formData, setFormData] = useState(initialReportForm);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState(null);
+  const { draftRestored, dismissRestored, clearDraft, saveState } = useFormDraft(
+    `report-request-draft-${id}`,
+    formData,
+    setFormData
+  );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -46,6 +55,7 @@ export default function NewReportPage({ params }) {
         throw new Error(data.error || "Failed to generate report");
       }
 
+      clearDraft();
       router.push(`/clients/${id}/reports/${data.report._id}/view`);
     } catch (err) {
       setError(err.message);
@@ -64,6 +74,9 @@ export default function NewReportPage({ params }) {
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {draftRestored && (
+          <DraftRestoredNotice onDismiss={dismissRestored} onDiscard={() => { const next = initialReportForm(); clearDraft(next); setFormData(next); }} />
+        )}
         <div>
           <label htmlFor="type" className="block text-sm font-medium text-gray-700">
             Report Type
@@ -122,9 +135,10 @@ export default function NewReportPage({ params }) {
         )}
 
         <div className="flex justify-end gap-2">
+          <DraftSaveIndicator state={saveState} />
           <button
             type="button"
-            onClick={() => router.back()}
+            onClick={() => { clearDraft(); router.back(); }}
             disabled={isGenerating}
             className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50"
           >

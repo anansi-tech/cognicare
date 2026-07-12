@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { toDateInputValue } from "@/lib/age";
 import { useFormDraft } from "@/hooks/useFormDraft";
-import { DraftRestoredNotice } from "@/components/ui/DraftRestoredNotice";
+import { DraftRestoredNotice, DraftSaveIndicator } from "@/components/ui/DraftRestoredNotice";
 
 // Inverse of composeInitialAssessment — splits the stored text back into fields.
 function parseInitialAssessment(text = "") {
@@ -44,79 +44,58 @@ const EMPTY_INTAKE = {
   currentStressors: "",
 };
 
-export default function ClientForm({ client, onSuccess, onCancel }) {
-  const [formData, setFormData] = useState({
-    name: client ? client.name || "" : "",
-    dateOfBirth: client ? toDateInputValue(client.dateOfBirth) : "",
-    gender: client ? client.gender || "prefer-not-to-say" : "prefer-not-to-say",
-    pronouns: client ? client.pronouns || "" : "",
+function clientFormValue(client) {
+  if (!client) return EMPTY_FORM;
+  return {
+    name: client.name || "",
+    dateOfBirth: toDateInputValue(client.dateOfBirth),
+    gender: client.gender || "prefer-not-to-say",
+    pronouns: client.pronouns || "",
     contactInfo: {
-      email: client ? client.contactInfo?.email || "" : "",
-      phone: client ? client.contactInfo?.phone || "" : "",
-      emergencyContact: client
-        ? client.contactInfo?.emergencyContact || {
-            name: "",
-            relationship: "",
-            phone: "",
-          }
-        : {
-            name: "",
-            relationship: "",
-            phone: "",
-          },
+      email: client.contactInfo?.email || "",
+      phone: client.contactInfo?.phone || "",
+      emergencyContact: {
+        name: client.contactInfo?.emergencyContact?.name || "",
+        relationship: client.contactInfo?.emergencyContact?.relationship || "",
+        phone: client.contactInfo?.emergencyContact?.phone || "",
+      },
     },
-    status: client ? client.status || "active" : "active",
-  });
+    status: client.status || "active",
+  };
+}
+
+export default function ClientForm({ client, onSuccess, onCancel }) {
+  const [formData, setFormData] = useState(() => clientFormValue(client));
   // Light-structured initial assessment (Round 16). On submit these get
   // concatenated under headers into the single `initialAssessment` string
   // that the agents consume. When editing an existing client whose
   // initialAssessment is a single blob, we preload it into Presenting
   // Concerns so nothing is lost — we don't try to parse old blobs.
-  const [intake, setIntake] = useState({
-    presentingConcerns: client?.initialAssessment || "",
-    relevantHistory: "",
-    riskIndicators: "",
-    currentStressors: "",
-  });
+  const [intake, setIntake] = useState(() =>
+    client ? parseInitialAssessment(client.initialAssessment) : EMPTY_INTAKE
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
 
-  // Local draft — new clients only. An existing client already has server state,
-  // and the form is seeded from it.
-  const isNew = !client;
   const draftValue = useMemo(() => ({ formData, intake }), [formData, intake]);
   const applyDraft = useCallback((updater) => {
     const next = typeof updater === "function" ? updater({ formData: {}, intake: {} }) : updater;
     if (next.formData) setFormData((prev) => ({ ...prev, ...next.formData }));
     if (next.intake) setIntake((prev) => ({ ...prev, ...next.intake }));
   }, []);
-  const { draftRestored, dismissRestored, clearDraft } = useFormDraft(
-    "client-draft-new",
+  const { draftRestored, dismissRestored, clearDraft, saveState } = useFormDraft(
+    `client-draft-${client?._id ?? "new"}`,
     draftValue,
     applyDraft,
-    isNew
+    true,
+    { serverUpdatedAt: client?.updatedAt }
   );
 
   useEffect(() => {
     if (client) {
       // Populate form with client data for editing
-      setFormData({
-        name: client.name || "",
-        dateOfBirth: toDateInputValue(client.dateOfBirth),
-        gender: client.gender || "prefer-not-to-say",
-        pronouns: client.pronouns || "",
-        contactInfo: {
-          email: client.contactInfo?.email || "",
-          phone: client.contactInfo?.phone || "",
-          emergencyContact: {
-            name: client.contactInfo?.emergencyContact?.name || "",
-            relationship: client.contactInfo?.emergencyContact?.relationship || "",
-            phone: client.contactInfo?.emergencyContact?.phone || "",
-          },
-        },
-        status: client.status || "active",
-      });
+      setFormData(clientFormValue(client));
       setIntake(parseInitialAssessment(client.initialAssessment));
     }
     // Depend only on the client id — a background refetch returning the same
@@ -278,9 +257,11 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
         <DraftRestoredNotice
           onDismiss={dismissRestored}
           onDiscard={() => {
-            clearDraft();
-            setFormData(EMPTY_FORM);
-            setIntake(EMPTY_INTAKE);
+            const nextForm = clientFormValue(client);
+            const nextIntake = client ? parseInitialAssessment(client.initialAssessment) : EMPTY_INTAKE;
+            clearDraft({ formData: nextForm, intake: nextIntake });
+            setFormData(nextForm);
+            setIntake(nextIntake);
           }}
         />
       )}
@@ -542,6 +523,7 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
       </div>
 
       <div className="flex items-center justify-between">
+        <DraftSaveIndicator state={saveState} />
         <button
           type="button"
           onClick={() => { clearDraft(); onCancel?.(); }}

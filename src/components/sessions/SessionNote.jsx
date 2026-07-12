@@ -40,8 +40,8 @@ export function SessionNote({ sessionId, refreshKey }) {
           const data = await res.json();
           setNote((prev) => ({ ...prev, payload: data.payload }));
           setSaveState("saved");
-        } else setSaveState("idle");
-      } catch { setSaveState("idle"); }
+        } else setSaveState("error");
+      } catch { setSaveState("error"); }
     }, 800);
     return () => clearTimeout(t);
   }, [soap, note, editorOpen, sessionId]);

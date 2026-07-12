@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Engineering principle
+
+Engineer from first principles, then apply Occam's razor: identify the actual invariant the product must preserve and implement the smallest design that preserves it. Do not add abstraction, state, or workflow unless the requirement demands it.
+
 ## Commands
 
 ```bash

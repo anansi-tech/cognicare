@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { useFormDraft } from "@/hooks/useFormDraft";
+import { DraftRestoredNotice, DraftSaveIndicator } from "@/components/ui/DraftRestoredNotice";
 
 // Self-edit profile form. The generic admin user CRUD was removed in
 // Round 10 — this form is now used only by /profile.
@@ -14,6 +16,20 @@ export default function UserForm({ user, onSuccess, onCancel }) {
   });
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const draftData = useMemo(() => ({ ...formData, password: "" }), [formData]);
+  const applyDraft = useCallback((updater) => {
+    setFormData((prev) => {
+      const next = typeof updater === "function" ? updater({ ...prev, password: "" }) : updater;
+      return { ...prev, ...next, password: "" };
+    });
+  }, []);
+  const { draftRestored, dismissRestored, clearDraft, saveState } = useFormDraft(
+    `profile-draft-${user?._id ?? "loading"}`,
+    draftData,
+    applyDraft,
+    !!user,
+    { serverUpdatedAt: user?.updatedAt }
+  );
 
   useEffect(() => {
     if (user) {
@@ -53,6 +69,7 @@ export default function UserForm({ user, onSuccess, onCancel }) {
         throw new Error(data.message || "Failed to save profile");
       }
 
+      clearDraft();
       onSuccess();
     } catch (err) {
       setError(err.message);
@@ -63,6 +80,9 @@ export default function UserForm({ user, onSuccess, onCancel }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {draftRestored && (
+        <DraftRestoredNotice onDismiss={dismissRestored} onDiscard={() => { clearDraft(); onCancel?.(); }} />
+      )}
       {error && <div className="bg-red-50 text-red-500 p-4 rounded mb-4">{error}</div>}
 
       <div>
@@ -125,9 +145,10 @@ export default function UserForm({ user, onSuccess, onCancel }) {
       </div>
 
       <div className="flex justify-end space-x-4">
+        <DraftSaveIndicator state={saveState} />
         <button
           type="button"
-          onClick={onCancel}
+          onClick={() => { clearDraft(); onCancel?.(); }}
           className="px-4 py-2 border border-input rounded-md text-foreground hover:bg-muted"
         >
           Cancel

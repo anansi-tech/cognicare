@@ -6,6 +6,7 @@ const BASE = "w-full rounded-md border border-input bg-background px-3 py-1.5 te
 export function SaveIndicator({ state }) {
   if (state === "saving") return <span className="text-xs text-muted-foreground">Saving…</span>;
   if (state === "saved") return <span className="text-xs text-muted-foreground">Saved</span>;
+  if (state === "error") return <span className="text-xs text-destructive">Couldn&apos;t save</span>;
   return null;
 }
 

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useFormDraft } from "@/hooks/useFormDraft";
+import { DraftRestoredNotice, DraftSaveIndicator } from "@/components/ui/DraftRestoredNotice";
 
 const FIELD_STYLE = {
   marginTop: 1,
@@ -17,8 +19,24 @@ const FIELD_STYLE = {
 
 const LABEL_STYLE = { display: "block", fontSize: 13, fontWeight: 600, color: "#55698F", marginBottom: 4 };
 
+const insuranceDraftValue = (insurance) => ({
+  provider: insurance?.provider || "",
+  policyNumber: insurance?.policyNumber || "",
+  groupNumber: insurance?.groupNumber || "",
+  coverage: insurance?.coverage || "full",
+  notes: insurance?.notes || "",
+});
+
 export default function InsuranceInfo({ client, onUpdate }) {
   const [showInsuranceModal, setShowInsuranceModal] = useState(false);
+  const [insuranceDraft, setInsuranceDraft] = useState(() => insuranceDraftValue(client?.insurance));
+  const { draftRestored, dismissRestored, clearDraft, saveState } = useFormDraft(
+    `insurance-draft-${client?._id}`,
+    insuranceDraft,
+    setInsuranceDraft,
+    !!client?._id,
+    { serverUpdatedAt: client?.updatedAt }
+  );
 
   const handleEditInsurance = () => setShowInsuranceModal(true);
 
@@ -39,6 +57,7 @@ export default function InsuranceInfo({ client, onUpdate }) {
       });
       if (!response.ok) throw new Error("Failed to update insurance information");
       const updatedClient = await response.json();
+      clearDraft();
       onUpdate(updatedClient);
       setShowInsuranceModal(false);
     } catch (error) {
@@ -90,32 +109,31 @@ export default function InsuranceInfo({ client, onUpdate }) {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                const fd = new FormData(e.target);
-                handleInsuranceUpdate({
-                  provider: fd.get("provider"),
-                  policyNumber: fd.get("policyNumber"),
-                  groupNumber: fd.get("groupNumber"),
-                  coverage: fd.get("coverage"),
-                  notes: fd.get("notes"),
-                });
+                handleInsuranceUpdate(insuranceDraft);
               }}
             >
               <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                {draftRestored && (
+                  <DraftRestoredNotice
+                    onDismiss={dismissRestored}
+                    onDiscard={() => { const next = insuranceDraftValue(ins); clearDraft(next); setInsuranceDraft(next); }}
+                  />
+                )}
                 <div>
                   <label style={LABEL_STYLE}>Provider</label>
-                  <input type="text" name="provider" defaultValue={ins?.provider} className="focus:ring-2 focus:ring-ring" style={FIELD_STYLE} />
+                  <input type="text" name="provider" value={insuranceDraft.provider} onChange={(e) => setInsuranceDraft((d) => ({ ...d, provider: e.target.value }))} className="focus:ring-2 focus:ring-ring" style={FIELD_STYLE} />
                 </div>
                 <div>
                   <label style={LABEL_STYLE}>Policy number</label>
-                  <input type="text" name="policyNumber" defaultValue={ins?.policyNumber} className="focus:ring-2 focus:ring-ring" style={FIELD_STYLE} />
+                  <input type="text" name="policyNumber" value={insuranceDraft.policyNumber} onChange={(e) => setInsuranceDraft((d) => ({ ...d, policyNumber: e.target.value }))} className="focus:ring-2 focus:ring-ring" style={FIELD_STYLE} />
                 </div>
                 <div>
                   <label style={LABEL_STYLE}>Group number</label>
-                  <input type="text" name="groupNumber" defaultValue={ins?.groupNumber} className="focus:ring-2 focus:ring-ring" style={FIELD_STYLE} />
+                  <input type="text" name="groupNumber" value={insuranceDraft.groupNumber} onChange={(e) => setInsuranceDraft((d) => ({ ...d, groupNumber: e.target.value }))} className="focus:ring-2 focus:ring-ring" style={FIELD_STYLE} />
                 </div>
                 <div>
                   <label style={LABEL_STYLE}>Coverage</label>
-                  <select name="coverage" defaultValue={ins?.coverage} className="focus:ring-2 focus:ring-ring" style={FIELD_STYLE}>
+                  <select name="coverage" value={insuranceDraft.coverage} onChange={(e) => setInsuranceDraft((d) => ({ ...d, coverage: e.target.value }))} className="focus:ring-2 focus:ring-ring" style={FIELD_STYLE}>
                     <option value="full">Full coverage</option>
                     <option value="partial">Partial coverage</option>
                     <option value="none">No coverage</option>
@@ -123,12 +141,13 @@ export default function InsuranceInfo({ client, onUpdate }) {
                 </div>
                 <div>
                   <label style={LABEL_STYLE}>Notes</label>
-                  <textarea name="notes" defaultValue={ins?.notes} rows={3} className="focus:ring-2 focus:ring-ring" style={{ ...FIELD_STYLE, resize: "vertical" }} />
+                  <textarea name="notes" value={insuranceDraft.notes} onChange={(e) => setInsuranceDraft((d) => ({ ...d, notes: e.target.value }))} rows={3} className="focus:ring-2 focus:ring-ring" style={{ ...FIELD_STYLE, resize: "vertical" }} />
                 </div>
                 <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 6 }}>
+                  <DraftSaveIndicator state={saveState} />
                   <button
                     type="button"
-                    onClick={() => setShowInsuranceModal(false)}
+                    onClick={() => { const next = insuranceDraftValue(ins); clearDraft(next); setInsuranceDraft(next); setShowInsuranceModal(false); }}
                     style={{ padding: "9px 18px", fontSize: 14, fontWeight: 600, color: "#55698F", background: "#F2F6FB", border: "none", borderRadius: 10, cursor: "pointer" }}
                   >
                     Cancel
