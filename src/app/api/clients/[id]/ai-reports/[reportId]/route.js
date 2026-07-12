@@ -47,11 +47,16 @@ export async function PATCH(req, { params }) {
   });
   if (!report) return NextResponse.json({ error: "Report not found" }, { status: 404 });
 
-  // `editedAt` tracks human edits only. Approving without editing bumps
-  // `updatedAt`, so downstream-regeneration offers key off this instead.
+  // `editedAt` tracks human edits only — it drives the downstream-regeneration
+  // offers, so a false stamp means nagging the clinician to re-derive work they
+  // never changed. Approve always PATCHes the payload (unchanged or not), so
+  // presence of the key proves nothing; compare against what's stored.
   if (payload) {
-    report.payload = { ...report.payload, ...payload };
-    report.editedAt = new Date();
+    const next = { ...report.payload, ...payload };
+    if (JSON.stringify(next) !== JSON.stringify(report.payload)) {
+      report.payload = next;
+      report.editedAt = new Date();
+    }
   }
   if (status && ["draft", "approved"].includes(status)) report.status = status;
   await report.save();
