@@ -54,7 +54,10 @@ export default function ClientInsights({ clientId, refreshKey = 0, onRegenerated
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [cascadeAllowed, setCascadeAllowed] = useState(false);
-  const [regenerating, setRegenerating] = useState(null); // "assessment" | "diagnostic"
+  const [regenerating, setRegenerating] = useState(null); // "assessment" | "diagnostic" | "treatment"
+  // Regeneration failures render inline — the preserved reports must stay
+  // visible, so this never goes through the full-panel `error` state.
+  const [regenError, setRegenError] = useState(null);
   const [localRefresh, setLocalRefresh] = useState(0);
   const { setOpen: setLiamOpen } = useLiam();
 
@@ -101,17 +104,23 @@ export default function ClientInsights({ clientId, refreshKey = 0, onRegenerated
       : "Regenerate the treatment plan from your edited diagnosis?\n\nThis replaces the current draft.";
     if (!window.confirm(message)) return;
     setRegenerating(from);
+    setRegenError(null);
     try {
       const res = await fetch(`/api/clients/${clientId}/regenerate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type: "intake-cascade", from }),
       });
-      if (!res.ok) throw new Error((await res.json()).error ?? "Regeneration failed");
+      if (!res.ok) {
+        throw new Error(
+          (await res.json().catch(() => null))?.error ??
+            "Regeneration failed — your previous reports are unchanged."
+        );
+      }
       setLocalRefresh((k) => k + 1);
       onRegenerated?.();
     } catch (e) {
-      setError(e.message ?? "Regeneration failed");
+      setRegenError(e.message ?? "Regeneration failed — your previous reports are unchanged.");
     } finally {
       setRegenerating(null);
     }
@@ -126,17 +135,23 @@ export default function ClientInsights({ clientId, refreshKey = 0, onRegenerated
     );
     if (!confirmed) return;
     setRegenerating("treatment");
+    setRegenError(null);
     try {
       const res = await fetch(`/api/clients/${clientId}/regenerate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type: "revise-treatment" }),
       });
-      if (!res.ok) throw new Error((await res.json()).error ?? "Revision failed");
+      if (!res.ok) {
+        throw new Error(
+          (await res.json().catch(() => null))?.error ??
+            "Revision failed — your current plan is unchanged."
+        );
+      }
       setLocalRefresh((k) => k + 1);
       onRegenerated?.();
     } catch (e) {
-      setError(e.message ?? "Revision failed");
+      setRegenError(e.message ?? "Revision failed — your current plan is unchanged.");
     } finally {
       setRegenerating(null);
     }
@@ -220,6 +235,19 @@ export default function ClientInsights({ clientId, refreshKey = 0, onRegenerated
 
   return (
     <div className="space-y-6">
+      {regenError && (
+        <div className="flex items-start justify-between gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          <span>{regenError}</span>
+          <button
+            type="button"
+            onClick={() => setRegenError(null)}
+            aria-label="Dismiss"
+            className="font-semibold hover:opacity-70"
+          >
+            ✕
+          </button>
+        </div>
+      )}
       <Section
         title="Assessment"
         summary={assessment?.summary}
@@ -335,20 +363,22 @@ export default function ClientInsights({ clientId, refreshKey = 0, onRegenerated
                 </button>
               </>
             )}
-            {/* Periodic plan review — no trigger condition; the prior version is kept. */}
-            <div className="mt-3 pt-3 border-t border-border/60 flex items-center justify-between gap-3">
-              <p className="text-xs text-muted-foreground m-0">
-                Revising generates v{(treatmentVersion ?? 1) + 1} from the latest diagnosis, progress, and measures. v{treatmentVersion ?? 1} is kept.
-              </p>
-              <button
-                type="button"
-                onClick={reviseTreatment}
-                disabled={regenerating === "treatment"}
-                className="flex-shrink-0 text-xs font-semibold text-primary hover:text-primary/80 disabled:opacity-60"
-              >
-                {regenerating === "treatment" ? "Revising…" : "Revise plan"}
-              </button>
-            </div>
+            {/* Periodic plan review — post-session only. Pre-session the R51
+                replace offers are the correct path, and revising there would
+                mint v2 and permanently close the cascade gate. What revising
+                does (v(n+1), prior kept) is spelled out in the confirm dialog. */}
+            {!cascadeAllowed && (
+              <div className="mt-3 pt-3 border-t border-border/60 flex justify-end">
+                <button
+                  type="button"
+                  onClick={reviseTreatment}
+                  disabled={regenerating === "treatment"}
+                  className="text-xs font-semibold text-primary hover:text-primary/80 disabled:opacity-60"
+                >
+                  {regenerating === "treatment" ? "Revising…" : "Revise plan"}
+                </button>
+              </div>
+            )}
           </>
         ) : (
           <Empty>Generated automatically at intake or when you open a scheduled session.</Empty>

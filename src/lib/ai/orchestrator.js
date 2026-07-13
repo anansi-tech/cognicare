@@ -15,7 +15,9 @@ import { notesHash, payloadHash } from "@/lib/hash";
 // the agent that consumes it, and persist those captured values with the
 // result. Never reload upstream afterwards to compute the stamp — if upstream
 // changed mid-generation, the artifact must land already-stale.
-export async function runWorkflow({ type, clientId, sessionId, userId, practiceId, sessionData }) {
+// `excludeReportIds`: superseded reports still in the DB during regeneration
+// (new artifacts save first; deletion happens after) — hidden from agent context.
+export async function runWorkflow({ type, clientId, sessionId, userId, practiceId, sessionData, excludeReportIds }) {
   const save = (env, extra = {}) =>
     persistReport({ ...env, clientId, sessionId, userId, practiceId, ...extra });
 
@@ -65,8 +67,10 @@ export async function runWorkflow({ type, clientId, sessionId, userId, practiceI
       sessionType: dbSession.type,
       attendance: dbSession.status,
     } : null);
-    const p = await evaluateProgress({ clientId, sessionData: sd }); await save(p, { status: "draft" });
-    const doc = await documentSession({ clientId, progress: p, sessionData: sd }); await save(doc);
+    const p = await evaluateProgress({ clientId, sessionData: sd, excludeReportIds });
+    await save(p, { status: "draft" });
+    const doc = await documentSession({ clientId, progress: p, sessionData: sd, excludeReportIds });
+    await save(doc);
     return { progress: p, documentation: doc };
   }
   throw new Error(`Unknown workflow type: ${type}`);

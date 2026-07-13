@@ -1,8 +1,8 @@
 import { runAgent } from "../baseAgent";
 import { buildClientBlock, buildRequestBlock } from "../context";
 
-export async function evaluateProgress({ clientId, sessionData }) {
-  const clientBlock = await buildClientBlock(clientId);
+export async function evaluateProgress({ clientId, sessionData, excludeReportIds }) {
+  const clientBlock = await buildClientBlock(clientId, { excludeReportIds });
   const requestBlock = buildRequestBlock(
     "Progress evaluation request",
     { sessionData: sessionData ?? null }

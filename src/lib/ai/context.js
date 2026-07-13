@@ -7,14 +7,20 @@ import { listInstruments } from "@/lib/mbc/instruments";
 
 const j = (label, obj) => `## ${label}\n${JSON.stringify(obj, null, 2)}`;
 
-/** Semi-static per-client block: identity, history, recent reports, measure trends. */
-export async function buildClientBlock(clientId) {
+/** Semi-static per-client block: identity, history, recent reports, measure trends.
+ * `excludeReportIds`: reports invisible to the agent — regeneration saves new
+ * artifacts before deleting the superseded ones (crash-safe ordering), and the
+ * agent must not see the stale reports it is replacing. */
+export async function buildClientBlock(clientId, { excludeReportIds = [] } = {}) {
   await connectDB();
   const client = await Client.findById(clientId);
   if (!client) throw new Error("Client not found");
 
   const recentSessions = await Session.find({ clientId }).sort({ date: -1 }).limit(8);
-  const recentReports = await AIReport.find({ clientId }).sort({ createdAt: -1 }).limit(8);
+  const recentReports = await AIReport.find({
+    clientId,
+    ...(excludeReportIds.length ? { _id: { $nin: excludeReportIds } } : {}),
+  }).sort({ createdAt: -1 }).limit(8);
 
   // Pull trends for every registered instrument; skip ones with no data so
   // the prompt isn't padded with "insufficient-data" for unused instruments.

@@ -1,8 +1,8 @@
 import { runAgent } from "../baseAgent";
 import { buildClientBlock, buildRequestBlock } from "../context";
 
-export async function plan({ clientId, priorPlan = null }) {
-  const clientBlock = await buildClientBlock(clientId);
+export async function plan({ clientId, priorPlan = null, excludeReportIds }) {
+  const clientBlock = await buildClientBlock(clientId, { excludeReportIds });
   const mode = priorPlan
     ? `REVISE the existing treatment plan below in light of the latest progress and session data. ` +
       `Keep what's working, change what isn't, and fill changeSummary with what changed and why.\n\n` +

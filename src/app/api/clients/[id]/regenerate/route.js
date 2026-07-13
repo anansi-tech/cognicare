@@ -68,20 +68,39 @@ export async function POST(req, { params }) {
   const { sessionId } = body;
   if (!sessionId) return NextResponse.json({ error: "sessionId required" }, { status: 400 });
 
-  await AIReport.deleteMany({
+  // Generate-first, delete-after: the superseded reports stay in the DB until
+  // every new save has succeeded, so a mid-generation failure loses nothing.
+  // They're hidden from agent context via excludeReportIds, and pickLatest
+  // makes the brief overlap invisible in the UI.
+  const oldScope = {
     clientId,
     sessionId,
     agentType: { $in: ["progress", "documentation"] },
     practiceId: user.practiceId,
-  });
+  };
+  const oldIds = (await AIReport.find(oldScope).select("_id").lean()).map((r) => r._id);
 
-  const result = await runWorkflow({
-    type: "post-session",
-    clientId,
-    sessionId,
-    userId: user.id,
-    practiceId: user.practiceId,
-  });
+  let result;
+  try {
+    result = await runWorkflow({
+      type: "post-session",
+      clientId,
+      sessionId,
+      userId: user.id,
+      practiceId: user.practiceId,
+      excludeReportIds: oldIds,
+    });
+  } catch (e) {
+    console.error("post-session regeneration failed:", e);
+    // Roll back any partially saved new reports; the old ones are untouched.
+    await AIReport.deleteMany({ ...oldScope, _id: { $nin: oldIds } }).catch(() => {});
+    return NextResponse.json(
+      { error: "Regeneration failed — your previous reports are unchanged." },
+      { status: 500 }
+    );
+  }
+
+  if (oldIds.length) await AIReport.deleteMany({ _id: { $in: oldIds } });
 
   logAuditEvent({
     userId: user.id,
@@ -174,71 +193,88 @@ async function intakeCascade({ req, user, clientId, from }) {
       ...extra,
     });
 
-  // Client-level (intake) artifacts only — never touch session-scoped reports.
-  const dropClientLevel = (agentTypes) =>
-    AIReport.deleteMany({
-      clientId,
-      practiceId: user.practiceId,
-      agentType: { $in: agentTypes },
-      sessionId: null,
-    });
+  // Generate-first, delete-after: the superseded client-level reports stay in
+  // the DB until every new save has succeeded, so a mid-generation failure
+  // loses nothing. They're hidden from agent context via excludeReportIds
+  // (the new plan must not anchor on the drafts it's replacing), and
+  // pickLatest makes the brief overlap invisible in the UI. Session-scoped
+  // reports are never touched.
+  const replacedTypes = from === "assessment" ? ["diagnostic", "treatment"] : ["treatment"];
+  const oldScope = {
+    clientId,
+    practiceId: user.practiceId,
+    agentType: { $in: replacedTypes },
+    sessionId: null,
+  };
+  const oldIds = (await AIReport.find(oldScope).select("_id").lean()).map((r) => r._id);
 
   const result = {};
   // Capture upstream hashes BEFORE the agent calls — if upstream changes
   // mid-generation, the new artifacts must land already-stale.
   const upstream = await resolveUpstream(clientId, user.practiceId);
 
-  if (from === "assessment") {
-    // The edited assessment is the input. Diagnose takes it explicitly; plan
-    // reads the fresh diagnostic back through buildClientBlock.
-    const { assessment } = upstream;
-    if (!assessment) {
-      return NextResponse.json({ error: "No assessment to regenerate from" }, { status: 404 });
+  try {
+    if (from === "assessment") {
+      // The edited assessment is the input. Diagnose takes it explicitly; plan
+      // reads the fresh diagnostic back through buildClientBlock (the old one
+      // is excluded, so the new save is the only diagnostic the plan sees).
+      const { assessment } = upstream;
+      if (!assessment) {
+        return NextResponse.json({ error: "No assessment to regenerate from" }, { status: 404 });
+      }
+      const aHash = payloadHash(assessment.payload);
+
+      const d = await diagnose({
+        clientId,
+        assessment: {
+          agentType: "assessment",
+          summary: assessment.summary,
+          payload: assessment.payload,
+        },
+        excludeReportIds: oldIds,
+      });
+      await save(d, { status: "draft", sourceAssessmentHash: aHash });
+
+      // The fresh in-memory diagnostic is the plan's upstream.
+      const dHash = payloadHash(d.payload);
+      const t = await plan({ clientId, excludeReportIds: oldIds });
+      await save(t, {
+        status: "draft",
+        version: 1,
+        sourceAssessmentHash: aHash,
+        sourceDiagnosticHash: dHash,
+      });
+
+      result.diagnostic = d;
+      result.treatment = t;
+    } else {
+      // from === "diagnostic": only the plan is downstream. buildClientBlock
+      // picks up the edited diagnostic.
+      const aHash = upstream.assessment ? payloadHash(upstream.assessment.payload) : undefined;
+      const dHash = upstream.diagnostic ? payloadHash(upstream.diagnostic.payload) : undefined;
+
+      const t = await plan({ clientId, excludeReportIds: oldIds });
+      await save(t, {
+        status: "draft",
+        version: 1,
+        sourceAssessmentHash: aHash,
+        sourceDiagnosticHash: dHash,
+      });
+
+      result.treatment = t;
     }
-    const aHash = payloadHash(assessment.payload);
-
-    await dropClientLevel(["diagnostic", "treatment"]);
-
-    const d = await diagnose({
-      clientId,
-      assessment: {
-        agentType: "assessment",
-        summary: assessment.summary,
-        payload: assessment.payload,
-      },
-    });
-    await save(d, { status: "draft", sourceAssessmentHash: aHash });
-
-    // The fresh in-memory diagnostic is the plan's upstream.
-    const dHash = payloadHash(d.payload);
-    const t = await plan({ clientId });
-    await save(t, {
-      status: "draft",
-      version: 1,
-      sourceAssessmentHash: aHash,
-      sourceDiagnosticHash: dHash,
-    });
-
-    result.diagnostic = d;
-    result.treatment = t;
-  } else {
-    // from === "diagnostic": only the plan is downstream. buildClientBlock
-    // picks up the edited diagnostic.
-    const aHash = upstream.assessment ? payloadHash(upstream.assessment.payload) : undefined;
-    const dHash = upstream.diagnostic ? payloadHash(upstream.diagnostic.payload) : undefined;
-
-    await dropClientLevel(["treatment"]);
-
-    const t = await plan({ clientId });
-    await save(t, {
-      status: "draft",
-      version: 1,
-      sourceAssessmentHash: aHash,
-      sourceDiagnosticHash: dHash,
-    });
-
-    result.treatment = t;
+  } catch (e) {
+    console.error("intake-cascade regeneration failed:", e);
+    // Roll back any partially saved new reports; the old ones are untouched.
+    await AIReport.deleteMany({ ...oldScope, _id: { $nin: oldIds } }).catch(() => {});
+    return NextResponse.json(
+      { error: "Regeneration failed — your previous reports are unchanged." },
+      { status: 500 }
+    );
   }
+
+  // All new saves succeeded — now retire the superseded reports.
+  if (oldIds.length) await AIReport.deleteMany({ _id: { $in: oldIds } });
 
   logAuditEvent({
     userId: user.id,
