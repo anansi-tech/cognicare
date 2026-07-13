@@ -10,7 +10,8 @@ export function IntakeAssessment({
   consentStatus,
   assessmentExists,
   latestAssessmentAt,
-  notesUpdatedAt,
+  notesHash,
+  sourceNotesHash,
   latestBaselineAt,
   onDone,
   onConsentOverridden,
@@ -70,11 +71,12 @@ export function IntakeAssessment({
     );
   }
 
-  const notesStale =
-    assessmentExists &&
-    notesUpdatedAt &&
-    latestAssessmentAt &&
-    new Date(notesUpdatedAt) > new Date(latestAssessmentAt);
+  // Content-hash staleness: the assessment stores the hash of the notes it was
+  // generated from (or last manually reconciled with); the client GET computes
+  // the current notes hash. Divergence = banner; reverting the notes restores
+  // the hash and the banner clears itself. Editing the assessment reconciles
+  // server-side, which also clears it. No timestamps involved.
+  const notesStale = assessmentExists && notesHash && notesHash !== sourceNotesHash;
 
   const measuresStale =
     assessmentExists &&

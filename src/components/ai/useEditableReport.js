@@ -32,7 +32,17 @@ export function useEditableReport({ clientId, report, onUpdated }) {
         });
         if (res.ok) {
           const data = await res.json();
-          onUpdated?.({ ...report, payload: data.payload, editedAt: data.editedAt });
+          // Hashes ride along so hash-based staleness recomputes immediately
+          // from local state — no refetch between an edit and its offer/nudge.
+          onUpdated?.({
+            ...report,
+            payload: data.payload,
+            editedAt: data.editedAt,
+            payloadHash: data.payloadHash,
+            sourceNotesHash: data.sourceNotesHash,
+            sourceAssessmentHash: data.sourceAssessmentHash,
+            sourceDiagnosticHash: data.sourceDiagnosticHash,
+          });
           setSaveState("saved");
         } else {
           setSaveState("error");
@@ -52,7 +62,16 @@ export function useEditableReport({ clientId, report, onUpdated }) {
     });
     if (res.ok) {
       const data = await res.json();
-      onUpdated?.({ ...report, payload: data.payload, status: "approved", editedAt: data.editedAt });
+      onUpdated?.({
+        ...report,
+        payload: data.payload,
+        status: "approved",
+        editedAt: data.editedAt,
+        payloadHash: data.payloadHash,
+        sourceNotesHash: data.sourceNotesHash,
+        sourceAssessmentHash: data.sourceAssessmentHash,
+        sourceDiagnosticHash: data.sourceDiagnosticHash,
+      });
       setIsEditing(false);
       setSaveState("idle");
     }

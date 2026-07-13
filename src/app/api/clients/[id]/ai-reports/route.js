@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { getSession } from "@/lib/auth";
 import AIReport from "@/models/aiReport";
+import { payloadHash } from "@/lib/hash";
 
 export async function GET(request, { params }) {
   try {
@@ -47,7 +48,12 @@ export async function GET(request, { params }) {
       reports = reports.slice(0, parseInt(limit));
     }
 
-    return NextResponse.json({ reports });
+    // Computed current-content hash per report; the stored source hashes ride
+    // along on the docs. Staleness in the UI = payloadHash vs downstream's
+    // stored source hash. Hashing happens server-side only.
+    return NextResponse.json({
+      reports: reports.map((r) => ({ ...r.toObject(), payloadHash: payloadHash(r.payload) })),
+    });
   } catch (error) {
     console.error("Error fetching AI reports:", error);
     return NextResponse.json({ error: "Failed to fetch AI reports" }, { status: 500 });

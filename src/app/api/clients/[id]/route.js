@@ -18,6 +18,7 @@ import {
   AuditActions,
   EntityTypes,
 } from "@/lib/audit";
+import { notesHash } from "@/lib/hash";
 import mongoose from "mongoose";
 
 // Get a specific client with their sessions and reports
@@ -99,7 +100,10 @@ export async function GET(req, context) {
     });
 
     return NextResponse.json({
-      client,
+      // Current-notes content hash, computed server-side. The notes banner
+      // compares it against the assessment's stored sourceNotesHash — a revert
+      // restores the original hash, so the banner clears itself.
+      client: { ...client.toObject(), initialAssessmentHash: notesHash(client.initialAssessment) },
       counselor,
       attendance,
       recentSessions,

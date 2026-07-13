@@ -9,6 +9,8 @@ import { runWorkflow } from "@/lib/ai/orchestrator";
 import { diagnose } from "@/lib/ai/agents/diagnostic";
 import { plan } from "@/lib/ai/agents/treatment";
 import { persistReport } from "@/lib/report-utils";
+import { resolveUpstream } from "@/lib/ai/upstream";
+import { payloadHash } from "@/lib/hash";
 
 // GET /api/clients/[id]/regenerate — may the intake chain still be re-derived?
 // The UI uses this to decide whether to offer cascade regeneration at all, so a
@@ -182,19 +184,18 @@ async function intakeCascade({ req, user, clientId, from }) {
     });
 
   const result = {};
+  // Capture upstream hashes BEFORE the agent calls — if upstream changes
+  // mid-generation, the new artifacts must land already-stale.
+  const upstream = await resolveUpstream(clientId, user.practiceId);
 
   if (from === "assessment") {
     // The edited assessment is the input. Diagnose takes it explicitly; plan
     // reads the fresh diagnostic back through buildClientBlock.
-    const assessment = await AIReport.findOne({
-      clientId,
-      practiceId: user.practiceId,
-      agentType: "assessment",
-    }).sort({ createdAt: -1 });
-
+    const { assessment } = upstream;
     if (!assessment) {
       return NextResponse.json({ error: "No assessment to regenerate from" }, { status: 404 });
     }
+    const aHash = payloadHash(assessment.payload);
 
     await dropClientLevel(["diagnostic", "treatment"]);
 
@@ -206,20 +207,35 @@ async function intakeCascade({ req, user, clientId, from }) {
         payload: assessment.payload,
       },
     });
-    await save(d, { status: "draft" });
+    await save(d, { status: "draft", sourceAssessmentHash: aHash });
 
+    // The fresh in-memory diagnostic is the plan's upstream.
+    const dHash = payloadHash(d.payload);
     const t = await plan({ clientId });
-    await save(t, { status: "draft", version: 1 });
+    await save(t, {
+      status: "draft",
+      version: 1,
+      sourceAssessmentHash: aHash,
+      sourceDiagnosticHash: dHash,
+    });
 
     result.diagnostic = d;
     result.treatment = t;
   } else {
     // from === "diagnostic": only the plan is downstream. buildClientBlock
     // picks up the edited diagnostic.
+    const aHash = upstream.assessment ? payloadHash(upstream.assessment.payload) : undefined;
+    const dHash = upstream.diagnostic ? payloadHash(upstream.diagnostic.payload) : undefined;
+
     await dropClientLevel(["treatment"]);
 
     const t = await plan({ clientId });
-    await save(t, { status: "draft", version: 1 });
+    await save(t, {
+      status: "draft",
+      version: 1,
+      sourceAssessmentHash: aHash,
+      sourceDiagnosticHash: dHash,
+    });
 
     result.treatment = t;
   }

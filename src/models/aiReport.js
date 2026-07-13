@@ -18,8 +18,15 @@ const aiReportSchema = new mongoose.Schema(
     version:     { type: Number, default: 1 },
     supersedes:  { type: mongoose.Schema.Types.ObjectId, ref: "AIReport" },
     // Set only when a human edits the payload — approving without editing bumps
-    // `updatedAt` but not this. Downstream-regeneration offers compare against it.
+    // `updatedAt` but not this. Metadata only; staleness is hash-based (R54).
     editedAt:    { type: Date },
+    // Content hashes (src/lib/hash.js) of the tracked direct upstreams,
+    // captured when this artifact was generated or last manually reconciled.
+    // Staleness = current upstream hash ≠ stored hash. HMAC output — no
+    // plaintext PHI — so plain unencrypted Strings.
+    sourceNotesHash:      { type: String }, // assessment: intake notes
+    sourceAssessmentHash: { type: String }, // diagnostic + treatment
+    sourceDiagnosticHash: { type: String }, // treatment
   },
   { timestamps: true }
 );

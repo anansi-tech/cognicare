@@ -4,6 +4,8 @@ import { getCurrentUser } from "@/lib/auth";
 import { visibleClientIds } from "@/lib/practice";
 import { logAuditEvent, auditMetaFromRequest, AuditActions, EntityTypes } from "@/lib/audit";
 import AIReport from "@/models/aiReport";
+import { resolveUpstream, reconciliationStamp } from "@/lib/ai/upstream";
+import { payloadHash } from "@/lib/hash";
 
 // GET a single AIReport (agent envelope) for this client.
 // Used by the citation chip viewer at /clients/[id]/ai-reports/[reportId].
@@ -47,15 +49,21 @@ export async function PATCH(req, { params }) {
   });
   if (!report) return NextResponse.json({ error: "Report not found" }, { status: 404 });
 
-  // `editedAt` tracks human edits only — it drives the downstream-regeneration
-  // offers, so a false stamp means nagging the clinician to re-derive work they
-  // never changed. Approve always PATCHes the payload (unchanged or not), so
-  // presence of the key proves nothing; compare against what's stored.
+  // Approve always PATCHes the payload (unchanged or not), so presence of the
+  // key proves nothing; compare against what's stored. Only a REAL change is a
+  // human edit — and a human edit is also manual reconciliation with current
+  // upstream (the Sol amendment): the clinician made this edit looking at the
+  // upstream as it exists now, so the source hashes refresh to match it.
+  // Approve-without-edit refreshes nothing and stamps nothing.
   if (payload) {
     const next = { ...report.payload, ...payload };
     if (JSON.stringify(next) !== JSON.stringify(report.payload)) {
       report.payload = next;
       report.editedAt = new Date();
+      Object.assign(
+        report,
+        reconciliationStamp(report.agentType, await resolveUpstream(clientId, user.practiceId))
+      );
     }
   }
   if (status && ["draft", "approved"].includes(status)) report.status = status;
@@ -72,6 +80,8 @@ export async function PATCH(req, { params }) {
   });
 
   // Re-fetch so post("init") decrypts payload — pre("save") encrypts it in-place.
+  // Hashes ride along so the client's in-memory report stays coherent with the
+  // hash-based staleness checks without a full refetch.
   const fresh = await AIReport.findById(report._id);
   return NextResponse.json({
     id: fresh._id,
@@ -79,5 +89,9 @@ export async function PATCH(req, { params }) {
     version: fresh.version,
     payload: fresh.payload,
     editedAt: fresh.editedAt,
+    payloadHash: payloadHash(fresh.payload),
+    sourceNotesHash: fresh.sourceNotesHash,
+    sourceAssessmentHash: fresh.sourceAssessmentHash,
+    sourceDiagnosticHash: fresh.sourceDiagnosticHash,
   });
 }

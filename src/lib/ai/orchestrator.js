@@ -4,35 +4,53 @@ import { plan } from "./agents/treatment";
 import { evaluateProgress } from "./agents/progress";
 import { document as documentSession } from "./agents/documentation";
 import { persistReport } from "@/lib/report-utils";
-import AIReport from "@/models/aiReport";
 import Session from "@/models/session";
 import { connectDB } from "@/lib/mongodb";
-
-async function latestTreatment(clientId) {
-  await connectDB();
-  return AIReport.findOne({ clientId, agentType: "treatment" })
-    .sort({ version: -1, createdAt: -1 });
-}
+import { resolveUpstream } from "./upstream";
+import { notesHash, payloadHash } from "@/lib/hash";
 
 // Each workflow runs in-process, sequentially, passing prior outputs forward, persisting each.
+//
+// Source-hash rule (R54): capture each upstream's content hash BEFORE invoking
+// the agent that consumes it, and persist those captured values with the
+// result. Never reload upstream afterwards to compute the stamp — if upstream
+// changed mid-generation, the artifact must land already-stale.
 export async function runWorkflow({ type, clientId, sessionId, userId, practiceId, sessionData }) {
   const save = (env, extra = {}) =>
     persistReport({ ...env, clientId, sessionId, userId, practiceId, ...extra });
 
   if (type === "intake") {
-    const a = await assess({ clientId, sessionData }); await save(a, { status: "draft" });
-    const d = await diagnose({ clientId, assessment: a }); await save(d, { status: "draft" });
+    await connectDB();
+    const { client } = await resolveUpstream(clientId, practiceId);
+    const nHash = notesHash(client?.initialAssessment);
+    const a = await assess({ clientId, sessionData });
+    await save(a, { status: "draft", sourceNotesHash: nHash });
+    // Hash the exact in-memory envelope handed to diagnose, not a re-read.
+    const aHash = payloadHash(a.payload);
+    const d = await diagnose({ clientId, assessment: a });
+    await save(d, { status: "draft", sourceAssessmentHash: aHash });
+    const dHash = payloadHash(d.payload);
     const t = await plan({ clientId });
-    await save(t, { status: "draft", version: 1 });
+    await save(t, {
+      status: "draft",
+      version: 1,
+      sourceAssessmentHash: aHash,
+      sourceDiagnosticHash: dHash,
+    });
     return { assessment: a, diagnostic: d, treatment: t };
   }
   if (type === "pre-session") {
-    const prior = await latestTreatment(clientId);
+    await connectDB();
+    const { assessment, diagnostic, treatment: prior } = await resolveUpstream(clientId, practiceId);
+    const aHash = assessment ? payloadHash(assessment.payload) : undefined;
+    const dHash = diagnostic ? payloadHash(diagnostic.payload) : undefined;
     const t = await plan({ clientId, priorPlan: prior });
     await save(t, {
       status: "draft",
       version: (prior?.version ?? 0) + 1,
       supersedes: prior?._id,
+      sourceAssessmentHash: aHash,
+      sourceDiagnosticHash: dHash,
     });
     return { treatment: t };
   }

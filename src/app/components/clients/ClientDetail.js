@@ -142,6 +142,7 @@ export default function ClientDetail({ clientId }) {
   const [administeredInstruments, setAdministeredInstruments] = useState([]);
   const [assessmentExists, setAssessmentExists] = useState(null); // null = loading
   const [latestAssessmentAt, setLatestAssessmentAt] = useState(null);
+  const [assessmentSourceNotesHash, setAssessmentSourceNotesHash] = useState(null);
   const [latestBaselineAt, setLatestBaselineAt] = useState(null);
   const [counselor, setCounselor] = useState(null);
   const [attendance, setAttendance] = useState(null);
@@ -286,6 +287,9 @@ export default function ClientDetail({ clientId }) {
       const latest = data.reports?.[0];
       setAssessmentExists(!!latest);
       setLatestAssessmentAt(latest?.createdAt ?? null);
+      // Notes hash the assessment was generated from / last reconciled with —
+      // the banner compares it against the client's current notes hash.
+      setAssessmentSourceNotesHash(latest?.sourceNotesHash ?? null);
     } catch {}
   }, [clientId]);
 
@@ -799,7 +803,8 @@ export default function ClientDetail({ clientId }) {
           consentStatus={consentStatus}
           assessmentExists={assessmentExists}
           latestAssessmentAt={latestAssessmentAt}
-          notesUpdatedAt={client?.initialAssessmentUpdatedAt}
+          notesHash={client?.initialAssessmentHash}
+          sourceNotesHash={assessmentSourceNotesHash}
           latestBaselineAt={latestBaselineAt}
           onDone={() => { setAiRefreshKey((k) => k + 1); refreshAssessment(); }}
           onConsentOverridden={() => setConsentStatus((prev) => ({ ...prev, overridden: true }))}

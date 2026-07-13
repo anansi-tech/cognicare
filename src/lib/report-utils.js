@@ -19,6 +19,9 @@ export async function persistReport({
   version,
   supersedes,
   status,
+  sourceNotesHash,
+  sourceAssessmentHash,
+  sourceDiagnosticHash,
 }) {
   await connectDB();
   // Derive practiceId from the Client if the caller didn't pass one (defensive).
@@ -41,6 +44,10 @@ export async function persistReport({
     status: status ?? (agentType === "documentation" ? "draft" : undefined),
     ...(version !== undefined && { version }),
     ...(supersedes !== undefined && { supersedes }),
+    // Upstream content hashes, captured by the caller BEFORE the agent ran.
+    ...(sourceNotesHash !== undefined && { sourceNotesHash }),
+    ...(sourceAssessmentHash !== undefined && { sourceAssessmentHash }),
+    ...(sourceDiagnosticHash !== undefined && { sourceDiagnosticHash }),
   });
   await doc.save();
   return doc;

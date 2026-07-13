@@ -17,11 +17,15 @@ function pickLatest(reports, agentType) {
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
 }
 
-// Was `upstream` edited by a human after `downstream` was derived from it?
-// Keys off editedAt, not updatedAt — approving without editing must not count.
-function editedSince(upstream, downstream) {
-  if (!upstream?.editedAt || !downstream?.createdAt) return false;
-  return new Date(upstream.editedAt) > new Date(downstream.createdAt);
+// Does `downstream` still reflect `upstream`'s current content? Staleness is a
+// content-hash mismatch: `upstream.payloadHash` is computed server-side on read,
+// `downstream[sourceKey]` was stamped at generation or last human reconciliation.
+// Reverting an edit restores the original hash, so prompts clear themselves; a
+// missing stamp (pre-backfill doc) reads as stale — run the backfill, not a
+// timestamp fallback.
+function upstreamStale(upstream, downstream, sourceKey) {
+  if (!upstream?.payloadHash || !downstream) return false;
+  return upstream.payloadHash !== downstream[sourceKey];
 }
 
 // The offer to re-derive downstream artifacts. Never fires on its own.
@@ -138,7 +142,13 @@ export default function ClientInsights({ clientId, refreshKey = 0, onRegenerated
     }
   };
 
-  const ax = useEditableReport({ clientId, report: assessment, onUpdated: setAssessment });
+  // Assessment edits reconcile sourceNotesHash server-side; poke the parent so
+  // the notes banner (which reads that hash) refreshes without a page reload.
+  const ax = useEditableReport({
+    clientId,
+    report: assessment,
+    onUpdated: (r) => { setAssessment(r); onRegenerated?.(); },
+  });
   const dx = useEditableReport({ clientId, report: diagnostic, onUpdated: setDiagnostic });
   const tx = useEditableReport({ clientId, report: treatment, onUpdated: setTreatment });
   const px = useEditableReport({ clientId, report: progress, onUpdated: setProgress });
@@ -182,16 +192,23 @@ export default function ClientInsights({ clientId, refreshKey = 0, onRegenerated
   const treatmentVersion = treatment?.version;
   const treatmentTitle = `Treatment Plan${treatmentVersion ? ` v${treatmentVersion}` : ""}`;
 
-  // Post-session, the intake chain is history — an upstream edit prompts a plan
-  // REVISION (new version, prior kept) rather than R51's replace. Exactly one
-  // nudge; the diagnosis is the closer input to the plan, so it wins if both
-  // were edited. Pre-session this is inert and the R51 offers show instead, so
-  // the two modes can never appear together.
+  // Content-hash staleness across the chain. Each downstream artifact stores
+  // the hash of the upstream it was derived from (or last reconciled with);
+  // divergence means the upstream's CURRENT content is not what it reflects.
+  const dxStaleVsAssessment = upstreamStale(assessment, diagnostic, "sourceAssessmentHash");
+  const txStaleVsDiagnostic = upstreamStale(diagnostic, treatment, "sourceDiagnosticHash");
+  const txStaleVsAssessment = upstreamStale(assessment, treatment, "sourceAssessmentHash");
+
+  // Post-session, the intake chain is history — an upstream divergence prompts
+  // a plan REVISION (new version, prior kept) rather than R51's replace.
+  // Exactly one nudge; the diagnosis is the closer input to the plan, so it
+  // wins if both diverged. Pre-session this is inert and the R51 offers show
+  // instead, so the two modes can never appear together.
   const reviseNudge = cascadeAllowed
     ? null
-    : editedSince(diagnostic, treatment)
+    : txStaleVsDiagnostic
       ? "diagnostic"
-      : editedSince(assessment, treatment)
+      : txStaleVsAssessment
         ? "assessment"
         : null;
 
@@ -226,7 +243,7 @@ export default function ClientInsights({ clientId, refreshKey = 0, onRegenerated
                 </button>
               </>
             )}
-            {cascadeAllowed && editedSince(assessment, diagnostic) && (
+            {cascadeAllowed && dxStaleVsAssessment && (
               <CascadeOffer
                 text="You've edited the assessment. Regenerate the diagnosis and treatment plan from your corrections? This replaces the current drafts."
                 buttonLabel="Regenerate downstream"
@@ -270,7 +287,7 @@ export default function ClientInsights({ clientId, refreshKey = 0, onRegenerated
                 </button>
               </>
             )}
-            {cascadeAllowed && editedSince(diagnostic, treatment) && (
+            {cascadeAllowed && txStaleVsDiagnostic && (
               <CascadeOffer
                 text="You've edited the diagnosis. Regenerate the treatment plan from it? This replaces the current draft."
                 buttonLabel="Regenerate treatment"
