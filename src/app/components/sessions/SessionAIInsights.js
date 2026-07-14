@@ -1,11 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AgentReportBody } from "@/components/ai/AgentReportBody";
 import { Section, Empty } from "@/components/ai/Section";
+import { IconButton } from "@/components/ai/editable";
 
 // Renders the four specialist agent envelopes (assessment/diagnostic/treatment/progress)
-// for the current session/client as stacked sections in clinical order. No inner tab chrome.
+// for the current session/client as stacked document-mode sections in clinical
+// order (Overview v2 parity). Read-only here — editing lives in the client
+// Overview; the header action deep-links there.
 
 function pickLatest(reports, agentType) {
   return reports
@@ -13,7 +17,30 @@ function pickLatest(reports, agentType) {
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
 }
 
+const fmtDate = (iso) =>
+  iso ? new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : null;
+
+// Same pill vocabulary and styles as the Overview's SectionHeaderActions.
+function StatusPill({ status }) {
+  if (status === "approved") {
+    return <span style={{ fontSize: 11.5, fontWeight: 700, padding: "3px 10px", borderRadius: 999, whiteSpace: "nowrap", background: "#E7F6EC", color: "#3B9E57" }}>Approved</span>;
+  }
+  if (status === "draft") {
+    return <span style={{ fontSize: 11.5, fontWeight: 700, padding: "3px 10px", borderRadius: 999, whiteSpace: "nowrap", background: "#FBF2DA", color: "#A9821F" }}>Draft — review</span>;
+  }
+  return null;
+}
+
+const ExternalLinkIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+    <polyline points="15 3 21 3 21 9" />
+    <line x1="10" y1="14" x2="21" y2="3" />
+  </svg>
+);
+
 export default function SessionAIInsights({ session, refreshKey = 0, focus }) {
+  const router = useRouter();
   const [assessment, setAssessment] = useState(null);
   const [diagnostic, setDiagnostic] = useState(null);
   const [treatment, setTreatment] = useState(null);
@@ -89,10 +116,31 @@ export default function SessionAIInsights({ session, refreshKey = 0, focus }) {
     );
   }
 
+  // Status pill + a jump to the client record, where these reports are edited.
+  const openInRecord = (
+    <IconButton title="Open in client record" onClick={() => router.push(`/clients/${clientId}?tab=overview`)}>
+      <ExternalLinkIcon />
+    </IconButton>
+  );
+  const actionsFor = (report) =>
+    report ? (
+      <>
+        <StatusPill status={report.status} />
+        {openInRecord}
+      </>
+    ) : undefined;
+
   return (
-    <div className="space-y-6">
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       {!sessionOnly && (
-        <Section title="Assessment" summary={assessment?.summary} collapsible defaultOpen>
+        <Section
+          sticky
+          title="Assessment"
+          summary={assessment?.summary}
+          subtitle={fmtDate(assessment?.createdAt) ? `Updated ${fmtDate(assessment?.createdAt)}` : undefined}
+          draft={assessment?.status === "draft"}
+          actions={actionsFor(assessment)}
+        >
           {assessment ? (
             <AgentReportBody agentType="assessment" payload={assessment.payload} />
           ) : (
@@ -102,10 +150,12 @@ export default function SessionAIInsights({ session, refreshKey = 0, focus }) {
       )}
       {!sessionOnly && (
         <Section
-          title="Diagnostic Impression"
+          sticky
+          title="Diagnostic impression"
           summary={diagnostic?.summary}
-          collapsible
-          defaultOpen={false}
+          subtitle={fmtDate(diagnostic?.createdAt) ? `Updated ${fmtDate(diagnostic?.createdAt)}` : undefined}
+          draft={diagnostic?.status === "draft"}
+          actions={actionsFor(diagnostic)}
         >
           {diagnostic ? (
             <AgentReportBody agentType="diagnostic" payload={diagnostic.payload} />
@@ -115,10 +165,17 @@ export default function SessionAIInsights({ session, refreshKey = 0, focus }) {
         </Section>
       )}
       <Section
-        title="Treatment Plan"
+        sticky
+        title={
+          <>
+            Treatment plan
+            {treatment?.version ? <span style={{ fontSize: 12, fontWeight: 700, color: "#8298BC", marginLeft: 6 }}>v{treatment.version}</span> : null}
+          </>
+        }
         summary={treatment?.summary}
-        collapsible
-        defaultOpen={false}
+        subtitle={fmtDate(treatment?.createdAt) ? `Client-scoped · Updated ${fmtDate(treatment?.createdAt)}` : undefined}
+        draft={treatment?.status === "draft"}
+        actions={actionsFor(treatment)}
       >
         {treatment ? (
           <AgentReportBody agentType="treatment" payload={treatment.payload} />
@@ -127,10 +184,12 @@ export default function SessionAIInsights({ session, refreshKey = 0, focus }) {
         )}
       </Section>
       <Section
-        title="Progress Report"
+        sticky
+        title="Progress report"
         summary={progress?.summary}
-        collapsible
-        defaultOpen={false}
+        subtitle={fmtDate(progress?.createdAt) ? `This session · Generated ${fmtDate(progress?.createdAt)}` : undefined}
+        draft={progress?.status === "draft"}
+        actions={actionsFor(progress)}
       >
         {progress ? (
           <AgentReportBody agentType="progress" payload={progress.payload} />

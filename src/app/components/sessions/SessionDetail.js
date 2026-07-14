@@ -10,6 +10,7 @@ import { useLiam } from "@/components/liam/LiamProvider";
 import { AutoSessionPrep } from "@/components/ai/AutoSessionPrep";
 import { AutoPostSession } from "@/components/ai/AutoPostSession";
 import { RegenerateButton } from "@/components/ai/RegenerateButton";
+import { IconButton, PencilIcon } from "@/components/ai/editable";
 import { SessionNote } from "@/components/sessions/SessionNote";
 import { MeasuresPanel } from "@/components/measures/MeasuresPanel";
 import { Spinner } from "@/components/ui/Spinner";
@@ -252,14 +253,20 @@ export default function SessionDetail({ sessionId }) {
           <p style={{ fontSize: 14.5, color: "#55698F", margin: "6px 0 0" }}>{metaLine}</p>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, flexWrap: "wrap" }}>
-          <button onClick={() => setIsEditing(true)} style={GHOST_BTN}>Edit</button>
           {session.status === "scheduled" && (
             <>
               <button onClick={() => openCancelDialog("noshow")} style={{ ...GHOST_BTN, color: "#A9821F", border: "1px solid #EEE0C0" }}>Mark no-show</button>
               <button onClick={() => openCancelDialog("cancel")} style={GHOST_BTN}>Cancel</button>
             </>
           )}
-          <button onClick={() => openCancelDialog("delete")} style={DANGER_BTN}>Delete</button>
+          <IconButton title="Edit session" onClick={() => setIsEditing(true)}>
+            <PencilIcon size={15} />
+          </IconButton>
+          <IconButton title="Delete session" onClick={() => openCancelDialog("delete")} danger>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+            </svg>
+          </IconButton>
         </div>
       </div>
 
