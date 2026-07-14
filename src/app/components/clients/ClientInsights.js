@@ -282,7 +282,7 @@ export default function ClientInsights({ clientId, refreshKey = 0, onRegenerated
             {reviseNudge === "assessment" && (
               <CascadeOffer
                 text={reviseNudgeText("assessment")}
-                buttonLabel="Revise plan"
+                buttonLabel="Revise treatment plan"
                 busy={regenerating === "treatment"}
                 onRun={reviseTreatment}
               />
@@ -326,7 +326,7 @@ export default function ClientInsights({ clientId, refreshKey = 0, onRegenerated
             {reviseNudge === "diagnostic" && (
               <CascadeOffer
                 text={reviseNudgeText("diagnosis")}
-                buttonLabel="Revise plan"
+                buttonLabel="Revise treatment plan"
                 busy={regenerating === "treatment"}
                 onRun={reviseTreatment}
               />
@@ -375,7 +375,7 @@ export default function ClientInsights({ clientId, refreshKey = 0, onRegenerated
                   disabled={regenerating === "treatment"}
                   className="text-xs font-semibold text-primary hover:text-primary/80 disabled:opacity-60"
                 >
-                  {regenerating === "treatment" ? "Revising…" : "Revise plan"}
+                  {regenerating === "treatment" ? "Revising treatment plan…" : "Revise treatment plan"}
                 </button>
               </div>
             )}

@@ -23,8 +23,8 @@ describe("notesHash", () => {
     expect(notesHash(null)).toBe(notesHash(""));
   });
 
-  it("carries the v1: scheme prefix", () => {
-    expect(notesHash("x")).toMatch(/^v1:[0-9a-f]{64}$/);
+  it("carries the current scheme prefix", () => {
+    expect(notesHash("x")).toMatch(/^v2:[0-9a-f]{64}$/);
   });
 });
 
@@ -49,6 +49,52 @@ describe("payloadHash", () => {
   it("treats null/undefined as empty payload", () => {
     expect(payloadHash(undefined)).toBe(payloadHash({}));
     expect(payloadHash(null)).toBe(payloadHash({}));
+  });
+
+  // The structured editors don't round-trip byte-identically: clearing a field
+  // leaves "" where the agent omitted the key, lists come back as [], selects
+  // as null. A revert through the editor must hash identical to the original.
+  describe("editor-artifact equivalence (semantic emptiness)", () => {
+    const generated = { primaryDiagnosis: { code: "F32.1", name: "MDD" }, differentials: [{ code: "F41.1" }] };
+
+    it('"" equals absent key', () => {
+      expect(payloadHash({ ...generated, rationale: "" })).toBe(payloadHash(generated));
+    });
+
+    it("[] equals missing list", () => {
+      expect(payloadHash({ ...generated, ruleOut: [] })).toBe(payloadHash(generated));
+    });
+
+    it("null equals absent key", () => {
+      expect(payloadHash({ ...generated, notes: null })).toBe(payloadHash(generated));
+    });
+
+    it("prunes recursively — objects emptied by pruning are themselves pruned", () => {
+      expect(payloadHash({ ...generated, extra: { list: [], text: "" } })).toBe(payloadHash(generated));
+      expect(payloadHash({ a: { b: { c: [] } } })).toBe(payloadHash({}));
+    });
+
+    it("full edit→revert cycle through editor artifacts clears", () => {
+      const edited = { ...generated, primaryDiagnosis: { code: "F41.1", name: "GAD" } };
+      const revertedWithArtifacts = {
+        primaryDiagnosis: { code: "F32.1", name: "MDD", rationale: "" },
+        differentials: [{ code: "F41.1" }],
+        ruleOut: [],
+      };
+      expect(payloadHash(edited)).not.toBe(payloadHash(generated));
+      expect(payloadHash(revertedWithArtifacts)).toBe(payloadHash(generated));
+    });
+
+    it("genuinely changed content still differs", () => {
+      expect(payloadHash({ ...generated, rationale: "new reasoning" })).not.toBe(payloadHash(generated));
+      expect(payloadHash({ ...generated, differentials: [] })).not.toBe(payloadHash(generated));
+      expect(payloadHash({ ...generated, primaryDiagnosis: { ...generated.primaryDiagnosis, name: "MDD, recurrent" } }))
+        .not.toBe(payloadHash(generated));
+    });
+
+    it("whitespace-only strings are NOT empty", () => {
+      expect(payloadHash({ ...generated, rationale: " " })).not.toBe(payloadHash(generated));
+    });
   });
 
   it("differs from notesHash on equivalent-looking input", () => {

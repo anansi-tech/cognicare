@@ -1,11 +1,12 @@
 /**
- * One-off idempotent backfill (Round 54): stamp source-content hashes onto
- * existing AIReports that predate hash-based staleness.
+ * Idempotent backfill (Round 54): stamp source-content hashes onto AIReports
+ * whose stored hashes are missing OR carry an outdated scheme version.
  *
- * Pre-R54 staleness is unknowable, so every un-stamped report is marked as
- * RECONCILED WITH CURRENT UPSTREAM — the honest baseline. Prompts then appear
- * only on real post-backfill divergence. Reports that already carry hashes are
- * skipped, so re-running is safe.
+ * Pre-backfill staleness under the current scheme is unknowable, so every
+ * report needing a stamp is marked as RECONCILED WITH CURRENT UPSTREAM — the
+ * honest baseline. Prompts then appear only on real post-backfill divergence.
+ * A hash already on the current HASH_VERSION is left alone, so re-running is
+ * safe; run once after any deploy that bumps the version.
  *
  * Requires MONGODB_URI and PHI_ENCRYPTION_KEY (decryption + HMAC).
  *
@@ -16,7 +17,10 @@
 import mongoose from "mongoose";
 import AIReport from "../src/models/aiReport.js";
 import { resolveUpstream } from "../src/lib/ai/upstream.js";
-import { notesHash, payloadHash } from "../src/lib/hash.js";
+import { notesHash, payloadHash, HASH_VERSION } from "../src/lib/hash.js";
+
+// Missing or stamped under an older canonicalization scheme → re-stamp.
+const needsStamp = (h) => !h || !h.startsWith(HASH_VERSION);
 
 const isDryRun = process.argv.includes("--dry-run");
 
@@ -45,15 +49,15 @@ for (const clientId of clientIds) {
   const reports = await AIReport.find({ clientId, agentType: { $in: TRACKED } });
   for (const r of reports) {
     let changed = false;
-    if (r.agentType === "assessment" && !r.sourceNotesHash) {
+    if (r.agentType === "assessment" && needsStamp(r.sourceNotesHash)) {
       r.sourceNotesHash = nHash;
       changed = true;
     }
-    if ((r.agentType === "diagnostic" || r.agentType === "treatment") && !r.sourceAssessmentHash && aHash) {
+    if ((r.agentType === "diagnostic" || r.agentType === "treatment") && needsStamp(r.sourceAssessmentHash) && aHash) {
       r.sourceAssessmentHash = aHash;
       changed = true;
     }
-    if (r.agentType === "treatment" && !r.sourceDiagnosticHash && dHash) {
+    if (r.agentType === "treatment" && needsStamp(r.sourceDiagnosticHash) && dHash) {
       r.sourceDiagnosticHash = dHash;
       changed = true;
     }
