@@ -134,7 +134,44 @@ describe("reconciliationStamp — human edit refreshes tracked upstream hashes",
   });
 
   it("untracked agent types are untouched", () => {
-    expect(reconciliationStamp("progress", { client, assessment, diagnostic })).toEqual({});
-    expect(reconciliationStamp("documentation", { client })).toEqual({});
+    expect(reconciliationStamp("report", { client, assessment, diagnostic })).toEqual({});
+  });
+});
+
+describe("session edge — progress/documentation vs session notes", () => {
+  const session = { notes: "Client discussed boundary setback at work." };
+  const generatedStamp = notesHash(session.notes);
+
+  it("unchanged notes: current hash matches the stamp", () => {
+    expect(notesHash("Client discussed boundary setback at work.")).toBe(generatedStamp);
+  });
+
+  it("changed notes diverge; revert restores the stamp", () => {
+    const edited = notesHash("Client discussed boundary setback at work. Added detail.");
+    expect(edited).not.toBe(generatedStamp);
+    expect(notesHash("Client discussed boundary setback at work.")).toBe(generatedStamp); // revert clears
+  });
+
+  it("editing the report reconciles against the session's CURRENT notes", () => {
+    const editedSession = { notes: "Notes rewritten after the fact." };
+    expect(reconciliationStamp("progress", { session: editedSession })).toEqual({
+      sourceNotesHash: notesHash(editedSession.notes),
+    });
+    expect(reconciliationStamp("documentation", { session: editedSession })).toEqual({
+      sourceNotesHash: notesHash(editedSession.notes),
+    });
+  });
+
+  it("without the session, progress/documentation refresh nothing", () => {
+    expect(reconciliationStamp("progress", {})).toEqual({});
+    expect(reconciliationStamp("documentation", {})).toEqual({});
+  });
+
+  it("session notes and intake notes never cross-match by construction", () => {
+    // Same string → same hash; the edges stay separate because each report
+    // compares against ITS upstream, not because the hashes differ.
+    expect(reconciliationStamp("progress", { session })).toEqual(
+      reconciliationStamp("assessment", { client: { initialAssessment: session.notes } })
+    );
   });
 });

@@ -24,7 +24,7 @@ const aiReportSchema = new mongoose.Schema(
     // captured when this artifact was generated or last manually reconciled.
     // Staleness = current upstream hash ≠ stored hash. HMAC output — no
     // plaintext PHI — so plain unencrypted Strings.
-    sourceNotesHash:      { type: String }, // assessment: intake notes
+    sourceNotesHash:      { type: String }, // assessment: intake notes; progress/documentation: their session's notes
     sourceAssessmentHash: { type: String }, // diagnostic + treatment
     sourceDiagnosticHash: { type: String }, // treatment
   },

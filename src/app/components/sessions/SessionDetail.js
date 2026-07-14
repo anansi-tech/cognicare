@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -50,6 +50,12 @@ export default function SessionDetail({ sessionId }) {
   const [cancelApplyToFuture, setCancelApplyToFuture] = useState(false);
   const [cancelMode, setCancelMode] = useState("cancel"); // "cancel" | "noshow" | "delete"
   const [cancelBusy, setCancelBusy] = useState(false);
+  // Session-notes staleness (R54 session edge) — fed by SessionAIInsights,
+  // rendered as the regenerate nudge above the SOAP note.
+  const [notesStale, setNotesStale] = useState(false);
+  const handleNotesStale = useCallback((v) => setNotesStale(v), []);
+  const [staleRegenBusy, setStaleRegenBusy] = useState(false);
+  const [staleRegenError, setStaleRegenError] = useState(null);
   const { bindClient } = useLiam();
 
   useEffect(() => {
@@ -105,6 +111,36 @@ export default function SessionDetail({ sessionId }) {
   const handleEditSuccess = () => {
     setIsEditing(false);
     fetchSession();
+  };
+
+  // Same endpoint + confirm as RegenerateButton — the nudge is just a second
+  // door to that one action. Old reports survive a failure (generate-first).
+  const regenerateFromNotes = async () => {
+    const confirmed = window.confirm(
+      "Regenerate will replace the current session note and progress report, including any edits you've approved. This can't be undone. Continue?"
+    );
+    if (!confirmed) return;
+    setStaleRegenBusy(true);
+    setStaleRegenError(null);
+    try {
+      const res = await fetch(`/api/clients/${clientId}/regenerate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId: session._id }),
+      });
+      if (!res.ok) {
+        setStaleRegenError(
+          (await res.json().catch(() => null))?.error ??
+            "Regeneration failed — your previous reports are unchanged."
+        );
+        return;
+      }
+      setAiRefreshKey((k) => k + 1);
+    } catch {
+      setStaleRegenError("Regeneration failed — your previous reports are unchanged.");
+    } finally {
+      setStaleRegenBusy(false);
+    }
   };
 
   const openCancelDialog = (mode) => {
@@ -439,10 +475,30 @@ export default function SessionDetail({ sessionId }) {
             />
           </div>
 
+          {/* Notes-staleness nudge (R54 session edge) — the note + progress pair
+              was generated from notes that have since changed. Regeneration goes
+              through the same endpoint and confirm as the Regenerate button. */}
+          {!isEditing && notesStale && (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 14, background: "#FEF9EC", border: "1px solid #F6E6BC", borderRadius: 11, padding: "9px 14px" }}>
+              <span style={{ fontSize: 12.5, color: "#7A6020", flex: 1, minWidth: 200 }}>
+                Session notes changed since this note and progress were generated. Regenerate them? This replaces the current versions.
+                {staleRegenError && <span style={{ display: "block", color: "#C0392B", marginTop: 3 }}>{staleRegenError}</span>}
+              </span>
+              <button
+                type="button"
+                onClick={regenerateFromNotes}
+                disabled={staleRegenBusy}
+                style={{ flexShrink: 0, border: "none", borderRadius: 8, background: "#A9821F", color: "#fff", fontFamily: "inherit", fontSize: 12, fontWeight: 700, padding: "6px 12px", cursor: staleRegenBusy ? "default" : "pointer", opacity: staleRegenBusy ? 0.6 : 1 }}
+                className="hover:opacity-90 transition-opacity"
+              >
+                {staleRegenBusy ? "Regenerating…" : "Regenerate"}
+              </button>
+            </div>
+          )}
           {!isEditing && <SessionNote sessionId={session._id} refreshKey={aiRefreshKey} />}
           {!isEditing && (
             <div style={{ marginTop: 16 }}>
-              <SessionAIInsights session={session} refreshKey={aiRefreshKey} focus="session" />
+              <SessionAIInsights session={session} refreshKey={aiRefreshKey} focus="session" onNotesStale={handleNotesStale} />
             </div>
           )}
         </div>

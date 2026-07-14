@@ -32,7 +32,10 @@ export async function resolveUpstream(clientId, practiceId) {
 // reconciliation with its tracked upstreams as they exist right now: the
 // clinician saw the current upstream while making the edit. Returns the
 // source-hash fields to refresh; empty for untracked agent types.
-export function reconciliationStamp(agentType, { client, assessment, diagnostic }) {
+//
+// `session` (the report's own session, hydrated) is required only for the
+// session edge: progress/documentation are derived from that session's notes.
+export function reconciliationStamp(agentType, { client, assessment, diagnostic, session }) {
   switch (agentType) {
     case "assessment":
       return { sourceNotesHash: notesHash(client?.initialAssessment) };
@@ -44,6 +47,9 @@ export function reconciliationStamp(agentType, { client, assessment, diagnostic 
       if (diagnostic) stamp.sourceDiagnosticHash = payloadHash(diagnostic.payload);
       return stamp;
     }
+    case "progress":
+    case "documentation":
+      return session ? { sourceNotesHash: notesHash(session.notes) } : {};
     default:
       return {};
   }

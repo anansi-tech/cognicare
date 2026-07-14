@@ -39,12 +39,17 @@ const ExternalLinkIcon = () => (
   </svg>
 );
 
-export default function SessionAIInsights({ session, refreshKey = 0, focus }) {
+// `onNotesStale` (optional, MUST be referentially stable): receives a boolean —
+// whether the session's notes diverged from what this session's progress/
+// documentation pair was generated (or last reconciled) from. The parent
+// renders the regenerate nudge above the SOAP section.
+export default function SessionAIInsights({ session, refreshKey = 0, focus, onNotesStale }) {
   const router = useRouter();
   const [assessment, setAssessment] = useState(null);
   const [diagnostic, setDiagnostic] = useState(null);
   const [treatment, setTreatment] = useState(null);
   const [progress, setProgress] = useState(null);
+  const [documentation, setDocumentation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -70,8 +75,11 @@ export default function SessionAIInsights({ session, refreshKey = 0, focus }) {
 
         if (cancelled) return;
 
-        // Session-scoped: progress is per-session
+        // Session-scoped: progress + documentation are per-session (the note
+        // itself renders in SessionNote; the doc is held here only for the
+        // notes-staleness comparison).
         setProgress(pickLatest(sessionReports, "progress") ?? null);
+        setDocumentation(pickLatest(sessionReports, "documentation") ?? null);
         // Client-scoped: assessment, diagnostic, treatment carry across sessions
         setAssessment(pickLatest(clientReports, "assessment") ?? null);
         setDiagnostic(pickLatest(clientReports, "diagnostic") ?? null);
@@ -88,6 +96,20 @@ export default function SessionAIInsights({ session, refreshKey = 0, focus }) {
       cancelled = true;
     };
   }, [clientId, sessionId, refreshKey]);
+
+  // Session edge (R54): the pair regenerates together, so one notes-edge
+  // signal covers both. A missing stamp reads as stale — backfill is the
+  // remedy, not a fallback. Reverting the notes restores the hash and clears.
+  const currentNotesHash = session?.notesHash;
+  const notesStale = !!(
+    currentNotesHash &&
+    ((progress && progress.sourceNotesHash !== currentNotesHash) ||
+      (documentation && documentation.sourceNotesHash !== currentNotesHash))
+  );
+  useEffect(() => {
+    if (loading) return;
+    onNotesStale?.(notesStale);
+  }, [notesStale, loading, onNotesStale]);
 
   if (loading) {
     return (

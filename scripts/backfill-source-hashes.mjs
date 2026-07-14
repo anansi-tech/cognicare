@@ -16,6 +16,7 @@
 
 import mongoose from "mongoose";
 import AIReport from "../src/models/aiReport.js";
+import Session from "../src/models/session.js";
 import { resolveUpstream } from "../src/lib/ai/upstream.js";
 import { notesHash, payloadHash, HASH_VERSION } from "../src/lib/hash.js";
 
@@ -65,6 +66,30 @@ for (const clientId of clientIds) {
       skipped++;
       continue;
     }
+    stamped++;
+    if (!isDryRun) await r.save();
+  }
+}
+
+// Session edge (R54): session-scoped progress/documentation are derived from
+// their session's notes — stamp as reconciled with those notes as they are now.
+const SESSION_TRACKED = ["progress", "documentation"];
+const sessionIds = await AIReport.distinct("sessionId", {
+  agentType: { $in: SESSION_TRACKED },
+  sessionId: { $ne: null },
+});
+console.log(`Found ${sessionIds.length} session(s) with session-scoped reports`);
+
+for (const sessionId of sessionIds) {
+  const session = await Session.findById(sessionId); // hydrated → decrypted notes
+  const sHash = notesHash(session?.notes);
+  const reports = await AIReport.find({ sessionId, agentType: { $in: SESSION_TRACKED } });
+  for (const r of reports) {
+    if (!needsStamp(r.sourceNotesHash)) {
+      skipped++;
+      continue;
+    }
+    r.sourceNotesHash = sHash;
     stamped++;
     if (!isDryRun) await r.save();
   }

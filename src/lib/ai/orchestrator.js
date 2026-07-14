@@ -67,10 +67,13 @@ export async function runWorkflow({ type, clientId, sessionId, userId, practiceI
       sessionType: dbSession.type,
       attendance: dbSession.status,
     } : null);
+    // Session edge (R54): both artifacts derive from these notes — capture the
+    // hash BEFORE the agent calls so a mid-generation edit lands already-stale.
+    const sNotesHash = notesHash(sd?.notes);
     const p = await evaluateProgress({ clientId, sessionData: sd, excludeReportIds });
-    await save(p, { status: "draft" });
+    await save(p, { status: "draft", sourceNotesHash: sNotesHash });
     const doc = await documentSession({ clientId, progress: p, sessionData: sd, excludeReportIds });
-    await save(doc);
+    await save(doc, { sourceNotesHash: sNotesHash });
     return { progress: p, documentation: doc };
   }
   throw new Error(`Unknown workflow type: ${type}`);

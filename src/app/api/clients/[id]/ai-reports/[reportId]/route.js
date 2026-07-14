@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { visibleClientIds } from "@/lib/practice";
 import { logAuditEvent, auditMetaFromRequest, AuditActions, EntityTypes } from "@/lib/audit";
 import AIReport from "@/models/aiReport";
+import Session from "@/models/session";
 import { resolveUpstream, reconciliationStamp } from "@/lib/ai/upstream";
 import { payloadHash } from "@/lib/hash";
 
@@ -60,10 +61,13 @@ export async function PATCH(req, { params }) {
     if (JSON.stringify(next) !== JSON.stringify(report.payload)) {
       report.payload = next;
       report.editedAt = new Date();
-      Object.assign(
-        report,
-        reconciliationStamp(report.agentType, await resolveUpstream(clientId, user.practiceId))
-      );
+      const upstream = await resolveUpstream(clientId, user.practiceId);
+      // Session edge: progress/documentation reconcile against their own
+      // session's current notes, not a client-level artifact.
+      if ((report.agentType === "progress" || report.agentType === "documentation") && report.sessionId) {
+        upstream.session = await Session.findById(report.sessionId);
+      }
+      Object.assign(report, reconciliationStamp(report.agentType, upstream));
     }
   }
   if (status && ["draft", "approved"].includes(status)) report.status = status;
