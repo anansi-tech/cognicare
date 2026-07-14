@@ -16,6 +16,7 @@ import { listInstruments } from "@/lib/mbc/instruments";
 import { useLiam } from "@/components/liam/LiamProvider";
 import { IntakeAssessment } from "@/components/ai/IntakeAssessment";
 import { ReassessmentBanner } from "@/components/ai/ReassessmentBanner";
+import { IconButton, PencilIcon } from "@/components/ai/editable";
 import {
   getConsentFormTemplate,
   getAvailableTemplates,
@@ -34,6 +35,7 @@ import { useFormDraft } from "@/hooks/useFormDraft";
 import { DraftRestoredNotice, DraftSaveIndicator } from "@/components/ui/DraftRestoredNotice";
 
 /** Compact one-line score summary per instrument, shown on Overview post-intake. */
+// Rail chips (Overview v2): compact 2-up score cards for the sticky sidebar.
 function MeasureGlance({ clientId, onViewAssessments }) {
   const [scores, setScores] = useState([]);
 
@@ -55,37 +57,34 @@ function MeasureGlance({ clientId, onViewAssessments }) {
   if (scores.length === 0) return null;
 
   return (
-    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-start", gap: 12 }}>
-      {scores.map((t) => {
-        const arrow = t.delta == null ? null : t.delta > 0 ? "↑" : t.delta < 0 ? "↓" : "→";
-        const arrowColor =
-          t.direction === "improved" ? "#3B9E57"
-          : t.direction === "worsened" ? "#C0392B"
-          : "#8298BC";
-        const pct = t.percentageFactor ? ` (${t.latest * t.percentageFactor}%)` : "";
-        const band = t.points.at(-1)?.band ?? "";
-        return (
-          <div key={t.instrumentId} style={{ background: "#fff", border: "1px solid #E3ECF7", borderRadius: 14, padding: "10px 14px", minWidth: 140 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "#8298BC" }}>{t.shortName}</div>
-            <div style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 22, color: "#0B2B6B", lineHeight: 1.15, marginTop: 2 }}>
-              {t.latest}{pct}
-            </div>
-            <div style={{ fontSize: 12.5, color: "#55698F", marginTop: 2 }}>
-              {band}
-              {arrow && <span style={{ marginLeft: 6, color: arrowColor }}>{arrow}</span>}
-            </div>
-          </div>
-        );
-      })}
-      <button
-        onClick={onViewAssessments}
-        style={{ fontSize: 13, fontWeight: 600, color: "#2F80FF", background: "none", border: "none", cursor: "pointer", alignSelf: "center" }}
-        className="hover:text-primary/70 transition-colors"
-      >
-        View assessments →
-      </button>
-    </div>
-  );
+    <div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          {scores.map((t) => {
+            const arrow = t.delta == null ? null : t.delta > 0 ? "↑" : t.delta < 0 ? "↓" : "→";
+            const arrowColor =
+              t.direction === "improved" ? "#3B9E57"
+              : t.direction === "worsened" ? "#C0392B"
+              : "#8298BC";
+            return (
+              <div key={t.instrumentId} style={{ background: "#fff", border: "1px solid #E3ECF7", borderRadius: 14, padding: "10px 12px" }}>
+                <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "#8298BC" }}>{t.shortName}</div>
+                <div style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 21, color: "#0B2B6B", marginTop: 1 }}>
+                  {t.latest}{arrow && <span style={{ fontSize: 13, color: arrowColor, marginLeft: 4 }}>{arrow}</span>}
+                </div>
+                <div style={{ fontSize: 11.5, color: "#55698F" }}>{t.points.at(-1)?.band ?? ""}</div>
+              </div>
+            );
+          })}
+        </div>
+        <button
+          onClick={onViewAssessments}
+          style={{ marginTop: 8, fontSize: 12.5, fontWeight: 600, color: "#2F80FF", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+          className="hover:text-primary/70 transition-colors"
+        >
+          View assessments →
+        </button>
+      </div>
+    );
 }
 
 function sortSessionsForDisplay(list) {
@@ -143,6 +142,12 @@ export default function ClientDetail({ clientId }) {
   const [assessmentExists, setAssessmentExists] = useState(null); // null = loading
   const [latestAssessmentAt, setLatestAssessmentAt] = useState(null);
   const [assessmentSourceNotesHash, setAssessmentSourceNotesHash] = useState(null);
+  // Overview v2 rail: latest reports (fed by ClientInsights), scroll-spy
+  // active section, and the single-column fallback breakpoint.
+  const [overviewReports, setOverviewReports] = useState({});
+  const [activeSection, setActiveSection] = useState("sec-assessment");
+  const [isNarrow, setIsNarrow] = useState(false);
+  const handleReportsChange = useCallback((r) => setOverviewReports(r), []);
   const [latestBaselineAt, setLatestBaselineAt] = useState(null);
   const [counselor, setCounselor] = useState(null);
   const [attendance, setAttendance] = useState(null);
@@ -294,6 +299,40 @@ export default function ClientDetail({ clientId }) {
   }, [clientId]);
 
   useEffect(() => { refreshAssessment(); }, [refreshAssessment]);
+
+  // Single-column fallback for the Overview grid.
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 1000px)");
+    const apply = () => setIsNarrow(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+
+  // Scroll-spy for the Overview navigator rail.
+  useEffect(() => {
+    if (activeTab !== "overview") return;
+    const ids = ["sec-assessment", "sec-diagnosis", "sec-treatment", "sec-progress", "sec-intake"];
+    const onScroll = () => {
+      const y = window.scrollY + 150;
+      let cur = ids[0];
+      for (const id of ids) {
+        const el = document.getElementById(id);
+        if (el && el.getBoundingClientRect().top + window.scrollY <= y) cur = id;
+      }
+      setActiveSection((prev) => (prev === cur ? prev : cur));
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [activeTab]);
+
+  const goToSection = (id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    // −84: clear the sticky navbar (~64px) plus breathing room.
+    window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 84, behavior: "smooth" });
+  };
 
   const fetchClient = async () => {
     try {
@@ -720,6 +759,14 @@ export default function ClientDetail({ clientId }) {
               <p style={{ fontSize: 13.5, color: "#55698F", margin: "6px 0 0" }}>
                 {counselor?.name && (<>Assigned to <strong style={{ color: "#0B2B6B" }}>{counselor.name}</strong> · </>)}
                 {ageFromDob(client.dateOfBirth) ?? "—"} / {genderLabel(client.gender)}
+                {(() => {
+                  const next = recentSessions
+                    .filter((s) => s.status === "scheduled" && new Date(s.date) > new Date())
+                    .sort((a, b) => new Date(a.date) - new Date(b.date))[0];
+                  return next ? (
+                    <> · Next session {new Date(next.date).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}</>
+                  ) : null;
+                })()}
               </p>
               {attendance && (attendance.noShows90 > 0 || attendance.cancellations90 > 0) && (
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
@@ -746,20 +793,14 @@ export default function ClientDetail({ clientId }) {
                 setCounselor((cur) => ({ ...(cur ?? {}), _id: counselorId, name: counselorName }));
               }}
             />
-            <button
-              onClick={() => setIsEditing(true)}
-              style={{ borderRadius: 10, border: "1px solid #E3ECF7", background: "#fff", padding: "7px 16px", fontSize: 13, fontWeight: 600, color: "#0B2B6B", cursor: "pointer" }}
-              className="hover:bg-[#F2F7FD] transition-colors"
-            >
-              Edit
-            </button>
-            <button
-              onClick={handleDeleteClient}
-              style={{ borderRadius: 10, border: "1px solid #FECACA", background: "#fff", padding: "7px 14px", fontSize: 13, fontWeight: 600, color: "#C0392B", cursor: "pointer" }}
-              className="hover:bg-[#FEF2F2] transition-colors"
-            >
-              Delete
-            </button>
+            <IconButton title="Edit client" onClick={() => setIsEditing(true)}>
+              <PencilIcon size={15} />
+            </IconButton>
+            <IconButton title="Delete client" onClick={handleDeleteClient} danger>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+              </svg>
+            </IconButton>
           </div>
         </div>
       </div>
@@ -850,98 +891,151 @@ export default function ClientDetail({ clientId }) {
               </div>
             )}
 
-            {/* Score chips — post-intake glanceable summary */}
-            {assessmentExists === true && (
-              <MeasureGlance
-                clientId={clientId}
-                onViewAssessments={() => setActiveTab("progress")}
-              />
-            )}
+            {/* Two-column clinical record: sticky navigator rail + continuous document */}
+            {(() => {
+              const { assessment: ovA, diagnostic: ovD, treatment: ovT, progress: ovP } = overviewReports;
+              const fmtShort = (iso) =>
+                iso ? new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : null;
+              const reassess = !!ovP?.payload?.reassessmentRecommended;
+              const navMeta = (r) =>
+                !r ? "Not yet generated"
+                : r.status === "draft" ? "Draft — needs review"
+                : r.status === "approved" ? `Approved · ${fmtShort(r.createdAt)}`
+                : `Updated ${fmtShort(r.createdAt)}`;
+              const navDot = (r) =>
+                !r ? "#A6B8D4" : r.status === "draft" ? "#E3B341" : r.status === "approved" ? "#3B9E57" : "#A6B8D4";
+              const navItems = [
+                { id: "sec-assessment", label: "Assessment", meta: navMeta(ovA), dot: navDot(ovA) },
+                { id: "sec-diagnosis", label: "Diagnostic impression", meta: navMeta(ovD), dot: navDot(ovD) },
+                { id: "sec-treatment", label: `Treatment plan${ovT?.version ? ` v${ovT.version}` : ""}`, meta: navMeta(ovT), dot: navDot(ovT) },
+                { id: "sec-progress", label: "Progress report", meta: reassess ? "Reassessment recommended" : navMeta(ovP), dot: reassess ? "#E3B341" : navDot(ovP) },
+                { id: "sec-intake", label: "Intake note", meta: "At creation", dot: "#A6B8D4" },
+              ];
 
-            {/* AI clinical picture */}
-            <ClientInsights
-              clientId={client._id}
-              refreshKey={aiRefreshKey}
-              onRegenerated={refreshAssessment}
-            />
+              const navCard = (
+                <div style={{ background: "#fff", border: "1px solid #E3ECF7", borderRadius: 16, padding: 10, boxShadow: "0 22px 50px -40px rgba(11,43,107,.3)" }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: "#8298BC", padding: "6px 10px 8px" }}>
+                    Clinical picture
+                  </div>
+                  {navItems.map((n) => {
+                    const active = activeSection === n.id;
+                    return (
+                      <button
+                        key={n.id}
+                        type="button"
+                        onClick={() => goToSection(n.id)}
+                        className="hover:bg-[#F0F6FD] transition-colors"
+                        style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", border: "none", textAlign: "left", fontFamily: "inherit", padding: "8px 10px", borderRadius: 9, cursor: "pointer", background: active ? "#EAF3FF" : "transparent" }}
+                      >
+                        <span style={{ flexShrink: 0, width: 7, height: 7, borderRadius: "50%", background: n.dot }} />
+                        <span style={{ minWidth: 0, flex: 1 }}>
+                          <span style={{ display: "block", fontSize: 13, fontWeight: active ? 700 : 600, color: active ? "#2F80FF" : "#33465F" }}>{n.label}</span>
+                          <span style={{ display: "block", fontSize: 11, color: "#A6B8D4", marginTop: 1 }}>{n.meta}</span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              );
 
-            {/* Basic + Contact info cards */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
-              <div style={{ background: "#fff", border: "1px solid #E3ECF7", borderRadius: 18, padding: "20px 22px", boxShadow: "0 22px 50px -40px rgba(11,43,107,.3)" }}>
-                <h2 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 16, color: "#0B2B6B", margin: "0 0 12px" }}>Basic Information</h2>
-                <dl>
+              const navChipsRow = (
+                <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4 }}>
+                  {navItems.map((n) => {
+                    const active = activeSection === n.id;
+                    return (
+                      <button
+                        key={n.id}
+                        type="button"
+                        onClick={() => goToSection(n.id)}
+                        style={{ display: "inline-flex", alignItems: "center", gap: 7, flexShrink: 0, border: "1px solid #E3ECF7", borderRadius: 999, padding: "6px 13px", fontFamily: "inherit", fontSize: 12.5, fontWeight: active ? 700 : 600, cursor: "pointer", background: active ? "#EAF3FF" : "#fff", color: active ? "#2F80FF" : "#33465F", whiteSpace: "nowrap" }}
+                      >
+                        <span style={{ width: 7, height: 7, borderRadius: "50%", background: n.dot }} />
+                        {n.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+
+              const scoreChips =
+                assessmentExists === true ? (
+                  <MeasureGlance clientId={clientId} onViewAssessments={() => setActiveTab("progress")} />
+                ) : null;
+
+              const emergency = client.contactInfo?.emergencyContact;
+              const factsCard = (
+                <div style={{ background: "#fff", border: "1px solid #E3ECF7", borderRadius: 16, padding: "14px 16px", boxShadow: "0 22px 50px -40px rgba(11,43,107,.3)" }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: "#8298BC", marginBottom: 8 }}>
+                    Client facts
+                  </div>
                   {[
-                    { label: "Name", value: client.name },
-                    { label: "Age", value: (<>{ageFromDob(client.dateOfBirth) ?? "—"}{client.dateOfBirth && <span style={{ fontSize: 12.5, color: "#8298BC", marginLeft: 8 }}>DOB {formatDob(client.dateOfBirth)}</span>}</>) },
-                    { label: "Gender", value: (<>{genderLabel(client.gender)}{client.pronouns && <span style={{ fontSize: 12.5, color: "#8298BC", marginLeft: 8 }}>({client.pronouns})</span>}</>) },
-                    { label: "Status", value: client.status.charAt(0).toUpperCase() + client.status.slice(1) },
-                    { label: "Created", value: formatDate(client.createdAt) },
-                    { label: "Last Updated", value: formatDate(client.updatedAt) },
-                  ].map(({ label, value }, i) => (
-                    <div key={label} style={{ display: "grid", gridTemplateColumns: "108px 1fr", padding: "9px 0", borderTop: i > 0 ? "1px solid #E3ECF7" : "none" }}>
-                      <dt style={{ fontSize: 13, fontWeight: 500, color: "#8298BC" }}>{label}</dt>
-                      <dd style={{ fontSize: 13.5, color: "#0B2B6B" }}>{value}</dd>
+                    { k: "Email", v: client.contactInfo?.email || "—" },
+                    { k: "Phone", v: client.contactInfo?.phone || "—" },
+                    { k: "Emergency", v: [emergency?.name, emergency?.relationship, emergency?.phone].filter(Boolean).join(", ") || "—" },
+                    { k: "DOB", v: client.dateOfBirth ? `${formatDob(client.dateOfBirth)} (${ageFromDob(client.dateOfBirth) ?? "—"})` : "—" },
+                    { k: "Client since", v: formatDate(client.createdAt) },
+                  ].map((f) => (
+                    <div key={f.k} style={{ display: "grid", gridTemplateColumns: "74px 1fr", gap: 8, padding: "6px 0", borderTop: "1px solid #F2F6FB", fontSize: 12.5 }}>
+                      <span style={{ color: "#8298BC" }}>{f.k}</span>
+                      <span style={{ color: "#24344F", fontWeight: 500, overflowWrap: "anywhere" }}>{f.v}</span>
                     </div>
                   ))}
-                </dl>
-              </div>
+                </div>
+              );
 
-              <div style={{ background: "#fff", border: "1px solid #E3ECF7", borderRadius: 18, padding: "20px 22px", boxShadow: "0 22px 50px -40px rgba(11,43,107,.3)" }}>
-                <h2 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 16, color: "#0B2B6B", margin: "0 0 12px" }}>Contact Information</h2>
-                <dl>
-                  <div style={{ display: "grid", gridTemplateColumns: "108px 1fr", padding: "9px 0" }}>
-                    <dt style={{ fontSize: 13, fontWeight: 500, color: "#8298BC" }}>Email</dt>
-                    <dd style={{ fontSize: 13.5, color: "#0B2B6B" }}>{client.contactInfo?.email || "—"}</dd>
-                  </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "108px 1fr", padding: "9px 0", borderTop: "1px solid #E3ECF7" }}>
-                    <dt style={{ fontSize: 13, fontWeight: 500, color: "#8298BC" }}>Phone</dt>
-                    <dd style={{ fontSize: 13.5, color: "#0B2B6B" }}>{client.contactInfo?.phone || "—"}</dd>
-                  </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "108px 1fr", padding: "9px 0", borderTop: "1px solid #E3ECF7" }}>
-                    <dt style={{ fontSize: 13, fontWeight: 500, color: "#8298BC" }}>Emergency</dt>
-                    <dd style={{ fontSize: 13.5, color: "#0B2B6B" }}>
-                      {client.contactInfo?.emergencyContact ? (
-                        <div>
-                          {client.contactInfo.emergencyContact.name && `${client.contactInfo.emergencyContact.name}`}
-                          {client.contactInfo.emergencyContact.relationship && (
-                            <span>
-                              {client.contactInfo.emergencyContact.name ? ", " : ""}
-                              {client.contactInfo.emergencyContact.relationship}
-                            </span>
-                          )}
-                          {client.contactInfo.emergencyContact.phone && (
-                            <span>
-                              {client.contactInfo.emergencyContact.name || client.contactInfo.emergencyContact.relationship ? ", " : ""}
-                              {client.contactInfo.emergencyContact.phone}
-                            </span>
-                          )}
-                          {!client.contactInfo.emergencyContact.name && !client.contactInfo.emergencyContact.relationship && !client.contactInfo.emergencyContact.phone && "—"}
-                        </div>
-                      ) : "—"}
-                    </dd>
-                  </div>
-                </dl>
-              </div>
-            </div>
+              const documentColumn = (
+                <div style={{ display: "flex", flexDirection: "column", gap: 18, minWidth: 0 }}>
+                  <ClientInsights
+                    clientId={client._id}
+                    refreshKey={aiRefreshKey}
+                    onRegenerated={refreshAssessment}
+                    onReportsChange={handleReportsChange}
+                  />
+                  {/* Intake note — the clinician-written source of the AI assessment */}
+                  <section id="sec-intake" style={{ background: "#fff", border: "1px solid #E3ECF7", borderRadius: 20, boxShadow: "0 22px 50px -40px rgba(11,43,107,.25)" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "14px 20px", borderBottom: "1px solid #EEF3FA" }}>
+                      <div>
+                        <h3 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 16, color: "#0B2B6B", margin: 0 }}>Intake note</h3>
+                        <p style={{ fontSize: 11.5, color: "#8298BC", margin: "1px 0 0" }}>Written at client creation · source of the AI assessment</p>
+                      </div>
+                      <IconButton title="New session" onClick={() => router.push(`/sessions/new?clientId=${clientId}`)}>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                          <path d="M12 5v14M5 12h14" />
+                        </svg>
+                      </IconButton>
+                    </div>
+                    <div style={{ padding: "14px 20px 20px" }}>
+                      <div style={{ background: "#F2F7FD", borderRadius: 12, padding: "14px 16px" }}>
+                        <p style={{ fontSize: 13.5, color: "#0B2B6B", whiteSpace: "pre-line", lineHeight: 1.65, margin: 0 }}>
+                          {client.initialAssessment}
+                        </p>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+              );
 
-            {/* Initial Assessment */}
-            <div style={{ background: "#fff", border: "1px solid #E3ECF7", borderRadius: 18, padding: "20px 22px", boxShadow: "0 22px 50px -40px rgba(11,43,107,.3)" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-                <h2 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 16, color: "#0B2B6B", margin: 0 }}>Initial Assessment</h2>
-                <button
-                  onClick={() => router.push(`/sessions/new?clientId=${clientId}`)}
-                  style={{ fontSize: 13.5, fontWeight: 600, color: "#2F80FF", background: "none", border: "none", cursor: "pointer" }}
-                  className="hover:text-primary/70 transition-colors"
-                >
-                  + Add New Session
-                </button>
-              </div>
-              <div style={{ background: "#F2F7FD", borderRadius: 12, padding: "14px 16px" }}>
-                <p style={{ fontSize: 14, color: "#0B2B6B", whiteSpace: "pre-line", lineHeight: 1.65, margin: 0 }}>
-                  {client.initialAssessment}
-                </p>
-              </div>
-            </div>
+              return isNarrow ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+                  {navChipsRow}
+                  {documentColumn}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                    {scoreChips}
+                    {factsCard}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: "grid", gridTemplateColumns: "252px minmax(0, 1fr)", gap: 24, alignItems: "start" }}>
+                  <div style={{ position: "sticky", top: 84, display: "flex", flexDirection: "column", gap: 14 }}>
+                    {navCard}
+                    {scoreChips}
+                    {factsCard}
+                  </div>
+                  {documentColumn}
+                </div>
+              );
+            })()}
+
           </div>
         )}
 

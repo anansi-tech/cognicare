@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useLiam } from "@/components/liam/LiamProvider";
 import { AgentReportBody, TreatmentBody, AssessmentBody, DiagnosticBody, ProgressBody } from "@/components/ai/AgentReportBody";
 import { Section, Empty } from "@/components/ai/Section";
-import { EditApproveBar } from "@/components/ai/editable";
+import { SectionHeaderActions, IconButton } from "@/components/ai/editable";
 import { useEditableReport } from "@/components/ai/useEditableReport";
 
 // Client-scoped agent insights. Renders the latest envelope of each agent type
@@ -28,16 +28,18 @@ function upstreamStale(upstream, downstream, sourceKey) {
   return upstream.payloadHash !== downstream[sourceKey];
 }
 
-// The offer to re-derive downstream artifacts. Never fires on its own.
+// The offer to re-derive downstream artifacts — a slim amber strip rendered in
+// the Section `nudge` slot, directly under the section header. Never fires on
+// its own.
 function CascadeOffer({ text, buttonLabel, busy, onRun }) {
   return (
-    <div style={{ marginTop: 12, background: "#FEF9EC", border: "1px solid #F6E6BC", borderRadius: 12, padding: "12px 14px" }}>
-      <p style={{ fontSize: 13.5, color: "#7A6020", margin: 0 }}>{text}</p>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", margin: "12px 20px 0", background: "#FEF9EC", border: "1px solid #F6E6BC", borderRadius: 11, padding: "9px 14px" }}>
+      <span style={{ fontSize: 12.5, color: "#7A6020", flex: 1, minWidth: 200 }}>{text}</span>
       <button
         type="button"
         onClick={onRun}
         disabled={busy}
-        style={{ marginTop: 9, borderRadius: 9, background: "#A9821F", color: "#fff", padding: "6px 14px", fontSize: 13, fontWeight: 600, border: "none", cursor: busy ? "default" : "pointer", opacity: busy ? 0.6 : 1 }}
+        style={{ flexShrink: 0, border: "none", borderRadius: 8, background: "#A9821F", color: "#fff", fontFamily: "inherit", fontSize: 12, fontWeight: 700, padding: "6px 12px", cursor: busy ? "default" : "pointer", opacity: busy ? 0.6 : 1 }}
         className="hover:opacity-90 transition-opacity"
       >
         {busy ? "Regenerating…" : buttonLabel}
@@ -46,7 +48,10 @@ function CascadeOffer({ text, buttonLabel, busy, onRun }) {
   );
 }
 
-export default function ClientInsights({ clientId, refreshKey = 0, onRegenerated }) {
+// `onReportsChange` (optional, MUST be referentially stable — useCallback in
+// the parent): receives { assessment, diagnostic, treatment, progress } so the
+// Overview rail can derive nav status dots/meta without duplicating fetches.
+export default function ClientInsights({ clientId, refreshKey = 0, onRegenerated, onReportsChange }) {
   const [assessment, setAssessment] = useState(null);
   const [diagnostic, setDiagnostic] = useState(null);
   const [treatment, setTreatment] = useState(null);
@@ -168,6 +173,13 @@ export default function ClientInsights({ clientId, refreshKey = 0, onRegenerated
   const tx = useEditableReport({ clientId, report: treatment, onUpdated: setTreatment });
   const px = useEditableReport({ clientId, report: progress, onUpdated: setProgress });
 
+  // Keep the parent's navigator rail in sync with report state (fetches AND
+  // in-place edits/approvals both land here).
+  useEffect(() => {
+    if (loading) return;
+    onReportsChange?.({ assessment, diagnostic, treatment, progress });
+  }, [assessment, diagnostic, treatment, progress, loading, onReportsChange]);
+
   if (loading) {
     return (
       <div className="rounded-lg border border-border bg-background p-4 text-sm text-muted-foreground">
@@ -205,7 +217,6 @@ export default function ClientInsights({ clientId, refreshKey = 0, onRegenerated
   }
 
   const treatmentVersion = treatment?.version;
-  const treatmentTitle = `Treatment Plan${treatmentVersion ? ` v${treatmentVersion}` : ""}`;
 
   // Content-hash staleness across the chain. Each downstream artifact stores
   // the hash of the upstream it was derived from (or last reconciled with);
@@ -234,7 +245,7 @@ export default function ClientInsights({ clientId, refreshKey = 0, onRegenerated
     iso ? new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : null;
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
       {regenError && (
         <div className="flex items-start justify-between gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
           <span>{regenError}</span>
@@ -249,166 +260,139 @@ export default function ClientInsights({ clientId, refreshKey = 0, onRegenerated
         </div>
       )}
       <Section
+        id="sec-assessment"
+        sticky
         title="Assessment"
         summary={assessment?.summary}
-        collapsible
-        defaultOpen
-        subtitle={`Assessment agent${fmtDate(assessment?.createdAt) ? ` · Updated ${fmtDate(assessment?.createdAt)}` : ""}`}
+        subtitle={fmtDate(assessment?.createdAt) ? `Updated ${fmtDate(assessment?.createdAt)}` : "Assessment agent"}
+        draft={assessment?.status === "draft"}
+        actions={assessment ? <SectionHeaderActions tx={ax} report={assessment} editLabel="Edit assessment" /> : undefined}
+        nudge={
+          cascadeAllowed && dxStaleVsAssessment ? (
+            <CascadeOffer
+              text="You've edited the assessment. Regenerate the diagnosis and treatment plan from your corrections? This replaces the current drafts."
+              buttonLabel="Regenerate downstream"
+              busy={regenerating === "assessment"}
+              onRun={() => runCascade("assessment")}
+            />
+          ) : null
+        }
       >
         {assessment ? (
-          <>
-            <EditApproveBar tx={ax} report={assessment} draftLabel={`Draft v${assessment.version ?? 1}`} />
-            {ax.canEdit ? (
-              <AssessmentBody payload={ax.edited} editable onChange={ax.setEdited} />
-            ) : (
-              <>
-                <AssessmentBody payload={assessment.payload} />
-                <button
-                  onClick={ax.startEdit}
-                  className="mt-2 text-xs text-primary hover:text-primary/80"
-                >
-                  Edit assessment
-                </button>
-              </>
-            )}
-            {cascadeAllowed && dxStaleVsAssessment && (
-              <CascadeOffer
-                text="You've edited the assessment. Regenerate the diagnosis and treatment plan from your corrections? This replaces the current drafts."
-                buttonLabel="Regenerate downstream"
-                busy={regenerating === "assessment"}
-                onRun={() => runCascade("assessment")}
-              />
-            )}
-            {reviseNudge === "assessment" && (
-              <CascadeOffer
-                text={reviseNudgeText("assessment")}
-                buttonLabel="Revise treatment plan"
-                busy={regenerating === "treatment"}
-                onRun={reviseTreatment}
-              />
-            )}
-          </>
+          ax.canEdit ? (
+            <AssessmentBody payload={ax.edited} editable onChange={ax.setEdited} />
+          ) : (
+            <AssessmentBody payload={assessment.payload} />
+          )
         ) : (
           <Empty>Assessment generates automatically when a client is created.</Empty>
         )}
       </Section>
       <Section
-        title="Diagnostic Impression"
+        id="sec-diagnosis"
+        sticky
+        title="Diagnostic impression"
         summary={diagnostic?.summary}
-        collapsible
-        defaultOpen={false}
-        subtitle={`Diagnostic agent${fmtDate(diagnostic?.createdAt) ? ` · Updated ${fmtDate(diagnostic?.createdAt)}` : ""}`}
+        subtitle={fmtDate(diagnostic?.createdAt) ? `Updated ${fmtDate(diagnostic?.createdAt)}` : "Diagnostic agent"}
+        draft={diagnostic?.status === "draft"}
+        actions={diagnostic ? <SectionHeaderActions tx={dx} report={diagnostic} editLabel="Edit diagnosis" /> : undefined}
+        nudge={
+          cascadeAllowed && txStaleVsDiagnostic ? (
+            <CascadeOffer
+              text="You've edited the diagnosis. Regenerate the treatment plan from it? This replaces the current draft."
+              buttonLabel="Regenerate treatment"
+              busy={regenerating === "diagnostic"}
+              onRun={() => runCascade("diagnostic")}
+            />
+          ) : null
+        }
       >
         {diagnostic ? (
-          <>
-            <EditApproveBar tx={dx} report={diagnostic} draftLabel="Draft" />
-            {dx.canEdit ? (
-              <DiagnosticBody payload={dx.edited} editable onChange={dx.setEdited} />
-            ) : (
-              <>
-                <DiagnosticBody payload={diagnostic.payload} />
-                <button
-                  onClick={dx.startEdit}
-                  className="mt-2 text-xs text-primary hover:text-primary/80"
-                >
-                  Edit diagnosis
-                </button>
-              </>
-            )}
-            {cascadeAllowed && txStaleVsDiagnostic && (
-              <CascadeOffer
-                text="You've edited the diagnosis. Regenerate the treatment plan from it? This replaces the current draft."
-                buttonLabel="Regenerate treatment"
-                busy={regenerating === "diagnostic"}
-                onRun={() => runCascade("diagnostic")}
-              />
-            )}
-            {reviseNudge === "diagnostic" && (
-              <CascadeOffer
-                text={reviseNudgeText("diagnosis")}
-                buttonLabel="Revise treatment plan"
-                busy={regenerating === "treatment"}
-                onRun={reviseTreatment}
-              />
-            )}
-          </>
+          dx.canEdit ? (
+            <DiagnosticBody payload={dx.edited} editable onChange={dx.setEdited} />
+          ) : (
+            <DiagnosticBody payload={diagnostic.payload} />
+          )
         ) : (
           <Empty>Generated automatically after the assessment.</Empty>
         )}
       </Section>
       <Section
-        title={treatmentTitle}
+        id="sec-treatment"
+        sticky
+        title={
+          <>
+            Treatment plan
+            {treatmentVersion ? <span style={{ fontSize: 12, fontWeight: 700, color: "#8298BC", marginLeft: 6 }}>v{treatmentVersion}</span> : null}
+          </>
+        }
         summary={treatment?.summary}
-        collapsible
-        defaultOpen={false}
-        subtitle={`Treatment agent${fmtDate(treatment?.createdAt) ? ` · Updated ${fmtDate(treatment?.createdAt)}` : ""}`}
+        subtitle={fmtDate(treatment?.createdAt) ? `Updated ${fmtDate(treatment?.createdAt)}` : "Treatment agent"}
+        draft={treatment?.status === "draft"}
+        actions={
+          treatment ? (
+            <SectionHeaderActions
+              tx={tx}
+              report={treatment}
+              editLabel="Edit plan"
+              // Periodic plan review — post-session only. Pre-session the R51
+              // replace offers are the correct path, and revising there would
+              // mint v2 and permanently close the cascade gate. What revising
+              // does (v(n+1), prior kept) is in the confirm dialog.
+              extra={
+                !cascadeAllowed ? (
+                  <IconButton
+                    title="Revise treatment plan (new version)"
+                    onClick={reviseTreatment}
+                    disabled={regenerating === "treatment"}
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+                      <polyline points="21 3 21 9 15 9" />
+                    </svg>
+                  </IconButton>
+                ) : null
+              }
+            />
+          ) : undefined
+        }
+        nudge={
+          reviseNudge ? (
+            <CascadeOffer
+              text={reviseNudgeText(reviseNudge === "diagnostic" ? "diagnosis" : "assessment")}
+              buttonLabel="Revise treatment plan"
+              busy={regenerating === "treatment"}
+              onRun={reviseTreatment}
+            />
+          ) : null
+        }
       >
         {treatment ? (
-          <>
-            <EditApproveBar tx={tx} report={treatment} draftLabel={`Draft v${treatment.version ?? 1}`} />
-            {tx.canEdit ? (
-              <TreatmentBody
-                payload={tx.edited}
-                editable={true}
-                onChange={tx.setEdited}
-              />
-            ) : (
-              <>
-                <AgentReportBody agentType="treatment" payload={treatment.payload} />
-                <button
-                  onClick={tx.startEdit}
-                  className="mt-2 text-xs text-primary hover:text-primary/80"
-                >
-                  Edit plan
-                </button>
-              </>
-            )}
-            {/* Periodic plan review — post-session only. Pre-session the R51
-                replace offers are the correct path, and revising there would
-                mint v2 and permanently close the cascade gate. What revising
-                does (v(n+1), prior kept) is spelled out in the confirm dialog. */}
-            {!cascadeAllowed && (
-              <div className="mt-3 pt-3 border-t border-border/60 flex justify-end">
-                <button
-                  type="button"
-                  onClick={reviseTreatment}
-                  disabled={regenerating === "treatment"}
-                  className="text-xs font-semibold text-primary hover:text-primary/80 disabled:opacity-60"
-                >
-                  {regenerating === "treatment" ? "Revising treatment plan…" : "Revise treatment plan"}
-                </button>
-              </div>
-            )}
-          </>
+          tx.canEdit ? (
+            <TreatmentBody payload={tx.edited} editable={true} onChange={tx.setEdited} />
+          ) : (
+            <AgentReportBody agentType="treatment" payload={treatment.payload} />
+          )
         ) : (
           <Empty>Generated automatically at intake or when you open a scheduled session.</Empty>
         )}
       </Section>
       <Section
-        title="Progress Report"
+        id="sec-progress"
+        sticky
+        title="Progress report"
         summary={progress?.summary}
-        collapsible
-        defaultOpen={false}
-        subtitle={`Progress agent${fmtDate(progress?.createdAt) ? ` · Updated ${fmtDate(progress?.createdAt)}` : ""}`}
+        subtitle={fmtDate(progress?.createdAt) ? `Updated ${fmtDate(progress?.createdAt)}` : "Progress agent"}
+        draft={progress?.status === "draft"}
         badge={progress?.payload?.reassessmentRecommended ? "Reassessment recommended" : undefined}
+        actions={progress ? <SectionHeaderActions tx={px} report={progress} editLabel="Edit progress" /> : undefined}
       >
         {progress ? (
-          <>
-            <EditApproveBar tx={px} report={progress} draftLabel="Draft" />
-            {px.canEdit ? (
-              <ProgressBody payload={px.edited} editable onChange={px.setEdited} />
-            ) : (
-              <>
-                <ProgressBody payload={progress.payload} />
-                <button
-                  onClick={px.startEdit}
-                  className="mt-2 text-xs text-primary hover:text-primary/80"
-                >
-                  Edit progress
-                </button>
-              </>
-            )}
-          </>
+          px.canEdit ? (
+            <ProgressBody payload={px.edited} editable onChange={px.setEdited} />
+          ) : (
+            <ProgressBody payload={progress.payload} />
+          )
         ) : (
           <Empty>Generated automatically after you complete a session.</Empty>
         )}

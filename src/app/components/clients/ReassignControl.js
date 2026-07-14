@@ -61,9 +61,14 @@ export default function ReassignControl({ client, onReassigned }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="px-3 py-1 bg-amber-500 text-white rounded hover:bg-amber-600"
+        title="Reassign clinician"
+        aria-label="Reassign clinician"
+        className="hover:bg-[#EAF3FF] hover:border-[#C7DCF5] hover:text-[#2F80FF] transition-colors"
+        style={{ display: "grid", placeItems: "center", width: 32, height: 32, border: "1px solid #E3ECF7", borderRadius: 9, background: "#fff", color: "#55698F", cursor: "pointer", flexShrink: 0 }}
       >
-        Reassign
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M16 3h5v5" /><path d="M21 3l-7 7" /><path d="M8 21H3v-5" /><path d="M3 21l7-7" />
+        </svg>
       </button>
 
       {open && (

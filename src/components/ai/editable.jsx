@@ -10,6 +10,90 @@ export function SaveIndicator({ state }) {
   return null;
 }
 
+// 32px square icon button used in section headers and the client header card.
+export function IconButton({ title, onClick, disabled = false, danger = false, children }) {
+  return (
+    <button
+      type="button"
+      title={title}
+      aria-label={title}
+      onClick={onClick}
+      disabled={disabled}
+      className={
+        danger
+          ? "hover:bg-[#FDECEC] hover:border-[#F3C2BC] hover:text-[#C0392B] transition-colors disabled:opacity-50"
+          : "hover:bg-[#EAF3FF] hover:border-[#C7DCF5] hover:text-[#2F80FF] transition-colors disabled:opacity-50"
+      }
+      style={{ display: "grid", placeItems: "center", width: 32, height: 32, border: "1px solid #E3ECF7", borderRadius: 9, background: "#fff", color: "#55698F", cursor: disabled ? "default" : "pointer", flexShrink: 0 }}
+    >
+      {children}
+    </button>
+  );
+}
+
+export const PencilIcon = ({ size = 14 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+  </svg>
+);
+
+const CheckIcon = ({ size = 13 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+);
+
+const PILL = { fontSize: 11.5, fontWeight: 700, padding: "3px 10px", borderRadius: 999, whiteSpace: "nowrap" };
+const SOLID_BTN = { display: "inline-flex", alignItems: "center", gap: 6, border: "none", borderRadius: 9, color: "#fff", fontFamily: "inherit", fontSize: 12.5, fontWeight: 700, padding: "7px 13px", cursor: "pointer" };
+
+// Section-header action slot (Overview v2): the full draft/approved/editing
+// control set in one always-visible place. Same functions the old in-body
+// EditApproveBar + bottom "Edit …" links exposed — startEdit, approve,
+// SaveIndicator — no new behavior. `extra` renders caller-owned buttons
+// (e.g. the treatment revise icon) whose handlers stay with the caller.
+export function SectionHeaderActions({ tx, report, editLabel = "Edit", extra = null }) {
+  if (!report) return null;
+  const isDraft = report.status === "draft";
+
+  // Re-editing an approved (or pre-status) report: autosave state + Done.
+  if (!isDraft && tx.isEditing) {
+    return (
+      <>
+        <SaveIndicator state={tx.saveState} />
+        <button type="button" onClick={tx.approve} style={{ ...SOLID_BTN, background: "#2F80FF", boxShadow: "0 10px 24px -12px rgba(47,128,255,.7)" }}>
+          <CheckIcon />Done
+        </button>
+      </>
+    );
+  }
+
+  // Draft: body is already editable (canEdit), so no pencil — review & approve.
+  if (isDraft) {
+    return (
+      <>
+        <span style={{ ...PILL, background: "#FBF2DA", color: "#A9821F" }}>Draft — review</span>
+        <SaveIndicator state={tx.saveState} />
+        {extra}
+        <button type="button" onClick={tx.approve} title="Approve" style={{ ...SOLID_BTN, background: "#3B9E57", boxShadow: "0 10px 24px -12px rgba(59,158,87,.7)" }}>
+          <CheckIcon />Approve
+        </button>
+      </>
+    );
+  }
+
+  return (
+    <>
+      {report.status === "approved" && (
+        <span style={{ ...PILL, background: "#E7F6EC", color: "#3B9E57" }}>Approved</span>
+      )}
+      {extra}
+      <IconButton title={editLabel} onClick={tx.startEdit}>
+        <PencilIcon />
+      </IconButton>
+    </>
+  );
+}
+
 // Draft/approved-editing status bar — shared across all editable report sections.
 // Shows when report is draft OR when an approved report is being re-edited.
 export function EditApproveBar({ tx, report, draftLabel }) {
