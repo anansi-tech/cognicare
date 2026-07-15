@@ -5,6 +5,7 @@ import { visibleClientIds } from "@/lib/practice";
 import { logAuditEvent, auditMetaFromRequest, AuditActions, EntityTypes } from "@/lib/audit";
 import Client from "@/models/client";
 import ConsentForm from "@/models/consentForm";
+import { isConsented } from "@/lib/consent";
 
 // GET consent status for a client.
 // Returns: { required, signed, latest, overridden }
@@ -35,7 +36,13 @@ export async function GET(_req, { params }) {
     : null;
   const overridden = !!(client?.consentOverride?.by);
 
-  return NextResponse.json({ required: true, signed, latest, overridden });
+  return NextResponse.json({
+    required: true,
+    signed,
+    latest,
+    overridden,
+    consented: isConsented({ forms, client }),
+  });
 }
 
 // PATCH — therapist records that consent was obtained in person (override).

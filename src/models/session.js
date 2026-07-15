@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 import { fieldEncryption } from "mongoose-field-encryption";
+// Relative import — this model is also loaded by plain-node scripts.
+import { notesHash } from "../lib/hash.js";
 
 const sessionSchema = new mongoose.Schema(
   {
@@ -47,6 +49,10 @@ const sessionSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
+    // Content hash of `notes`, stamped on every notes write by the pre("save")
+    // hook below. Aggregates and GET routes read it instead of
+    // decrypt-and-recompute (compute-fallback only for pre-backfill docs).
+    notesHash: { type: String },
     // Shared by sessions generated together as a recurring series (Round 15).
     // Each session is still its own doc; the seriesId only links them so we
     // can offer "cancel this and future" without modeling a separate series.
@@ -70,9 +76,12 @@ const sessionSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Update timestamps before saving
+// Update timestamps + hash-on-write before saving. Any write that changes
+// notes restamps its content hash. Registered BEFORE the encryption plugin —
+// its own pre("save") encrypts notes in place, and this needs the plaintext.
 sessionSchema.pre("save", function (next) {
   this.updatedAt = new Date();
+  if (this.isModified("notes")) this.notesHash = notesHash(this.notes ?? "");
   next();
 });
 

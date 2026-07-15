@@ -93,7 +93,7 @@ export async function PATCH(req, { params }) {
     version: fresh.version,
     payload: fresh.payload,
     editedAt: fresh.editedAt,
-    payloadHash: payloadHash(fresh.payload),
+    payloadHash: fresh.payloadHash ?? payloadHash(fresh.payload),
     sourceNotesHash: fresh.sourceNotesHash,
     sourceAssessmentHash: fresh.sourceAssessmentHash,
     sourceDiagnosticHash: fresh.sourceDiagnosticHash,

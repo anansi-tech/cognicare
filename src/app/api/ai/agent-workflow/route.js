@@ -5,6 +5,7 @@ import { runWorkflow } from "@/lib/ai/orchestrator";
 import { connectDB } from "@/lib/mongodb";
 import Client from "@/models/client";
 import ConsentForm from "@/models/consentForm";
+import { isConsented } from "@/lib/consent";
 
 export const runtime = "nodejs";
 // Two sequential gpt-5.5 reasoning calls; needs > Vercel Hobby's 60s cap (Fluid/Pro allow up to 300s).
@@ -27,12 +28,11 @@ export async function POST(req) {
   // Intake must not process PHI before informed consent is obtained.
   if (type === "intake") {
     await connectDB();
-    const [client, signed] = await Promise.all([
+    const [client, forms] = await Promise.all([
       Client.findById(clientId).select("consentOverride").lean(),
-      ConsentForm.exists({ clientId, practiceId: user.practiceId, status: "signed" }),
+      ConsentForm.find({ clientId, practiceId: user.practiceId }).select("status").lean(),
     ]);
-    const overridden = !!(client?.consentOverride?.by);
-    if (!signed && !overridden) {
+    if (!isConsented({ forms, client })) {
       return NextResponse.json(
         { error: "Informed consent required before processing" },
         { status: 409 }

@@ -95,8 +95,34 @@ for (const sessionId of sessionIds) {
   }
 }
 
+// Hash-on-write backfill (R55): stamp missing/old-version content hashes.
+// New writes stamp themselves via the models' pre("save") hooks; this covers
+// documents that predate them. Hydrated reads decrypt; setting only the hash
+// field leaves payload/notes unmodified so the hooks don't double-stamp.
+const reportCursor = AIReport.find({}).cursor();
+for await (const r of reportCursor) {
+  if (!needsStamp(r.payloadHash)) {
+    skipped++;
+    continue;
+  }
+  r.payloadHash = payloadHash(r.payload);
+  stamped++;
+  if (!isDryRun) await r.save();
+}
+
+const sessionCursor = Session.find({}).cursor();
+for await (const s of sessionCursor) {
+  if (!needsStamp(s.notesHash)) {
+    skipped++;
+    continue;
+  }
+  s.notesHash = notesHash(s.notes ?? "");
+  stamped++;
+  if (!isDryRun) await s.save();
+}
+
 console.log(
-  `${isDryRun ? "[dry run] Would stamp" : "Stamped"} ${stamped} report(s); ${skipped} already current.`
+  `${isDryRun ? "[dry run] Would stamp" : "Stamped"} ${stamped} report(s)/session(s); ${skipped} already current.`
 );
 if (isDryRun) console.log("Re-run without --dry-run to apply.");
 

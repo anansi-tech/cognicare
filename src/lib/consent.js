@@ -5,6 +5,17 @@ import { getConsentFormTemplate } from "@/lib/templates/consentFormTemplate";
 import { sendEmail } from "@/lib/email";
 
 /**
+ * The ONE definition of "this client has consented to AI processing":
+ * a signed consent form on file, OR the clinician recorded consent obtained
+ * in person (client.consentOverride, set via the consent-status PATCH).
+ * Used by the consent-status route, the agent-workflow gate, and the
+ * dashboard aggregate — so they can never disagree.
+ */
+export function isConsented({ forms = [], client }) {
+  return forms.some((f) => f.status === "signed") || !!client?.consentOverride?.by;
+}
+
+/**
  * Create a consent form record and email the client a sign link.
  * Caller must have already verified the client is visible to the counselor.
  * Best-effort email: a send failure does not throw.

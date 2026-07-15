@@ -10,7 +10,8 @@ import AIReport from "@/models/aiReport";
 import ConsentForm from "@/models/consentForm";
 import MeasureAdministration from "@/models/measureAdministration";
 import { dayRangeInTz } from "@/lib/timezone";
-import { notesHash, payloadHash } from "@/lib/hash";
+import { notesHash } from "@/lib/hash";
+import { isConsented } from "@/lib/consent";
 import { computeDirection } from "@/lib/mbc/trend";
 import { getInstrument } from "@/lib/mbc/instruments";
 
@@ -81,11 +82,12 @@ export const GET = requireAuth(async (req) => {
 
     // ------------------------------------------------------------------
     // Dashboard v2 (additive): reviewQueue + signals + schedule enrichment.
-    // Everything below is metadata-only in the RESPONSE — report/note payload
-    // content is never included. Hydration (decryption) happens only where a
-    // content hash must be computed, in memory, using the same lib/hash
-    // functions the client/session views compare with, so the dashboard can
-    // never disagree with them about what's stale.
+    // Metadata-only AND decryption-free: content hashes are stamped on write
+    // (model pre-save hooks, same lib/hash functions the client/session views
+    // compare with), so staleness here is lean stored-hash comparisons — the
+    // dashboard can never disagree with the views, and never decrypts.
+    // Docs that predate the hash backfill simply don't produce items until
+    // the backfill stamps them.
     // ------------------------------------------------------------------
     const clientScopeFilter = { practiceId, clientId: { $in: allowedClientIds } };
 
@@ -96,11 +98,11 @@ export const GET = requireAuth(async (req) => {
       consentDocs,
       administrationsLean,   // unencrypted measure metadata
       treatmentsLean,        // version + stored source hash (unencrypted)
-      diagnosticsHydrated,   // hydrated: payload must decrypt to hash it
+      diagnosticsLean,       // stored payloadHash (unencrypted)
       pairReportsLean,       // session-scoped pair stamps (unencrypted)
-      completedSessionsHydrated, // hydrated: notes must decrypt to hash them
+      completedSessionsLean, // stored notesHash (unencrypted)
     ] = await Promise.all([
-      Client.find({ _id: { $in: allowedClientIds } }).select("name").lean(),
+      Client.find({ _id: { $in: allowedClientIds } }).select("name consentOverride").lean(),
       Session.find(sessionScope).select("date status clientId").lean(),
       AIReport.find({ ...clientScopeFilter, status: "draft" })
         .select("agentType clientId sessionId createdAt version").lean(),
@@ -110,10 +112,12 @@ export const GET = requireAuth(async (req) => {
         .select("clientId instrumentId total administeredAt").sort({ administeredAt: 1 }).lean(),
       AIReport.find({ ...clientScopeFilter, agentType: "treatment" })
         .select("clientId sessionId version status sourceDiagnosticHash createdAt").lean(),
-      AIReport.find({ ...clientScopeFilter, agentType: "diagnostic", sessionId: null }),
+      AIReport.find({ ...clientScopeFilter, agentType: "diagnostic", sessionId: null })
+        .select("clientId payloadHash createdAt editedAt").lean(),
       AIReport.find({ ...clientScopeFilter, sessionId: { $ne: null }, agentType: { $in: ["progress", "documentation"] } })
         .select("agentType clientId sessionId sourceNotesHash createdAt").lean(),
-      Session.find({ ...sessionScope, status: "completed" }),
+      Session.find({ ...sessionScope, status: "completed" })
+        .select("clientId date notesHash").lean(),
     ]);
 
     const nameById = new Map(clientDocs.map((c) => [c._id.toString(), c.name]));
@@ -123,16 +127,20 @@ export const GET = requireAuth(async (req) => {
     // --- Review queue: items requiring clinician ACTION -----------------
     const reviewItems = [];
 
-    // Session notes, hashed with the same function the session view compares
-    // with. Empty-notes sessions get an "Add notes" item and are excluded from
-    // staleness — regenerating from empty notes is never the right action.
+    // Stored notes hashes (stamped on write). Empty notes are detected by
+    // comparing against the constant hash of "" — no decryption. Empty-notes
+    // sessions get an "Add notes" item and are excluded from staleness —
+    // regenerating from empty notes is never the right action. Sessions
+    // without a stamp (pre-backfill) are skipped until the backfill runs.
+    const EMPTY_NOTES_HASH = notesHash("");
     const notesHashBySession = new Map();
     const emptyNoteSessions = [];
-    for (const s of completedSessionsHydrated) {
-      if (!s.notes?.trim()) {
+    for (const s of completedSessionsLean) {
+      if (!s.notesHash) continue;
+      if (s.notesHash === EMPTY_NOTES_HASH) {
         emptyNoteSessions.push(s);
       } else {
-        notesHashBySession.set(s._id.toString(), notesHash(s.notes));
+        notesHashBySession.set(s._id.toString(), s.notesHash);
       }
     }
 
@@ -179,15 +187,15 @@ export const GET = requireAuth(async (req) => {
       }
     }
     const latestDiagnosticByClient = new Map();
-    for (const d of diagnosticsHydrated) {
+    for (const d of diagnosticsLean) {
       const cid = d.clientId.toString();
       const cur = latestDiagnosticByClient.get(cid);
       if (!cur || d.createdAt > cur.createdAt) latestDiagnosticByClient.set(cid, d);
     }
     for (const [cid, tx] of latestTreatmentByClient) {
       const dx = latestDiagnosticByClient.get(cid);
-      if (!dx) continue;
-      if (payloadHash(dx.payload) !== tx.sourceDiagnosticHash) {
+      if (!dx?.payloadHash) continue; // pre-backfill stamp missing — skip until backfilled
+      if (dx.payloadHash !== tx.sourceDiagnosticHash) {
         reviewItems.push({
           type: "stale-plan",
           clientId: cid,
@@ -213,15 +221,23 @@ export const GET = requireAuth(async (req) => {
       });
     }
 
-    // Unsigned consent forms — pending with no signed form on file (they
-    // block AI processing).
-    const signedConsentClients = new Set(
-      consentDocs.filter((c) => c.status === "signed").map((c) => c.clientId.toString())
-    );
+    // Unsigned consent forms — pending forms for clients who are NOT
+    // consented (no signed form AND no in-person override). Same isConsented
+    // helper as the consent-status route and the agent-workflow gate, so the
+    // dashboard can never disagree with them: an overridden client with a
+    // stale pending form is consented, not a review item.
+    const formsByClient = new Map();
+    for (const c of consentDocs) {
+      const cid = c.clientId.toString();
+      if (!formsByClient.has(cid)) formsByClient.set(cid, []);
+      formsByClient.get(cid).push(c);
+    }
+    const clientDocById = new Map(clientDocs.map((c) => [c._id.toString(), c]));
     const consentSeen = new Set();
     for (const c of consentDocs) {
       const cid = c.clientId.toString();
-      if (c.status !== "pending" || signedConsentClients.has(cid) || consentSeen.has(cid)) continue;
+      if (c.status !== "pending" || consentSeen.has(cid)) continue;
+      if (isConsented({ forms: formsByClient.get(cid) ?? [], client: clientDocById.get(cid) })) continue;
       consentSeen.add(cid);
       reviewItems.push({
         type: "consent",

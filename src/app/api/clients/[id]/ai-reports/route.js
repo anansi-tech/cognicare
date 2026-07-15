@@ -48,11 +48,15 @@ export async function GET(request, { params }) {
       reports = reports.slice(0, parseInt(limit));
     }
 
-    // Computed current-content hash per report; the stored source hashes ride
-    // along on the docs. Staleness in the UI = payloadHash vs downstream's
-    // stored source hash. Hashing happens server-side only.
+    // Current-content hash per report (stamped on write; computed only for
+    // docs that predate the backfill); the stored source hashes ride along on
+    // the docs. Staleness in the UI = payloadHash vs downstream's stored
+    // source hash. Hashing happens server-side only.
     return NextResponse.json({
-      reports: reports.map((r) => ({ ...r.toObject(), payloadHash: payloadHash(r.payload) })),
+      reports: reports.map((r) => ({
+        ...r.toObject(),
+        payloadHash: r.payloadHash ?? payloadHash(r.payload),
+      })),
     });
   } catch (error) {
     console.error("Error fetching AI reports:", error);

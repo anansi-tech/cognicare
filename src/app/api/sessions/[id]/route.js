@@ -34,8 +34,12 @@ export const GET = requireAuth(async (req) => {
 
     // Current-notes content hash (server-side only): the session view compares
     // it against the progress/documentation sourceNotesHash stamps — a revert
-    // restores the hash, so the regenerate nudge clears itself.
-    return NextResponse.json({ ...sessionData.toObject(), notesHash: notesHash(sessionData.notes) });
+    // restores the hash, so the regenerate nudge clears itself. Stamped on
+    // write; computed only for docs that predate the backfill.
+    return NextResponse.json({
+      ...sessionData.toObject(),
+      notesHash: sessionData.notesHash ?? notesHash(sessionData.notes),
+    });
   } catch (error) {
     console.error("Session GET error:", error);
     return NextResponse.json({ message: "Error fetching session" }, { status: 500 });
