@@ -102,7 +102,7 @@ export const GET = requireAuth(async (req) => {
       pairReportsLean,       // session-scoped pair stamps (unencrypted)
       completedSessionsLean, // stored notesHash (unencrypted)
     ] = await Promise.all([
-      Client.find({ _id: { $in: allowedClientIds } }).select("name consentOverride").lean(),
+      Client.find({ _id: { $in: allowedClientIds } }).select("name status consentOverride").lean(),
       Session.find(sessionScope).select("date status clientId").lean(),
       AIReport.find({ ...clientScopeFilter, status: "draft" })
         .select("agentType clientId sessionId createdAt version").lean(),
@@ -263,8 +263,17 @@ export const GET = requireAuth(async (req) => {
       }
       return instById.get(id);
     };
+    // Signals are about ongoing care: only ACTIVE clients. A discharged
+    // client's last measure would otherwise read "overdue" forever, and a
+    // signal about someone no longer in care isn't actionable. (The review
+    // queue is deliberately NOT filtered this way — drafts still need
+    // sign-off for the record regardless of client status.)
+    const activeClients = new Set(
+      clientDocs.filter((c) => c.status === "active").map((c) => c._id.toString())
+    );
     const byClientInstrument = new Map();
     for (const a of administrationsLean) {
+      if (!activeClients.has(a.clientId.toString())) continue;
       const key = `${a.clientId}:${a.instrumentId}`;
       if (!byClientInstrument.has(key)) byClientInstrument.set(key, []);
       byClientInstrument.get(key).push(a);
