@@ -210,7 +210,13 @@ Source of truth is `src/app/globals.css`. Prefer `var(--*)` where a token exists
 
 **Shared table pattern** — white rounded-18 card; `#F6FAFE`/`#F2F7FD` header with 11.5px uppercase `#8298BC` labels; `divide-y` rows; hover `#F5F9FE`; Sky status pills; primary "New" pill button; muted empty state.
 
-**AI report components** — `@/components/ai/Section.jsx` (collapsible shell: logo tile, subtitle, badge, rotating chevron) + `@/components/ai/AgentReportBody.jsx` (assessment / diagnostic / treatment / progress / documentation bodies). Edit read-mode presentation only — never touch editable branches, field keys, or props. These are shared by the client Overview tab AND session detail views. Severity/trend/goal scales live in `AgentReportBody`'s `SEV` / `CONFIDENCE` / `GOAL` maps.
+**AI report components** — `@/components/ai/Section.jsx` (legacy collapsible shell + document mode via optional `id`/`sticky`/`actions`/`nudge`/`draft` props) + `@/components/ai/AgentReportBody.jsx` (assessment / diagnostic / treatment / progress / documentation bodies). Edit read-mode presentation only — never touch editable branches, field keys, or props. These are shared by the client Overview tab AND session detail views. Severity/trend/goal scales live in `AgentReportBody`'s `SEV` / `CONFIDENCE` / `GOAL` maps.
+
+**Layout pattern** — the rail + continuous-document pattern (sticky scroll-spy nav, document-mode sections with sticky headers, status-pill vocabulary "Draft — review" / "Approved") is the standard for record views; new record-like screens should follow it.
+
+**Load-bearing copy** (ClientInsights / SessionAIInsights / SessionDetail) — labels and confirm-dialog copy carry clinical semantics: "Revise treatment plan", "Regenerate note & progress", and "Edit plan" are three different operations; the offer/nudge distinction (replace vs revise) and one-nudge precedence are intentional; confirm dialogs must keep the destructive phrasing "replaces the current versions". Never reword, merge, or soften these in a styling or copy pass.
+
+**Dashboard aggregate contract** (`/api/dashboard/stats`) — extensions are additive-only (existing keys/consumers unchanged); every aggregate goes through `visibleClientIds` (counselor assignment — clinicians never see other clinicians' clients); "today" via `dayRangeInTz` with the practice timezone; review-queue/signals are metadata-only — never decrypt payloads in the aggregate. Staleness = stored-hash comparisons (`notesHash`/`payloadHash`/`sourceNotesHash`/`sourceDiagnosticHash` stamped by model pre-save hooks) — the same definitions as the client/session views; never invent a parallel staleness rule. Dashboard "Regenerate?" items only navigate — destructive flows live on the linked pages. Review = requires clinician action; signal = informs (RCI-based, ranked worsened → overdue → improved, instrument shortNames). Overdue threshold is a 28-day heuristic pending a per-practice cadence setting.
 
 ### Architecture notes
 
@@ -219,8 +225,8 @@ Source of truth is `src/app/globals.css`. Prefer `var(--*)` where a token exists
 
 ### Restyle status
 
-**Done:** marketing/auth pages; app shell (Navbar, Dashboard, Billing/Subscription, Clients); LIAM sheet + citations; Spinner; shared table pattern (Clients + Sessions); Assessments tab; `AgentReportBody` read-mode; full Client Detail view (all tabs + `BillingInfo`/`InsuranceInfo`); Session Detail (`SessionDetail.js` + `SessionNote.jsx`); Team, Profile, Audit, Settings.
+**Done:** marketing/auth pages; app shell (Navbar, Billing/Subscription, Clients); LIAM sheet + citations; Spinner; shared table pattern (Clients + Sessions); Assessments tab; `AgentReportBody` read-mode; full Client Detail view (all tabs + `BillingInfo`/`InsuranceInfo`); Team, Profile, Audit, Settings; forms pass (ClientForm relayout + Sky field pattern in SessionForm and reports/new); client-portal consent page; Reports pipeline v2 (structured section generation, restyled viewer, HTML→PDF via `src/lib/report-pdf.js` + `serverExternalPackages`, shared `parseReportSections`); Client Overview v2 (navigator rail + continuous clinical document in `ClientInsights.js`, document-mode `Section.jsx` with sticky headers + action slots, nudges under headers); Session Detail v3 (same rail+document pattern across `SessionDetail.js`/`SessionNote.jsx`/`SessionAIInsights.js`, SOAP actions in the sticky section header); Dashboard v2 (morning triage view + additive `/api/dashboard/stats` extension: reviewQueue, signals, schedule enrichment; hash backfill shipped and run).
 
-**Remaining:** `src/app/(app)/client-portal/consent/[token]/page.js` — still old gray Tailwind. Needs Sky treatment: eyebrow + Bricolage title, Sky card, status-pill scale (signed→green / awaiting→amber), soft-sky body box, `border-input` + focus-ring fields, Sky success/error alerts. Preserve all token-auth/sign logic, `ConsentMarkdown`, the minor/guardian branch, and the ESIGN copy.
+**Remaining gray holdouts:** none.
 
 **Working rule:** UI changes are styling only — never alter data fetching, auth, routing, form contracts, or handler logic.
