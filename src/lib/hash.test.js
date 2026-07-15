@@ -217,5 +217,23 @@ describe("session edge — progress/documentation vs session notes", () => {
       const sessionV3 = { notes: sessionV2.notes + " Another change." };
       expect(isNudgeActive(note, sessionV3)).toBe(true); // fresh divergence re-triggers
     });
+
+    it("SOAP edit reconciles the PAIR — nudge gone with a progress report present; next notes edit re-triggers", () => {
+      // The UI nudge ORs the pair; the route reconciles both on a real edit.
+      const sessionV2 = { notes: generatedNotes + " Later addendum." };
+      let note = freshNote();
+      let progressReport = { sourceNotesHash: notesHash(generatedNotes) };
+      const pairNudge = (s) => isNudgeActive(note, s) || isNudgeActive(progressReport, s);
+
+      expect(pairNudge(sessionV2)).toBe(true); // notes diverged → nudge
+      note = patchSoap(note, { ...soapV1, plan: "Taper." }, sessionV2);
+      progressReport = { ...progressReport, ...reconciliationStamp("progress", { session: sessionV2 }) };
+      expect(isNudgeActive(note, sessionV2)).toBe(false);
+      expect(isNudgeActive(progressReport, sessionV2)).toBe(false);
+      expect(pairNudge(sessionV2)).toBe(false); // documentation alone would leave the OR true
+
+      const sessionV3 = { notes: sessionV2.notes + " Another change." };
+      expect(pairNudge(sessionV3)).toBe(true); // fresh divergence re-triggers for the pair
+    });
   });
 });

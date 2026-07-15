@@ -46,6 +46,43 @@ export function SessionNote({ sessionId, refreshKey }) {
     return () => clearTimeout(t);
   }, [soap, note, editorOpen, sessionId]);
 
+  // The debounce must not make the final keystrokes disposable: if the page
+  // unloads (or the tab hides, or the component unmounts) inside the 800ms
+  // window, flush the pending edit immediately. keepalive lets the request
+  // outlive the page. Safe to race with the debounced save — the route's
+  // canonical-hash gate makes an identical second PATCH a no-op.
+  const soapRef = useRef(soap);
+  const noteRef = useRef(note);
+  const editorOpenRef = useRef(editorOpen);
+  soapRef.current = soap;
+  noteRef.current = note;
+  editorOpenRef.current = editorOpen;
+
+  useEffect(() => {
+    const flush = () => {
+      const s = soapRef.current;
+      const n = noteRef.current;
+      if (!n || !s || !editorOpenRef.current) return;
+      if (JSON.stringify(s) === JSON.stringify(n.payload?.soap)) return;
+      fetch(`/api/sessions/${sessionId}/note`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ soap: s }),
+        keepalive: true,
+      }).catch(() => {});
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") flush();
+    };
+    window.addEventListener("pagehide", flush);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      document.removeEventListener("visibilitychange", onVisibility);
+      flush(); // unmount flush
+    };
+  }, [sessionId]);
+
   if (!note) return null;
 
   const approve = async () => {

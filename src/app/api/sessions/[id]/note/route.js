@@ -53,6 +53,21 @@ export async function PATCH(req, { params }) {
       note.editedAt = new Date();
       const parentSession = await Session.findById(sessionId);
       Object.assign(note, reconciliationStamp("documentation", { session: parentSession }));
+      // The pair is generated, nudged, and regenerated as a UNIT, and the SOAP
+      // is the artifact the clinician signs — her edit is the review of this
+      // session's outputs against the current notes. Reconcile progress too,
+      // or the pair-OR'd nudge survives the edit and its Regenerate invites
+      // destroying the hand-edit it just prompted. No editedAt on progress —
+      // it wasn't human-edited, only re-reviewed.
+      const progressReport = await AIReport.findOne({
+        sessionId,
+        agentType: "progress",
+        practiceId: user.practiceId,
+      }).sort({ createdAt: -1 });
+      if (progressReport) {
+        Object.assign(progressReport, reconciliationStamp("progress", { session: parentSession }));
+        await progressReport.save();
+      }
     }
   }
   if (status === "approved") note.status = "approved";
