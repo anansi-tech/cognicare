@@ -5,6 +5,55 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Spinner } from "@/components/ui/Spinner";
+import { avatarColors, initials } from "@/lib/avatar";
+
+const CARD = { background: "#fff", border: "1px solid #E9F0F9", borderRadius: 20, boxShadow: "0 22px 50px -40px rgba(11,43,107,.4)", overflow: "hidden" };
+const CARD_HEAD = { display: "flex", alignItems: "center", gap: 10, padding: "18px 24px", borderBottom: "1px solid #EEF3FA" };
+const H2 = { fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 18, letterSpacing: "-.01em", margin: 0, color: "#0B2B6B" };
+const PILL = { fontSize: 11.5, fontWeight: 700, padding: "3px 10px", borderRadius: 999, whiteSpace: "nowrap" };
+const AMBER = { background: "#FBF2DA", color: "#A9821F" };
+const GREEN = { background: "#E7F6EC", color: "#3B9E57" };
+const RED = { background: "#FDECEC", color: "#C0392B" };
+const SLATE = { background: "#EEF1F5", color: "#6E7E97" };
+
+// Presentation map for review-queue items — the pill only NAVIGATES; the
+// destructive flows (approve, regenerate + confirm) live on the linked pages.
+function reviewPresentation(item) {
+  const titleCase = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+  switch (item.type) {
+    case "draft-note":
+      return { title: "Session note — draft", dot: "#E3B341", pill: "Approve", pillStyle: AMBER, href: `/sessions/${item.sessionId}`, ctx: "session" };
+    case "draft-report": {
+      const title =
+        item.reportType === "treatment"
+          ? `Treatment plan v${item.version ?? 1} — draft`
+          : item.reportType === "diagnostic"
+            ? "Diagnostic impression — draft"
+            : `${titleCase(item.reportType)} report — draft`;
+      const href =
+        item.reportType === "progress" && item.sessionId
+          ? `/sessions/${item.sessionId}`
+          : `/clients/${item.clientId}?tab=overview`;
+      return { title, dot: "#E3B341", pill: "Approve", pillStyle: AMBER, href, ctx: item.sessionId ? "session" : "generated" };
+    }
+    case "stale-notes":
+      return { title: "Notes changed since note & progress were generated", dot: "#C0392B", pill: "Regenerate?", pillStyle: AMBER, href: `/sessions/${item.sessionId}`, ctx: "session" };
+    case "stale-plan":
+      return { title: `Diagnosis changed since plan v${item.version ?? 1}`, dot: "#C0392B", pill: "Regenerate?", pillStyle: AMBER, href: `/clients/${item.clientId}?tab=overview`, ctx: "edited" };
+    case "consent":
+      return { title: "Consent form awaiting signature", dot: "#E3B341", pill: "Consent pending", pillStyle: AMBER, href: `/clients/${item.clientId}?tab=consent-billing`, ctx: "requested" };
+    case "missing-notes":
+      return { title: "Completed session missing notes", dot: "#8298BC", pill: "Add notes", pillStyle: SLATE, href: `/sessions/${item.sessionId}`, ctx: "session" };
+    default:
+      return null;
+  }
+}
+
+const SIGNAL_PILL = {
+  worsened: RED,
+  overdue: AMBER,
+  improved: GREEN,
+};
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -17,6 +66,9 @@ export default function DashboardPage() {
     reportsGenerated: 0,
     todaysAppointments: [],
     upcomingThisWeek: 0,
+    reviewQueue: [],
+    reviewTotal: 0,
+    signals: [],
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -35,7 +87,7 @@ export default function DashboardPage() {
             throw new Error("Failed to fetch stats");
           }
           const data = await response.json();
-          setStats(data);
+          setStats((prev) => ({ ...prev, ...data }));
         } catch (error) {
           console.error("Error fetching dashboard stats:", error);
         } finally {
@@ -70,16 +122,6 @@ export default function DashboardPage() {
 
   const tz = session?.user?.practiceTimezone ?? "America/New_York";
 
-  const formatDate = (dateString) =>
-    new Date(dateString).toLocaleString("en-US", {
-      timeZone: tz,
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
-
   const formatTime = (dateString) =>
     new Date(dateString).toLocaleTimeString("en-US", {
       timeZone: tz,
@@ -88,64 +130,58 @@ export default function DashboardPage() {
       hour12: true,
     });
 
+  const shortDate = (dateString) =>
+    new Date(dateString).toLocaleDateString("en-US", { timeZone: tz, month: "short", day: "numeric" });
+
+  const relativeDate = (dateString) => {
+    const todayStr = new Date().toLocaleDateString("en-US", { timeZone: tz });
+    const yesterdayStr = new Date(Date.now() - 86400000).toLocaleDateString("en-US", { timeZone: tz });
+    const dStr = new Date(dateString).toLocaleDateString("en-US", { timeZone: tz });
+    if (dStr === todayStr) return "Today";
+    if (dStr === yesterdayStr) return "Yesterday";
+    return shortDate(dateString);
+  };
+
   const formatLabel = {
-    "in-person": "In person",
+    "in-person": "In-person",
     video: "Video",
     phone: "Phone",
     chat: "Chat",
-  };
-
-  const getStatusPill = (s) => {
-    switch (s?.toLowerCase()) {
-      case "completed":   return "bg-[#E7F6EC] text-[#3B9E57]";
-      case "scheduled":   return "bg-[#E4F1FF] text-[#2F80FF]";
-      case "in-progress": return "bg-amber-50 text-amber-700";
-      case "cancelled":   return "bg-red-50 text-red-600";
-      default:            return "bg-secondary text-muted-foreground";
-    }
   };
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
   const firstName = session?.user?.name?.split(" ")[0] ?? "";
 
-  const CARD_STYLE = {
-    background: "#fff",
-    border: "1px solid #E9F0F9",
-    borderRadius: 18,
-    padding: 20,
-    boxShadow: "0 20px 46px -40px rgba(11,43,107,.35)",
-  };
+  const eyebrow = new Date().toLocaleDateString("en-US", { timeZone: tz, weekday: "long", month: "long", day: "numeric" });
+  const sessionsToday = stats.todaysAppointments.length;
+  const reviewCount = stats.reviewTotal ?? stats.reviewQueue.length;
 
   return (
-    <div className="space-y-5">
+    <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
 
       {/* Page header */}
-      <div>
+      <div style={{ marginBottom: 6 }}>
         <p style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: ".12em", color: "#2F80FF", textTransform: "uppercase", margin: 0 }}>
-          Overview
+          {eyebrow}
         </p>
         <h1 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 34, letterSpacing: "-.025em", margin: "7px 0 0", color: "#0B2B6B" }}>
           {greeting}{firstName ? `, ${firstName}` : ""}
         </h1>
         <p style={{ fontSize: 15.5, color: "#55698F", margin: "6px 0 0" }}>
-          Here&apos;s what&apos;s happening across your practice today.
+          {sessionsToday} session{sessionsToday === 1 ? "" : "s"} today ·{" "}
+          <a href="#review" style={{ color: "#2F80FF", textDecoration: "none" }}>
+            {reviewCount} item{reviewCount === 1 ? "" : "s"} need{reviewCount === 1 ? "s" : ""} your review
+          </a>
         </p>
       </div>
 
-      {/* Today's Schedule */}
-      <div style={{ background: "#fff", border: "1px solid #E9F0F9", borderRadius: 20, boxShadow: "0 22px 50px -40px rgba(11,43,107,.4)", overflow: "hidden" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px", borderBottom: "1px solid #EEF3FA" }}>
-          <div>
-            <h2 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 18, letterSpacing: "-.01em", margin: 0, color: "#0B2B6B" }}>
-              Today&apos;s schedule
-            </h2>
-            <p style={{ fontSize: 12.5, color: "#8298BC", margin: "3px 0 0" }}>
-              {new Date().toLocaleDateString("en-US", { timeZone: tz, weekday: "long", month: "long", day: "numeric" })}
-            </p>
-          </div>
+      {/* ===== Today's schedule ===== */}
+      <div style={CARD}>
+        <div style={{ ...CARD_HEAD, justifyContent: "space-between" }}>
+          <h2 style={H2}>Today&apos;s schedule</h2>
           {stats.upcomingThisWeek > 0 && (
-            <Link href="/sessions/calendar" style={{ fontSize: 13.5, fontWeight: 600, color: "#2F80FF", textDecoration: "none" }}>
+            <Link href="/sessions/calendar" style={{ fontSize: 13.5, fontWeight: 600, color: "#2F80FF", textDecoration: "none", flexShrink: 0 }}>
               {stats.upcomingThisWeek} more in the next 7 days →
             </Link>
           )}
@@ -156,154 +192,167 @@ export default function DashboardPage() {
           </div>
         ) : (
           <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
-            {stats.todaysAppointments.map((a) => (
-              <li key={a.id} style={{ borderBottom: "1px solid #F2F6FB" }}>
-                <Link
-                  href={`/sessions/${a.id}`}
-                  className="flex items-center justify-between gap-4 px-6 py-[15px] hover:bg-[#F5F9FE] transition-colors duration-[130ms]"
-                  style={{ textDecoration: "none" }}
-                >
-                  <div className="flex items-center min-w-0" style={{ gap: 18 }}>
-                    <span style={{ fontWeight: 700, fontSize: 14, color: "#0B2B6B", fontVariantNumeric: "tabular-nums", width: 76, flexShrink: 0 }}>
-                      {formatTime(a.date)}
-                    </span>
-                    <span style={{ fontSize: 14.5, color: "#2C3E5E", fontWeight: 500 }}>
-                      {a.clientName}
-                    </span>
-                  </div>
-                  <span style={{ fontSize: 12.5, color: "#8298BC", flexShrink: 0 }}>
-                    {formatLabel[a.format] || a.format}
-                    {a.type ? ` · ${a.type}` : ""}
-                  </span>
-                </Link>
-              </li>
-            ))}
+            {stats.todaysAppointments.map((a) => {
+              const [avBg, avColor] = avatarColors(a.clientName);
+              const prep = a.consentPending
+                ? { label: "Consent pending", style: AMBER }
+                : a.prepReady
+                  ? { label: "Brief ready", style: GREEN }
+                  : null;
+              return (
+                <li key={a.id} style={{ borderBottom: "1px solid #F2F6FB" }}>
+                  <Link
+                    href={`/sessions/${a.id}`}
+                    className="flex items-center justify-between gap-4 hover:bg-[#F5F9FE] transition-colors duration-[130ms]"
+                    style={{ padding: "15px 24px", textDecoration: "none" }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 16, minWidth: 0 }}>
+                      <span style={{ fontWeight: 700, fontSize: 14, color: "#0B2B6B", fontVariantNumeric: "tabular-nums", width: 72, flexShrink: 0 }}>
+                        {formatTime(a.date)}
+                      </span>
+                      <span style={{ display: "grid", placeItems: "center", width: 34, height: 34, borderRadius: "50%", background: avBg, color: avColor, fontWeight: 700, fontSize: 12.5, flexShrink: 0 }}>
+                        {initials(a.clientName)}
+                      </span>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                          <span style={{ fontSize: 14.5, fontWeight: 600, color: "#0B2B6B" }}>{a.clientName}</span>
+                          {a.isFirstSession && (
+                            <span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: ".04em", textTransform: "uppercase", padding: "2px 8px", borderRadius: 999, background: "#E4F1FF", color: "#2F80FF" }}>
+                              First session
+                            </span>
+                          )}
+                        </div>
+                        <span style={{ fontSize: 12.5, color: "#8298BC" }}>
+                          {a.type ? a.type.charAt(0).toUpperCase() + a.type.slice(1) : "Session"} · {formatLabel[a.format] || a.format}
+                        </span>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+                      {prep && <span style={{ ...PILL, ...prep.style }}>{prep.label}</span>}
+                      <span style={{ color: "#C3D2E8" }}>›</span>
+                    </div>
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 gap-[18px] sm:grid-cols-2 lg:grid-cols-4">
-
-        <div className="transition-all duration-200 hover:-translate-y-[3px] hover:border-[#C7DCF5] hover:shadow-[0_26px_56px_-34px_rgba(11,43,107,.42)]" style={CARD_STYLE}>
-          <span style={{ display: "grid", placeItems: "center", width: 44, height: 44, borderRadius: 13, background: "#EAF3FF" }}>
-            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#2F80FF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
-            </svg>
-          </span>
-          <div style={{ fontSize: 13, fontWeight: 500, color: "#8298BC", marginTop: 16 }}>Total clients</div>
-          <div style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 30, color: "#0B2B6B", marginTop: 2 }}>
-            {stats.totalClients}
-          </div>
-          <Link href="/clients" style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#2F80FF", marginTop: 10, textDecoration: "none" }}>
-            View all clients →
-          </Link>
+      {/* ===== Needs your review ===== */}
+      <div id="review" style={CARD}>
+        <div style={CARD_HEAD}>
+          <h2 style={H2}>Needs your review</h2>
+          {reviewCount > 0 && <span style={{ ...PILL, ...AMBER }}>{reviewCount}</span>}
         </div>
-
-        <div className="transition-all duration-200 hover:-translate-y-[3px] hover:border-[#C7DCF5] hover:shadow-[0_26px_56px_-34px_rgba(11,43,107,.42)]" style={CARD_STYLE}>
-          <span style={{ display: "grid", placeItems: "center", width: 44, height: 44, borderRadius: 13, background: "#E2F4F2" }}>
-            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#158A98" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg>
-          </span>
-          <div style={{ fontSize: 13, fontWeight: 500, color: "#8298BC", marginTop: 16 }}>Active sessions</div>
-          <div style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 30, color: "#158A98", marginTop: 2 }}>
-            {stats.activeSessions}
+        {stats.reviewQueue.length === 0 ? (
+          <div style={{ padding: "30px 24px", textAlign: "center" }}>
+            <p style={{ fontSize: 14, fontWeight: 600, color: "#3B9E57", margin: 0 }}>You&apos;re all caught up.</p>
+            <p style={{ fontSize: 12.5, color: "#8298BC", margin: "5px 0 0" }}>Nothing awaiting your sign-off.</p>
           </div>
-          <Link href="/sessions" style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#2F80FF", marginTop: 10, textDecoration: "none" }}>
-            View all sessions →
-          </Link>
-        </div>
-
-        <div className="transition-all duration-200 hover:-translate-y-[3px] hover:border-[#C7DCF5] hover:shadow-[0_26px_56px_-34px_rgba(11,43,107,.42)]" style={CARD_STYLE}>
-          <span style={{ display: "grid", placeItems: "center", width: 44, height: 44, borderRadius: 13, background: "#E7F6EC" }}>
-            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#4DBB6A" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
-            </svg>
-          </span>
-          <div style={{ fontSize: 13, fontWeight: 500, color: "#8298BC", marginTop: 16 }}>Completed sessions</div>
-          <div style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 30, color: "#4DBB6A", marginTop: 2 }}>
-            {stats.completedSessions}
-          </div>
-          <Link href="/sessions?status=completed" style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#2F80FF", marginTop: 10, textDecoration: "none" }}>
-            View completed →
-          </Link>
-        </div>
-
-        <div className="transition-all duration-200 hover:-translate-y-[3px] hover:border-[#C7DCF5] hover:shadow-[0_26px_56px_-34px_rgba(11,43,107,.42)]" style={CARD_STYLE}>
-          <span style={{ display: "grid", placeItems: "center", width: 44, height: 44, borderRadius: 13, background: "#E4F7FA" }}>
-            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#1597A6" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
-            </svg>
-          </span>
-          <div style={{ fontSize: 13, fontWeight: 500, color: "#8298BC", marginTop: 16 }}>Reports generated</div>
-          <div style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 30, color: "#1597A6", marginTop: 2 }}>
-            {stats.reportsGenerated}
-          </div>
-          <Link href="/reports" style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#2F80FF", marginTop: 10, textDecoration: "none" }}>
-            View all reports →
-          </Link>
-        </div>
+        ) : (
+          <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+            {stats.reviewQueue.map((item, i) => {
+              const p = reviewPresentation(item);
+              if (!p) return null;
+              return (
+                <li key={`${item.type}-${item.reportId ?? item.sessionId ?? item.clientId}-${i}`} style={{ borderBottom: "1px solid #F2F6FB" }}>
+                  <Link
+                    href={p.href}
+                    className="flex items-center justify-between gap-4 hover:bg-[#F5F9FE] transition-colors duration-[130ms]"
+                    style={{ padding: "14px 24px", textDecoration: "none" }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
+                      <span style={{ flexShrink: 0, width: 8, height: 8, borderRadius: "50%", background: p.dot }} />
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: "#0B2B6B" }}>{p.title}</div>
+                        <div style={{ fontSize: 12.5, color: "#8298BC", marginTop: 1 }}>
+                          {item.clientName} · {p.ctx} {shortDate(item.date)}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+                      <span style={{ ...PILL, ...p.pillStyle }}>{p.pill}</span>
+                      <span style={{ color: "#C3D2E8" }}>›</span>
+                    </div>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </div>
 
-      {/* Recent Activity */}
-      <div style={{ background: "#fff", border: "1px solid #E9F0F9", borderRadius: 20, boxShadow: "0 22px 50px -40px rgba(11,43,107,.4)", overflow: "hidden" }}>
-        <div style={{ padding: "20px 24px", borderBottom: "1px solid #EEF3FA" }}>
-          <h2 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 18, letterSpacing: "-.01em", margin: 0, color: "#0B2B6B" }}>
-            Recent activity
-          </h2>
+      {/* ===== Client signals ===== */}
+      {stats.signals.length > 0 && (
+        <div style={CARD}>
+          <div style={{ ...CARD_HEAD, alignItems: "baseline" }}>
+            <h2 style={H2}>Client signals</h2>
+            <span style={{ fontSize: 12, color: "#8298BC" }}>From measure trends — informational</span>
+          </div>
+          <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+            {stats.signals.map((g, i) => (
+              <li key={`${g.clientId}-${i}`} style={{ borderBottom: "1px solid #F2F6FB" }}>
+                <Link
+                  href={`/clients/${g.clientId}?tab=progress`}
+                  className="flex items-center justify-between gap-4 hover:bg-[#F5F9FE] transition-colors duration-[130ms]"
+                  style={{ padding: "13px 24px", textDecoration: "none" }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+                    <span style={{ flexShrink: 0, fontSize: 11, fontWeight: 700, letterSpacing: ".03em", textTransform: "uppercase", padding: "3px 9px", borderRadius: 6, minWidth: 88, textAlign: "center", ...(SIGNAL_PILL[g.severity] ?? SLATE) }}>
+                      {g.severity}
+                    </span>
+                    <span style={{ fontSize: 13.5, color: "#24344F" }}>
+                      <strong style={{ color: "#0B2B6B" }}>{g.clientName}</strong> — {g.text}
+                    </span>
+                  </div>
+                  <span style={{ color: "#C3D2E8", flexShrink: 0 }}>›</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* ===== Practice pulse (compact strip) ===== */}
+      <div className="grid grid-cols-2 sm:grid-cols-4" style={{ gap: 12 }}>
+        {[
+          { n: stats.totalClients, label: "active clients", href: "/clients" },
+          { n: stats.activeSessions, label: "upcoming sessions", href: "/sessions" },
+          { n: stats.completedSessions, label: "completed", href: "/sessions?status=completed" },
+          { n: stats.reportsGenerated, label: "reports", href: "/reports" },
+        ].map((p) => (
+          <Link
+            key={p.label}
+            href={p.href}
+            className="hover:border-[#C7DCF5] transition-colors"
+            style={{ display: "flex", alignItems: "baseline", gap: 9, background: "#fff", border: "1px solid #E3ECF7", borderRadius: 14, padding: "13px 16px", textDecoration: "none" }}
+          >
+            <span style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 22, color: "#0B2B6B" }}>{p.n}</span>
+            <span style={{ fontSize: 12.5, fontWeight: 500, color: "#8298BC" }}>{p.label}</span>
+          </Link>
+        ))}
+      </div>
+
+      {/* ===== Recent activity (slim) ===== */}
+      <div style={CARD}>
+        <div style={{ padding: "16px 24px", borderBottom: "1px solid #EEF3FA" }}>
+          <h2 style={{ ...H2, fontSize: 15 }}>Recent activity</h2>
         </div>
         <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
           {stats.recentActivity.map((activity, index) => (
             <li
               key={index}
-              className="flex items-center justify-between gap-4 px-6 py-4 hover:bg-[#F5F9FE] transition-colors duration-[130ms] cursor-pointer"
-              style={{ borderBottom: "1px solid #F2F6FB" }}
+              className="flex items-center justify-between gap-4 hover:bg-[#F5F9FE] transition-colors duration-[130ms] cursor-pointer"
+              style={{ padding: "11px 24px", borderBottom: "1px solid #F2F6FB" }}
               onClick={() => handleActivityClick(activity)}
             >
-              <div className="flex items-center min-w-0" style={{ gap: 14 }}>
-                <span style={{
-                  display: "grid", placeItems: "center", width: 38, height: 38, borderRadius: 11, flexShrink: 0,
-                  background: activity.type === "session" ? "#E2F4F2" : "#EAF3FF",
-                }}>
-                  {activity.type === "session" ? (
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#158A98" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                    </svg>
-                  ) : (
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2F80FF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                      <polyline points="14 2 14 8 20 8" />
-                      <line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" />
-                    </svg>
-                  )}
-                </span>
-                <div className="min-w-0">
-                  <div style={{ fontSize: 14.5, fontWeight: 600, color: "#0B2B6B" }}>
-                    {activity.type === "report"
-                      ? `${activity.reportType ? activity.reportType.charAt(0).toUpperCase() + activity.reportType.slice(1) + " report" : "Report"} for ${activity.clientName}`
-                      : `Session with ${activity.clientName}`}
-                  </div>
-                  <div style={{ fontSize: 12.5, color: "#8298BC", marginTop: 1 }}>
-                    {activity.type === "report"
-                      ? "Generated report"
-                      : activity.duration
-                        ? `Duration: ${activity.duration} minutes`
-                        : "Session"}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center flex-shrink-0" style={{ gap: 16 }}>
-                {activity.status && (
-                  <span className={`text-[11.5px] font-bold px-[10px] py-[4px] rounded-full ${getStatusPill(activity.status)}`}>
-                    {activity.status}
-                  </span>
-                )}
-                <span style={{ fontSize: 12.5, color: "#A6B8D4", width: 120, textAlign: "right" }}>
-                  {formatDate(activity.date)}
-                </span>
-              </div>
+              <span style={{ fontSize: 13.5, color: "#41557A", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {activity.type === "report"
+                  ? `${activity.reportType ? activity.reportType.charAt(0).toUpperCase() + activity.reportType.slice(1) + " report" : "Report"} generated for ${activity.clientName}`
+                  : `Session ${activity.status === "completed" ? "completed" : activity.status === "scheduled" ? "scheduled" : "updated"} with ${activity.clientName}`}
+              </span>
+              <span style={{ fontSize: 12, color: "#A6B8D4", flexShrink: 0 }}>{relativeDate(activity.date)}</span>
             </li>
           ))}
         </ul>
