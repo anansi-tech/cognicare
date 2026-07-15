@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
-import { SaveIndicator } from "@/components/ai/editable";
+import { SaveIndicator, IconButton, PencilIcon } from "@/components/ai/editable";
 
 const FIELDS = [
   ["subjective", "Subjective"],
@@ -10,7 +10,10 @@ const FIELDS = [
   ["plan", "Plan"],
 ];
 
-export function SessionNote({ sessionId, refreshKey }) {
+// `id`: scroll-spy anchor. `nudge`: caller-owned strip (the notes-staleness
+// regenerate offer) rendered between the sticky header and the body — its
+// render condition and wiring live in SessionDetail; only placement is here.
+export function SessionNote({ sessionId, refreshKey, id, nudge }) {
   const [note, setNote] = useState(null);
   const [soap, setSoap] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -102,18 +105,49 @@ export function SessionNote({ sessionId, refreshKey }) {
     ? { bg: "#EEF1F5", color: "#6E7E97", label: "Draft — not in record" }
     : { bg: "#E7F6EC", color: "#3B9E57", label: "Approved" };
 
+  // Document-mode section (Overview v2 vocabulary): sticky header carries the
+  // actions that used to sit at the bottom — same handlers, same states.
   return (
-    <div style={{ border: "1px solid #E7EEF7", borderRadius: 16, overflow: "hidden" }}>
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "14px 18px", background: "linear-gradient(90deg, #F6FAFF, #FFFFFF)", borderBottom: "1px solid #EEF3FA" }}>
-        <h3 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 15, margin: 0, color: "#0B2B6B" }}>Session note</h3>
-        <span style={{ fontSize: 11.5, fontWeight: 700, padding: "3px 11px", borderRadius: 999, background: statusPill.bg, color: statusPill.color }}>
-          {statusPill.label}
-        </span>
+    <section id={id} style={{ background: "#fff", border: `1px solid ${editorOpen ? "#F0DFAE" : "#E3ECF7"}`, borderRadius: 20, boxShadow: "0 22px 50px -40px rgba(11,43,107,.25)" }}>
+      {/* Sticky header — sits below the app navbar */}
+      <div style={{ position: "sticky", top: 64, zIndex: 5, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "14px 20px", background: "rgba(255,255,255,.94)", backdropFilter: "blur(6px)", borderBottom: "1px solid #EEF3FA", borderRadius: "20px 20px 0 0" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+          <span style={{ display: "grid", placeItems: "center", width: 30, height: 30, borderRadius: 8, background: "#0B2B6B", flexShrink: 0 }}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M11.5 5A5 5 0 1 0 11.5 11" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" />
+            </svg>
+          </span>
+          <div>
+            <h3 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 16, margin: 0, color: "#0B2B6B" }}>Session note</h3>
+            <p style={{ fontSize: 11.5, color: "#8298BC", margin: "1px 0 0" }}>SOAP · This session</p>
+          </div>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+          <span style={{ fontSize: 11.5, fontWeight: 700, padding: "3px 10px", borderRadius: 999, whiteSpace: "nowrap", background: statusPill.bg, color: statusPill.color }}>
+            {statusPill.label}
+          </span>
+          {editorOpen ? (
+            <>
+              <SaveIndicator state={saveState} />
+              <button
+                onClick={approve}
+                style={{ display: "inline-flex", alignItems: "center", gap: 6, border: "none", cursor: "pointer", fontFamily: "inherit", background: "#2F80FF", color: "#fff", fontWeight: 700, fontSize: 12.5, padding: "7px 13px", borderRadius: 9, boxShadow: "0 10px 24px -12px rgba(47,128,255,.7)" }}
+              >
+                Approve note
+              </button>
+            </>
+          ) : (
+            <IconButton title="Edit note" onClick={() => setIsEditing(true)}>
+              <PencilIcon />
+            </IconButton>
+          )}
+        </div>
       </div>
 
+      {nudge}
+
       {/* Body */}
-      <div style={{ padding: "6px 18px 18px" }}>
+      <div style={{ padding: "4px 20px 20px" }}>
         {FIELDS.map(([key, label]) => (
           <div key={key} style={{ marginTop: 16 }}>
             <div style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: "#7C93B8" }}>{label}</div>
@@ -129,28 +163,7 @@ export function SessionNote({ sessionId, refreshKey }) {
             )}
           </div>
         ))}
-
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 20 }}>
-          {editorOpen ? (
-            <>
-              <SaveIndicator state={saveState} />
-              <button
-                onClick={approve}
-                style={{ border: "none", cursor: "pointer", fontFamily: "inherit", background: "#2F80FF", color: "#fff", fontWeight: 700, fontSize: 13.5, padding: "9px 18px", borderRadius: 10, boxShadow: "0 8px 20px -8px rgba(47,128,255,.7)" }}
-              >
-                Approve note
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={() => setIsEditing(true)}
-              style={{ border: "1px solid #DCE6F3", cursor: "pointer", fontFamily: "inherit", background: "#fff", color: "#0B2B6B", fontWeight: 600, fontSize: 13.5, padding: "9px 16px", borderRadius: 10 }}
-            >
-              Edit note
-            </button>
-          )}
-        </div>
       </div>
-    </div>
+    </section>
   );
 }

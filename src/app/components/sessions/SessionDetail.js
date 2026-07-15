@@ -14,6 +14,7 @@ import { IconButton, PencilIcon } from "@/components/ai/editable";
 import { SessionNote } from "@/components/sessions/SessionNote";
 import { MeasuresPanel } from "@/components/measures/MeasuresPanel";
 import { Spinner } from "@/components/ui/Spinner";
+import { avatarColors, initials } from "@/lib/avatar";
 
 const STATUS_PILL = {
   completed: { bg: "#E7F6EC", color: "#3B9E57" },
@@ -56,7 +57,46 @@ export default function SessionDetail({ sessionId }) {
   const handleNotesStale = useCallback((v) => setNotesStale(v), []);
   const [staleRegenBusy, setStaleRegenBusy] = useState(false);
   const [staleRegenError, setStaleRegenError] = useState(null);
+  // Session-v3 rail: report states (fed by SessionAIInsights, display only),
+  // scroll-spy active section, single-column fallback breakpoint.
+  const [sessionReports, setSessionReports] = useState({});
+  const handleReportsChange = useCallback((r) => setSessionReports(r), []);
+  const [activeSection, setActiveSection] = useState("sec-info");
+  const [isNarrow, setIsNarrow] = useState(false);
   const { bindClient } = useLiam();
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 1000px)");
+    const apply = () => setIsNarrow(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+
+  // Scroll-spy for the rail — same mechanics as the client Overview v2.
+  useEffect(() => {
+    if (isEditing) return;
+    const ids = ["sec-info", "sec-note", "sec-treatment", "sec-progress"];
+    const onScroll = () => {
+      const y = window.scrollY + 150;
+      let cur = ids[0];
+      for (const id of ids) {
+        const el = document.getElementById(id);
+        if (el && el.getBoundingClientRect().top + window.scrollY <= y) cur = id;
+      }
+      setActiveSection((prev) => (prev === cur ? prev : cur));
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [isEditing]);
+
+  const goToSection = (id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    // −84: clear the sticky navbar (~64px) plus breathing room.
+    window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 84, behavior: "smooth" });
+  };
 
   useEffect(() => {
     if (!sessionId) return;
@@ -269,7 +309,7 @@ export default function SessionDetail({ sessionId }) {
   const sp = STATUS_PILL[session.status] ?? { bg: "#EEF1F5", color: "#6E7E97" };
 
   return (
-    <div style={{ maxWidth: 940, margin: "0 auto", padding: "28px 32px 64px" }}>
+    <div style={{ maxWidth: 1240, margin: "0 auto", padding: "28px 32px 64px" }}>
       {/* Back link */}
       <Link
         href="/sessions"
@@ -379,107 +419,114 @@ export default function SessionDetail({ sessionId }) {
         </div>
       )}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-        {/* Card 1 — Session info */}
-        <div style={CARD}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 40px" }}>
-            <div>
-              <h2 style={SECTION_H2}>Session information</h2>
-              <InfoRow label="Client">
-                {session.clientId ? (
-                  <Link
-                    href={`/clients/${clientId}`}
-                    style={{ color: "#0B2B6B", fontWeight: 600, textDecoration: "none" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = "#2F80FF")}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = "#0B2B6B")}
-                  >
-                    {clientName}
-                  </Link>
-                ) : (
-                  "Unknown Client"
-                )}
-              </InfoRow>
-              <InfoRow label="Date & time">{formatDate(session.date)}</InfoRow>
-              <InfoRow label="Duration">{formatDuration(session.duration)}</InfoRow>
-              <InfoRow label="Type">{session.type ? session.type.charAt(0).toUpperCase() + session.type.slice(1) : "—"}</InfoRow>
-              <InfoRow label="Format">{session.format ? session.format.charAt(0).toUpperCase() + session.format.slice(1) : "—"}</InfoRow>
-              <InfoRow label="Status">
-                <span style={{ fontSize: 11.5, fontWeight: 700, padding: "3px 11px", borderRadius: 999, background: sp.bg, color: sp.color }}>
-                  {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
+      {(() => {
+        const shortDate = (iso) =>
+          iso ? new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : null;
+        const { treatment: tx, progress: px, documentation: doc } = sessionReports;
+        const statusLabel = session.status.charAt(0).toUpperCase() + session.status.slice(1);
+        const infoDot =
+          session.status === "completed" ? "#3B9E57"
+          : session.status === "cancelled" || session.status === "no-show" ? "#A6B8D4"
+          : "#E3B341";
+        const reportDot = (r) =>
+          !r ? "#A6B8D4" : r.status === "draft" ? "#E3B341" : r.status === "approved" ? "#3B9E57" : "#A6B8D4";
+        const navItems = [
+          { id: "sec-info", label: "Session information", meta: `${statusLabel} · ${shortDate(session.date)}`, dot: infoDot },
+          {
+            id: "sec-note",
+            label: "Session note",
+            meta: !doc ? "Not yet generated" : doc.status === "draft" ? "Draft — not in record" : doc.status === "approved" ? "Approved · SOAP" : `Updated ${shortDate(doc.createdAt)}`,
+            dot: reportDot(doc),
+          },
+          {
+            id: "sec-treatment",
+            label: `Treatment plan${tx?.version ? ` v${tx.version}` : ""}`,
+            meta: !tx ? "Not yet generated" : `Client-scoped · ${tx.status === "approved" ? "Approved" : tx.status === "draft" ? "Draft — needs review" : `Updated ${shortDate(tx.createdAt)}`}`,
+            dot: reportDot(tx),
+          },
+          {
+            id: "sec-progress",
+            label: "Progress report",
+            meta: !px ? "Not yet generated" : px.status === "draft" ? "Draft — needs review" : px.status === "approved" ? `Approved · ${shortDate(px.createdAt)}` : `Updated ${shortDate(px.createdAt)}`,
+            dot: reportDot(px),
+          },
+        ];
+
+        const navCard = (
+          <div style={{ background: "#fff", border: "1px solid #E3ECF7", borderRadius: 16, padding: 10, boxShadow: "0 22px 50px -40px rgba(11,43,107,.3)" }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: "#8298BC", padding: "6px 10px 8px" }}>
+              This session
+            </div>
+            {navItems.map((n) => {
+              const active = activeSection === n.id;
+              return (
+                <button
+                  key={n.id}
+                  type="button"
+                  onClick={() => goToSection(n.id)}
+                  className="hover:bg-[#F0F6FD] transition-colors"
+                  style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", border: "none", textAlign: "left", fontFamily: "inherit", padding: "8px 10px", borderRadius: 9, cursor: "pointer", background: active ? "#EAF3FF" : "transparent" }}
+                >
+                  <span style={{ flexShrink: 0, width: 7, height: 7, borderRadius: "50%", background: n.dot }} />
+                  <span style={{ minWidth: 0, flex: 1 }}>
+                    <span style={{ display: "block", fontSize: 13, fontWeight: active ? 700 : 600, color: active ? "#2F80FF" : "#33465F" }}>{n.label}</span>
+                    <span style={{ display: "block", fontSize: 11, color: "#A6B8D4", marginTop: 1 }}>{n.meta}</span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        );
+
+        const navChipsRow = (
+          <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4 }}>
+            {navItems.map((n) => {
+              const active = activeSection === n.id;
+              return (
+                <button
+                  key={n.id}
+                  type="button"
+                  onClick={() => goToSection(n.id)}
+                  style={{ display: "inline-flex", alignItems: "center", gap: 7, flexShrink: 0, border: "1px solid #E3ECF7", borderRadius: 999, padding: "6px 13px", fontFamily: "inherit", fontSize: 12.5, fontWeight: active ? 700 : 600, cursor: "pointer", background: active ? "#EAF3FF" : "#fff", color: active ? "#2F80FF" : "#33465F", whiteSpace: "nowrap" }}
+                >
+                  <span style={{ width: 7, height: 7, borderRadius: "50%", background: n.dot }} />
+                  {n.label}
+                </button>
+              );
+            })}
+          </div>
+        );
+
+        const clientChip = session.clientId ? (
+          <div style={{ background: "#fff", border: "1px solid #E3ECF7", borderRadius: 16, padding: "12px 14px", boxShadow: "0 22px 50px -40px rgba(11,43,107,.3)", display: "flex", alignItems: "center", gap: 11 }}>
+            {(() => {
+              const [bg, color] = avatarColors(clientName);
+              return (
+                <span style={{ display: "grid", placeItems: "center", width: 38, height: 38, borderRadius: "50%", background: bg, color, fontWeight: 700, fontSize: 14, flexShrink: 0 }}>
+                  {initials(clientName)}
                 </span>
-              </InfoRow>
+              );
+            })()}
+            <div style={{ minWidth: 0 }}>
+              <Link href={`/clients/${clientId}`} style={{ display: "block", fontSize: 13.5, fontWeight: 700, color: "#0B2B6B", textDecoration: "none" }} className="hover:text-primary transition-colors">
+                {clientName}
+              </Link>
+              <Link href={`/clients/${clientId}`} style={{ fontSize: 11.5, color: "#8298BC", textDecoration: "none" }} className="hover:text-primary transition-colors">
+                Open client record ›
+              </Link>
             </div>
-            <div>
-              <h2 style={SECTION_H2}>Record details</h2>
-              <InfoRow label="Created">{formatDate(session.createdAt)}</InfoRow>
-              <InfoRow label="Last updated">{formatDate(session.updatedAt)}</InfoRow>
-            </div>
           </div>
-        </div>
+        ) : null;
 
-        {/* Card 2 — Measures + Session notes */}
-        <div style={CARD}>
-          <h2 style={SECTION_H2}>Measures</h2>
-          <div style={{ marginBottom: 22 }}>
-            <MeasuresPanel
-              clientId={clientId}
-              sessionId={session._id}
-              compact
-            />
-          </div>
-          <h2 style={SECTION_H2}>Session notes</h2>
-          <div style={{ background: "#F7FAFE", border: "1px solid #EEF3FA", borderRadius: 12, padding: "14px 16px", marginTop: 8 }}>
-            <p style={{ fontSize: 13.5, lineHeight: 1.6, color: session.notes ? "#41557A" : "#8298BC", margin: 0, whiteSpace: "pre-wrap" }}>
-              {session.notes || "No notes recorded for this session."}
-            </p>
-          </div>
-        </div>
-
-        {/* Card 3 — AI Insights */}
-        <div id="ai-insights-section" style={CARD}>
-          {/* AI card header */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 18 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ display: "grid", placeItems: "center", width: 30, height: 30, borderRadius: 9, background: "#0B2B6B", flexShrink: 0 }}>
-                <svg width="16" height="16" viewBox="0 0 512 512" fill="none">
-                  <path d="M352 166c-26-24-60-38-98-38-74 0-134 56-134 128s60 128 134 128c38 0 72-14 98-38" stroke="#25B9C8" strokeWidth="46" strokeLinecap="round" />
-                </svg>
-              </span>
-              <h2 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 18, letterSpacing: "-.01em", margin: 0, color: "#0B2B6B" }}>AI insights</h2>
-              {session.status === "completed" && (
-                <span style={{ fontSize: 11.5, fontWeight: 700, padding: "3px 11px", borderRadius: 999, background: "#E7F6EC", color: "#3B9E57" }}>Analysis available</span>
-              )}
-            </div>
-            {session.status === "completed" && (
-              <RegenerateButton
-                clientId={clientId}
-                sessionId={session._id}
-                onDone={() => setAiRefreshKey((k) => k + 1)}
-              />
-            )}
-          </div>
-
-          {/* Auto-prep components */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
-            <AutoSessionPrep
-              clientId={clientId}
-              sessionId={session._id}
-              sessionStatus={session.status}
-              onDone={() => setAiRefreshKey((k) => k + 1)}
-            />
-            <AutoPostSession
-              clientId={clientId}
-              sessionId={session._id}
-              sessionStatus={session.status}
-              onDone={() => setAiRefreshKey((k) => k + 1)}
-            />
-          </div>
-
-          {/* Notes-staleness nudge (R54 session edge) — the note + progress pair
-              was generated from notes that have since changed. Regeneration goes
-              through the same endpoint and confirm as the Regenerate button. */}
-          {!isEditing && notesStale && (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 14, background: "#FEF9EC", border: "1px solid #F6E6BC", borderRadius: 11, padding: "9px 14px" }}>
+        // Notes-staleness nudge (R54 session edge) — the note + progress pair
+        // was generated from notes that have since changed. Rendered between
+        // the Session-note sticky header and its body (position only — the
+        // render condition, copy, and regenerate wiring are unchanged).
+        // Regeneration goes through the same endpoint and confirm as the
+        // Regenerate button.
+        const staleNudge =
+          !isEditing && notesStale ? (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", margin: "12px 20px 0", background: "#FEF9EC", border: "1px solid #F6E6BC", borderRadius: 11, padding: "9px 14px" }}>
               <span style={{ fontSize: 12.5, color: "#7A6020", flex: 1, minWidth: 200 }}>
                 Session notes changed since this note and progress were generated. Regenerate them? This replaces the current versions.
                 {staleRegenError && <span style={{ display: "block", color: "#C0392B", marginTop: 3 }}>{staleRegenError}</span>}
@@ -494,15 +541,125 @@ export default function SessionDetail({ sessionId }) {
                 {staleRegenBusy ? "Regenerating…" : "Regenerate"}
               </button>
             </div>
-          )}
-          {!isEditing && <SessionNote sessionId={session._id} refreshKey={aiRefreshKey} />}
-          {!isEditing && (
-            <div style={{ marginTop: 16 }}>
-              <SessionAIInsights session={session} refreshKey={aiRefreshKey} focus="session" onNotesStale={handleNotesStale} />
+          ) : null;
+
+        const documentColumn = (
+          <div style={{ display: "flex", flexDirection: "column", gap: 18, minWidth: 0 }}>
+            {/* Session information — merged card */}
+            <section id="sec-info" style={CARD}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 40px" }}>
+                <div>
+                  <h2 style={SECTION_H2}>Session information</h2>
+                  <InfoRow label="Client">
+                    {session.clientId ? (
+                      <Link
+                        href={`/clients/${clientId}`}
+                        style={{ color: "#0B2B6B", fontWeight: 600, textDecoration: "none" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.color = "#2F80FF")}
+                        onMouseLeave={(e) => (e.currentTarget.style.color = "#0B2B6B")}
+                      >
+                        {clientName}
+                      </Link>
+                    ) : (
+                      "Unknown Client"
+                    )}
+                  </InfoRow>
+                  <InfoRow label="Date & time">{formatDate(session.date)}</InfoRow>
+                  <InfoRow label="Duration">{formatDuration(session.duration)}</InfoRow>
+                  <InfoRow label="Type">{session.type ? session.type.charAt(0).toUpperCase() + session.type.slice(1) : "—"}</InfoRow>
+                  <InfoRow label="Format">{session.format ? session.format.charAt(0).toUpperCase() + session.format.slice(1) : "—"}</InfoRow>
+                  <InfoRow label="Status">
+                    <span style={{ fontSize: 11.5, fontWeight: 700, padding: "3px 11px", borderRadius: 999, background: sp.bg, color: sp.color }}>
+                      {statusLabel}
+                    </span>
+                  </InfoRow>
+                </div>
+                <div>
+                  <h2 style={SECTION_H2}>Record details</h2>
+                  <InfoRow label="Created">{formatDate(session.createdAt)}</InfoRow>
+                  <InfoRow label="Last updated">{formatDate(session.updatedAt)}</InfoRow>
+                </div>
+              </div>
+              <div style={{ marginTop: 18 }}>
+                <h2 style={SECTION_H2}>Measures</h2>
+                <div style={{ marginBottom: 18 }}>
+                  <MeasuresPanel
+                    clientId={clientId}
+                    sessionId={session._id}
+                    compact
+                  />
+                </div>
+                <h2 style={SECTION_H2}>Session notes</h2>
+                <div style={{ background: "#F7FAFE", border: "1px solid #EEF3FA", borderRadius: 12, padding: "14px 16px", marginTop: 8 }}>
+                  <p style={{ fontSize: 13.5, lineHeight: 1.6, color: session.notes ? "#41557A" : "#8298BC", margin: 0, whiteSpace: "pre-wrap" }}>
+                    {session.notes || "No notes recorded for this session."}
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            {/* AI region — run-in header; the card wrapper dissolved, sections
+                sit directly in the document column like Overview v2 */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", padding: "2px 2px 0" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ display: "grid", placeItems: "center", width: 30, height: 30, borderRadius: 9, background: "#0B2B6B", flexShrink: 0 }}>
+                  <svg width="16" height="16" viewBox="0 0 512 512" fill="none">
+                    <path d="M352 166c-26-24-60-38-98-38-74 0-134 56-134 128s60 128 134 128c38 0 72-14 98-38" stroke="#25B9C8" strokeWidth="46" strokeLinecap="round" />
+                  </svg>
+                </span>
+                <h2 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 18, letterSpacing: "-.01em", margin: 0, color: "#0B2B6B" }}>AI insights</h2>
+                {session.status === "completed" && (
+                  <span style={{ fontSize: 11.5, fontWeight: 700, padding: "3px 11px", borderRadius: 999, background: "#E7F6EC", color: "#3B9E57" }}>Analysis available</span>
+                )}
+              </div>
+              {session.status === "completed" && (
+                <RegenerateButton
+                  clientId={clientId}
+                  sessionId={session._id}
+                  onDone={() => setAiRefreshKey((k) => k + 1)}
+                />
+              )}
             </div>
-          )}
-        </div>
-      </div>
+
+            {/* Auto-prep components */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <AutoSessionPrep
+                clientId={clientId}
+                sessionId={session._id}
+                sessionStatus={session.status}
+                onDone={() => setAiRefreshKey((k) => k + 1)}
+              />
+              <AutoPostSession
+                clientId={clientId}
+                sessionId={session._id}
+                sessionStatus={session.status}
+                onDone={() => setAiRefreshKey((k) => k + 1)}
+              />
+            </div>
+
+            {!isEditing && <SessionNote sessionId={session._id} refreshKey={aiRefreshKey} id="sec-note" nudge={staleNudge} />}
+            {!isEditing && (
+              <SessionAIInsights session={session} refreshKey={aiRefreshKey} focus="session" onNotesStale={handleNotesStale} onReportsChange={handleReportsChange} />
+            )}
+          </div>
+        );
+
+        return isNarrow ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+            {navChipsRow}
+            {documentColumn}
+            {clientChip}
+          </div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "252px minmax(0, 1fr)", gap: 24, alignItems: "start" }}>
+            <div style={{ position: "sticky", top: 84, display: "flex", flexDirection: "column", gap: 14 }}>
+              {navCard}
+              {clientChip}
+            </div>
+            {documentColumn}
+          </div>
+        );
+      })()}
     </div>
   );
 }

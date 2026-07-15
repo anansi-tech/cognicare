@@ -43,7 +43,10 @@ const ExternalLinkIcon = () => (
 // whether the session's notes diverged from what this session's progress/
 // documentation pair was generated (or last reconciled) from. The parent
 // renders the regenerate nudge above the SOAP section.
-export default function SessionAIInsights({ session, refreshKey = 0, focus, onNotesStale }) {
+// `onReportsChange` (optional, stable): receives { treatment, progress,
+// documentation } so the session rail can derive nav dots/meta — display
+// data only, no new fetches.
+export default function SessionAIInsights({ session, refreshKey = 0, focus, onNotesStale, onReportsChange }) {
   const router = useRouter();
   const [assessment, setAssessment] = useState(null);
   const [diagnostic, setDiagnostic] = useState(null);
@@ -111,6 +114,11 @@ export default function SessionAIInsights({ session, refreshKey = 0, focus, onNo
     onNotesStale?.(notesStale);
   }, [notesStale, loading, onNotesStale]);
 
+  useEffect(() => {
+    if (loading) return;
+    onReportsChange?.({ treatment, progress, documentation });
+  }, [treatment, progress, documentation, loading, onReportsChange]);
+
   if (loading) {
     return (
       <div className="rounded-lg border border-border bg-background p-4 text-sm text-muted-foreground">
@@ -156,6 +164,7 @@ export default function SessionAIInsights({ session, refreshKey = 0, focus, onNo
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       {!sessionOnly && (
         <Section
+          id="sec-assessment"
           sticky
           title="Assessment"
           summary={assessment?.summary}
@@ -172,6 +181,7 @@ export default function SessionAIInsights({ session, refreshKey = 0, focus, onNo
       )}
       {!sessionOnly && (
         <Section
+          id="sec-diagnosis"
           sticky
           title="Diagnostic impression"
           summary={diagnostic?.summary}
@@ -187,6 +197,7 @@ export default function SessionAIInsights({ session, refreshKey = 0, focus, onNo
         </Section>
       )}
       <Section
+        id="sec-treatment"
         sticky
         title={
           <>
@@ -206,6 +217,7 @@ export default function SessionAIInsights({ session, refreshKey = 0, focus, onNo
         )}
       </Section>
       <Section
+        id="sec-progress"
         sticky
         title="Progress report"
         summary={progress?.summary}
