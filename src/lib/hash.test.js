@@ -174,4 +174,48 @@ describe("session edge — progress/documentation vs session notes", () => {
       reconciliationStamp("assessment", { client: { initialAssessment: session.notes } })
     );
   });
+
+  // Mirrors the note route's PATCH guard exactly: canonical-hash change
+  // detection, reconciliation only on a real change.
+  describe("SOAP edit reconciliation (note route guard)", () => {
+    const patchSoap = (note, soap, parentSession) => {
+      const next = { ...note.payload, soap };
+      if (payloadHash(next) === payloadHash(note.payload)) return note;
+      return { ...note, payload: next, ...reconciliationStamp("documentation", { session: parentSession }) };
+    };
+    const isNudgeActive = (note, currentSession) =>
+      note.sourceNotesHash !== notesHash(currentSession.notes);
+
+    const generatedNotes = "Client discussed boundaries.";
+    const soapV1 = { subjective: "Reports progress.", objective: "Engaged.", assessment: "Improving.", plan: "Continue." };
+    const freshNote = () => ({
+      payload: { soap: soapV1 },
+      sourceNotesHash: notesHash(generatedNotes),
+    });
+
+    it("SOAP edit clears an active notes-nudge", () => {
+      const editedSession = { notes: generatedNotes + " Later addendum." };
+      let note = freshNote();
+      expect(isNudgeActive(note, editedSession)).toBe(true); // notes diverged → nudge
+      note = patchSoap(note, { ...soapV1, plan: "Taper to biweekly." }, editedSession);
+      expect(isNudgeActive(note, editedSession)).toBe(false); // edit reconciled it
+    });
+
+    it("SOAP save-without-change refreshes nothing", () => {
+      const editedSession = { notes: generatedNotes + " Later addendum." };
+      let note = freshNote();
+      note = patchSoap(note, { ...soapV1 }, editedSession); // byte-different object, same content
+      expect(note.sourceNotesHash).toBe(notesHash(generatedNotes)); // stamp untouched
+      expect(isNudgeActive(note, editedSession)).toBe(true); // nudge stays
+    });
+
+    it("notes edited after a SOAP reconcile re-trigger the nudge", () => {
+      const sessionV2 = { notes: generatedNotes + " Later addendum." };
+      let note = freshNote();
+      note = patchSoap(note, { ...soapV1, plan: "Taper." }, sessionV2); // reconciled vs V2
+      expect(isNudgeActive(note, sessionV2)).toBe(false);
+      const sessionV3 = { notes: sessionV2.notes + " Another change." };
+      expect(isNudgeActive(note, sessionV3)).toBe(true); // fresh divergence re-triggers
+    });
+  });
 });

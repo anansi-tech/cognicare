@@ -4,6 +4,8 @@ import { visibleClientIds } from "@/lib/practice";
 import { connectDB } from "@/lib/mongodb";
 import AIReport from "@/models/aiReport";
 import Session from "@/models/session";
+import { payloadHash } from "@/lib/hash";
+import { reconciliationStamp } from "@/lib/ai/upstream";
 
 // The note is visible iff the parent session's client is visible to the user.
 async function sessionVisibleTo(sessionId, user) {
@@ -39,7 +41,20 @@ export async function PATCH(req, { params }) {
   }
   const note = await AIReport.findOne({ sessionId, agentType: "documentation", practiceId: user.practiceId }).sort({ createdAt: -1 });
   if (!note) return NextResponse.json({ error: "No note for this session" }, { status: 404 });
-  if (soap) note.payload = { ...note.payload, soap };
+  // Same payload-changed pattern as the generalized report PATCH: only a REAL
+  // change is a human edit, and a human edit reconciles the note with the
+  // session's current notes (Sol amendment). Canonical hash comparison, so
+  // editor round-trip artifacts don't count as changes. Approve/save-without-
+  // change refreshes nothing.
+  if (soap) {
+    const next = { ...note.payload, soap };
+    if (payloadHash(next) !== payloadHash(note.payload)) {
+      note.payload = next;
+      note.editedAt = new Date();
+      const parentSession = await Session.findById(sessionId);
+      Object.assign(note, reconciliationStamp("documentation", { session: parentSession }));
+    }
+  }
   if (status === "approved") note.status = "approved";
   await note.save();
   // Re-fetch so post("init") decrypts payload — pre("save") encrypts it in-place.
