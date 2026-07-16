@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Brand } from "@/components/Brand";
+import { validatePassword } from "@/lib/password";
 
 const PERKS = [
   "Five specialists + LIAM",
@@ -47,6 +48,14 @@ export default function SignupPage() {
 
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
+      setLoading(false);
+      return;
+    }
+
+    // Mirrors the server rule for inline UX; the register route is the authority.
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      setError(passwordError);
       setLoading(false);
       return;
     }

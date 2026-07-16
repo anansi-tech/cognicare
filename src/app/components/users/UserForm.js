@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useFormDraft } from "@/hooks/useFormDraft";
 import { DraftRestoredNotice, DraftSaveIndicator } from "@/components/ui/DraftRestoredNotice";
+import { validatePassword } from "@/lib/password";
 
 // Self-edit profile form. The generic admin user CRUD was removed in
 // Round 10 — this form is now used only by /profile.
@@ -53,6 +54,16 @@ export default function UserForm({ user, onSuccess, onCancel }) {
     if (!user) return;
     setLoading(true);
     setError(null);
+
+    // Mirrors the server rule for inline UX; the PATCH route is the authority.
+    if (formData.password) {
+      const passwordError = validatePassword(formData.password);
+      if (passwordError) {
+        setError(passwordError);
+        setLoading(false);
+        return;
+      }
+    }
 
     try {
       const requestData = { ...formData };

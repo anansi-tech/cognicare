@@ -5,6 +5,7 @@ import Practice from "@/models/practice";
 import Invitation from "@/models/invitation";
 import { hash } from "bcryptjs";
 import { getSeatUsage } from "@/lib/practice";
+import { validatePassword } from "@/lib/password";
 
 export async function POST(request) {
   try {
@@ -25,6 +26,12 @@ export async function POST(request) {
         { message: "Email, password, and name are required" },
         { status: 400 }
       );
+    }
+
+    // Server is the authority on password policy; the form mirrors it for UX.
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      return NextResponse.json({ message: passwordError }, { status: 400 });
     }
 
     // Connect to MongoDB

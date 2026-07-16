@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/mongodb";
 import User from "@/models/user";
 import { getCurrentUser } from "@/lib/auth";
 import bcrypt from "bcryptjs";
+import { validatePassword } from "@/lib/password";
 
 // Self-only user endpoints. Generic user CRUD was removed in Round 10 —
 // roster management moved to /team. Used by /profile to read + update the
@@ -55,7 +56,13 @@ export async function PATCH(req, { params }) {
   }
   if (licenseNumber !== undefined) user.licenseNumber = licenseNumber;
   if (specialization !== undefined) user.specialization = specialization;
-  if (password) user.password = await bcrypt.hash(password, 12);
+  if (password) {
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      return NextResponse.json({ message: passwordError }, { status: 400 });
+    }
+    user.password = await bcrypt.hash(password, 12);
+  }
 
   await user.save();
   const updatedUser = user.toObject();
