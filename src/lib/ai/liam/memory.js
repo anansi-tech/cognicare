@@ -26,8 +26,14 @@ export function buildMemoryBlock(thread) {
 
 // Append the latest exchange; compress overflow into rollingSummary.
 export async function appendExchange(thread, userText, assistantText) {
-  thread.turns.push({ role: "user", content: userText });
-  thread.turns.push({ role: "assistant", content: assistantText });
+  const userContent = userText?.trim();
+  const assistantContent = assistantText?.trim();
+  if (!userContent || !assistantContent) {
+    throw new Error("LIAM exchanges require non-empty user and assistant content");
+  }
+
+  thread.turns.push({ role: "user", content: userContent });
+  thread.turns.push({ role: "assistant", content: assistantContent });
   thread.lastActiveAt = new Date();
 
   if (thread.turns.length > KEEP_TURNS) {
@@ -36,6 +42,7 @@ export async function appendExchange(thread, userText, assistantText) {
     const transcript = overflow.map((t) => `${t.role}: ${t.content}`).join("\n");
     const { text } = await generateText({
       model: openai(MODELS.background),
+      providerOptions: { openai: { store: false } },
       messages: [{
         role: "user",
         content:

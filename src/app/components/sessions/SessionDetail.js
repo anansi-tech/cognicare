@@ -63,7 +63,7 @@ export default function SessionDetail({ sessionId }) {
   const handleReportsChange = useCallback((r) => setSessionReports(r), []);
   const [activeSection, setActiveSection] = useState("sec-info");
   const [isNarrow, setIsNarrow] = useState(false);
-  const { bindClient } = useLiam();
+  const { bindClient, releaseClient } = useLiam();
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 1000px)");
@@ -109,8 +109,10 @@ export default function SessionDetail({ sessionId }) {
     if (!c) return;
     const id = typeof c === "object" ? (c._id ?? c.id) : c;
     const name = typeof c === "object" ? (c.name ?? "") : "";
-    if (id) bindClient(id, name);
-  }, [session?.clientId, bindClient]);
+    if (!id) return;
+    bindClient(id, name);
+    return () => releaseClient(id);
+  }, [session?.clientId, bindClient, releaseClient]);
 
   const fetchSession = async () => {
     try {

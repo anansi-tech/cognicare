@@ -5,8 +5,7 @@ const LiamContext = createContext(null);
 
 export function LiamProvider({ children }) {
   const [open, setOpen] = useState(false);
-  const [clientId, setClientId] = useState(null);
-  const [clientName, setClientName] = useState("");
+  const [client, setClient] = useState({ id: null, name: "" });
 
   // Cmd-K / Ctrl-K opens LIAM from anywhere.
   useEffect(() => {
@@ -21,12 +20,26 @@ export function LiamProvider({ children }) {
   }, []);
 
   const bindClient = useCallback((id, name = "") => {
-    setClientId(id);
-    setClientName(name);
+    setClient({ id, name });
+  }, []);
+
+  // Route owners release only the client they bound. The id comparison keeps
+  // an old page's cleanup from clearing a newer binding during navigation.
+  const releaseClient = useCallback((id) => {
+    setClient((current) =>
+      String(current.id) === String(id) ? { id: null, name: "" } : current
+    );
   }, []);
 
   return (
-    <LiamContext.Provider value={{ open, setOpen, clientId, clientName, bindClient }}>
+    <LiamContext.Provider value={{
+      open,
+      setOpen,
+      clientId: client.id,
+      clientName: client.name,
+      bindClient,
+      releaseClient,
+    }}>
       {children}
     </LiamContext.Provider>
   );
