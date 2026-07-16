@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { getSession } from "@/lib/auth";
+import { visibleClientIds } from "@/lib/practice";
 import AIReport from "@/models/aiReport";
 import { payloadHash } from "@/lib/hash";
 
@@ -21,8 +22,14 @@ export async function GET(request, { params }) {
 
     await connectDB();
 
-    // Scope to the practice so a clinician can only read their practice's
-    // clients' reports.
+    // Assignment-based visibility: a clinician reads only their assigned
+    // clients' reports (practice scope alone would leak across colleagues in
+    // a shared practice). Non-revealing 404.
+    const allowed = await visibleClientIds(session.user);
+    if (!allowed.some((id) => id.toString() === clientId)) {
+      return NextResponse.json({ error: "Client not found" }, { status: 404 });
+    }
+
     const query = { clientId, practiceId: session.user.practiceId };
 
     if (agentType) {

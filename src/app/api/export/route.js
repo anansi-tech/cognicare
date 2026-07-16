@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
+import { visibleClientIds } from "@/lib/practice";
 import { connectDB } from "@/lib/mongodb";
 import Client from "@/models/client";
 import Session from "@/models/session";
@@ -16,9 +17,10 @@ export async function GET(request) {
 
     await connectDB();
 
-    // Export is practice-scoped — everything the practice owns.
-    const clients = await Client.find({ practiceId: user.practiceId });
-    const clientIds = clients.map((client) => client._id);
+    // Export follows assignment visibility like everything else: a clinician
+    // exports their own caseload; the practice owner exports the practice.
+    const clientIds = await visibleClientIds(user);
+    const clients = await Client.find({ _id: { $in: clientIds } });
 
     const sessions = await Session.find({ clientId: { $in: clientIds } });
     const aiReports = await AIReport.find({ clientId: { $in: clientIds } });

@@ -30,6 +30,8 @@ Every document in every collection is scoped by `practiceId`. A practice is auto
 
 Role hierarchy: `admin` (practice owner) > `counselor`. The session JWT carries `practiceId`, `role`, `isPracticeOwner`, and `stripeSubscriptionStatus` — use these instead of a separate DB lookup where possible.
 
+**Scope guard is universal**: every API route that reads or writes client-linked data must enforce `visibleClientIds`/`clientScope` before loading context, calling models, or returning data — including when modifying pre-existing routes. Unauthorized = non-revealing 404. Enforced structurally by `src/app/api/scope-guard.test.js`, which walks every route touching `clientId` and asserts the guard import; exemptions (token-auth, cron) must be justified in that file.
+
 ### Auth
 
 - **Edge-safe config**: `src/auth.config.js` — no Mongoose, used by middleware
@@ -79,6 +81,10 @@ Six specialized agents run after sessions: `assessment`, `diagnostic`, `treatmen
 - Soft-cap counts: ~3-4 goals, ~3-5 interventions, ~1-3 homework (treatment); ~2-3 ranked differentials (diagnostic); ~3-5 concerns, ~3 risk/protective factors (assessment); ~3 barriers, ~3 recommendations (progress). These are prompt-guided only — schemas remain unconstrained arrays.
 
 **Liam** (`src/lib/ai/liam/`) is a separate in-session copilot with per-thread rolling memory stored in `LiamThread`. The chat panel (`src/components/liam/LiamSheet.jsx`) is 480px wide.
+
+**LIAM statelessness**: all LIAM OpenAI calls (generation AND the rolling-summary compression) set `store: false`. The server-owned `LiamThread` is the sole conversation history; model input = memory block + the newest user message only — never resent browser messages (they're display state).
+
+**LIAM memory integrity**: only successful, non-empty user/assistant exchanges persist to `LiamThread` — aborted, failed, or empty generations never enter memory (empty user text is a 400; empty assistant text skips `appendExchange`).
 
 ### Measurement-Based Care (`src/lib/mbc/`)
 
