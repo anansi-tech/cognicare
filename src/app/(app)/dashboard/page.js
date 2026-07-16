@@ -50,6 +50,7 @@ function reviewPresentation(item) {
 }
 
 const SIGNAL_PILL = {
+  risk: RED,
   worsened: RED,
   overdue: AMBER,
   improved: GREEN,
@@ -294,7 +295,7 @@ export default function DashboardPage() {
             {stats.signals.map((g, i) => (
               <li key={`${g.clientId}-${i}`} style={{ borderBottom: "1px solid #F2F6FB" }}>
                 <Link
-                  href={`/clients/${g.clientId}?tab=progress`}
+                  href={`/clients/${g.clientId}?tab=${g.severity === "risk" ? "overview" : "progress"}`}
                   className="flex items-center justify-between gap-4 hover:bg-[#F5F9FE] transition-colors duration-[130ms]"
                   style={{ padding: "13px 24px", textDecoration: "none" }}
                 >

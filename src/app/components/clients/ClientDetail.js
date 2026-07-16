@@ -12,6 +12,8 @@ import ReassignControl from "./ReassignControl";
 import { ageFromDob, formatDob, genderLabel } from "@/lib/age";
 import { MeasuresPanel } from "@/components/measures/MeasuresPanel";
 import { AdministrationHistory } from "@/components/measures/AdministrationHistory";
+import { RiskBanners } from "@/components/measures/RiskBanners";
+import { SafetyPlanSection } from "@/components/safety-plan/SafetyPlanSection";
 import { listInstruments } from "@/lib/mbc/instruments";
 import { useLiam } from "@/components/liam/LiamProvider";
 import { IntakeAssessment } from "@/components/ai/IntakeAssessment";
@@ -146,6 +148,8 @@ export default function ClientDetail({ clientId }) {
   // active section, and the single-column fallback breakpoint.
   const [overviewReports, setOverviewReports] = useState({});
   const [activeSection, setActiveSection] = useState("sec-assessment");
+  const [risk, setRisk] = useState(null); // /api/clients/[id]/risk summary (RiskBanners feeds it up)
+  const [riskRefreshKey, setRiskRefreshKey] = useState(0);
   const [isNarrow, setIsNarrow] = useState(false);
   const handleReportsChange = useCallback((r) => setOverviewReports(r), []);
   const [latestBaselineAt, setLatestBaselineAt] = useState(null);
@@ -313,7 +317,7 @@ export default function ClientDetail({ clientId }) {
   // Scroll-spy for the Overview navigator rail.
   useEffect(() => {
     if (activeTab !== "overview") return;
-    const ids = ["sec-assessment", "sec-diagnosis", "sec-treatment", "sec-progress", "sec-intake"];
+    const ids = ["sec-assessment", "sec-diagnosis", "sec-treatment", "sec-progress", "sec-safety-plan", "sec-intake"];
     const onScroll = () => {
       const y = window.scrollY + 150;
       let cur = ids[0];
@@ -858,6 +862,15 @@ export default function ClientDetail({ clientId }) {
       <div>
         {activeTab === "overview" && (
           <div className="space-y-5">
+            {/* Risk surfacing: elevated C-SSRS + PHQ-9 item-9 trigger (R55) */}
+            <RiskBanners
+              clientId={clientId}
+              refreshKey={riskRefreshKey}
+              onLoaded={setRisk}
+              onChanged={() => setRiskRefreshKey((k) => k + 1)}
+              onOpenSafetyPlan={() => goToSection("sec-safety-plan")}
+            />
+
             {/* Baseline measures card — visible during intake phase */}
             {assessmentExists === false && (
               <div style={{ background: "#EEF4FB", border: "1px solid #CBE0F8", borderRadius: 16, padding: 16 }}>
@@ -887,6 +900,7 @@ export default function ClientDetail({ clientId }) {
                   compact
                   onSaved={(instrumentId) => {
                     if (instrumentId) setAdministeredInstruments((prev) => prev.includes(instrumentId) ? prev : [...prev, instrumentId]);
+                    setRiskRefreshKey((k) => k + 1);
                   }}
                 />
               </div>
@@ -910,6 +924,16 @@ export default function ClientDetail({ clientId }) {
                 { id: "sec-diagnosis", label: "Diagnostic impression", meta: navMeta(ovD), dot: navDot(ovD) },
                 { id: "sec-treatment", label: `Treatment plan${ovT?.version ? ` v${ovT.version}` : ""}`, meta: navMeta(ovT), dot: navDot(ovT) },
                 { id: "sec-progress", label: "Progress report", meta: reassess ? "Reassessment recommended" : navMeta(ovP), dot: reassess ? "#E3B341" : navDot(ovP) },
+                {
+                  id: "sec-safety-plan",
+                  label: "Safety plan",
+                  meta: !risk?.safetyPlan?.exists
+                    ? "Not on file"
+                    : risk.safetyPlan.reviewedAt
+                      ? `Reviewed ${fmtShort(risk.safetyPlan.reviewedAt)}`
+                      : "On file",
+                  dot: risk?.safetyPlan?.exists ? "#3B9E57" : risk?.elevated ? "#C0392B" : "#A6B8D4",
+                },
                 { id: "sec-intake", label: "Intake note", meta: "At creation", dot: "#A6B8D4" },
               ];
 
@@ -991,6 +1015,16 @@ export default function ClientDetail({ clientId }) {
                     refreshKey={aiRefreshKey}
                     onRegenerated={refreshAssessment}
                     onReportsChange={handleReportsChange}
+                  />
+                  <SafetyPlanSection
+                    clientId={clientId}
+                    onPlanChanged={(saved) =>
+                      setRisk((r) =>
+                        r
+                          ? { ...r, safetyPlan: { exists: true, reviewedAt: saved.reviewedAt ?? null, updatedAt: saved.updatedAt } }
+                          : r
+                      )
+                    }
                   />
                   {/* Intake note — the clinician-written source of the AI assessment */}
                   <section id="sec-intake" style={{ background: "#fff", border: "1px solid #E3ECF7", borderRadius: 20, boxShadow: "0 22px 50px -40px rgba(11,43,107,.25)" }}>

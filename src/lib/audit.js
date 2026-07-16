@@ -127,4 +127,5 @@ export const EntityTypes = {
   REPORT: "report",
   SETTINGS: "settings",
   MEASURE: "measure",
+  SAFETY_PLAN: "safety-plan",
 };

@@ -88,7 +88,9 @@ Six specialized agents run after sessions: `assessment`, `diagnostic`, `treatmen
 
 ### Measurement-Based Care (`src/lib/mbc/`)
 
-Three instruments are registered: **PHQ-9** (depression, lower=better), **GAD-7** (anxiety, lower=better), **WHO-5** (wellbeing, higher=better). The `direction` field on each instrument JSON drives score interpretation throughout.
+Four instruments are registered: **PHQ-9** (depression, lower=better), **GAD-7** (anxiety, lower=better), **WHO-5** (wellbeing, higher=better), **C-SSRS** (suicide-risk screener, categorical). The `direction` field on each summed instrument JSON drives score interpretation throughout.
+
+**C-SSRS is categorical, not summed** (`scoring.method: "categorical"`): branching items via per-item `showIf`, result is a risk tier (`none|low|moderate|high` — highest `tierIfYes` among endorsed items, per Columbia's triage protocol), never a total. Trend/RCI/overdue logic skips categorical instruments entirely. The tier is stored as a top-level **unencrypted** field on `MeasureAdministration` for lean dashboard reads (responses/flags stay encrypted). Wording is Columbia's verbatim with attribution — never paraphrase instrument text. Risk surfacing (PHQ-9 item-9 trigger banner, elevated-tier banner, dashboard risk signal) is content-anchored via `computeRiskSummary` in `src/lib/mbc/risk.js` — the latest administration decides; time never clears anything. Copy discipline: "Screener indicates elevated risk — clinical judgment required." — never a diagnosis or safe/unsafe verdict. `SafetyPlan` (Stanley-Brown, one per client, content encrypted) lives at `/api/clients/[id]/safety-plan`; agents and the dashboard see existence + `reviewedAt` metadata only.
 
 **Always use the registry — never hardcode instrument IDs:**
 ```js

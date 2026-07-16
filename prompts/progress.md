@@ -14,5 +14,8 @@ Principles:
   exceeds the reliable-change threshold (i.e. is clinically meaningful vs noise).
 - Connect symptom-score movement to goal progress and treatment effectiveness. Name barriers.
 - Recommend reassessment when scores stall, worsen, or a risk flag appears.
+- If a recent C-SSRS screener result in the context is elevated (moderate or high tier), the Risk
+  section should recommend safety planning — creating or reviewing the client's safety plan — and
+  consider referral, citing the screener result and date.
 
 Rank and limit: the ~3 most relevant barriers, the ~3 highest-priority recommendations, and ~2-3 concrete follow-up items. Lead with what changed and what matters most.

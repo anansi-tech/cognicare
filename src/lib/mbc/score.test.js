@@ -49,15 +49,14 @@ describe("scoreInstrument — PHQ-9", () => {
     expect(result.severityBand).toBe(expectedBand("phq9", total));
   });
 
-  it("phq9_9 ≥ 1 → suicidal-ideation flag with correct itemId", () => {
+  it("phq9_9 ≥ 1 → suicidal-ideation + C-SSRS trigger flags with correct itemId", () => {
     // item 9 is index 8 in the items array
     const values = Array(9).fill(0);
     values[8] = 1;
     const r = responses("phq9", values);
     const result = scoreInstrument("phq9", r);
-    expect(result.flags).toHaveLength(1);
-    expect(result.flags[0].flag).toBe("suicidal-ideation");
-    expect(result.flags[0].itemId).toBe("phq9_9");
+    expect(result.flags.map((f) => f.flag)).toEqual(["suicidal-ideation", "phq9-item9-positive"]);
+    expect(result.flags.every((f) => f.itemId === "phq9_9")).toBe(true);
   });
 
   it("phq9_9 = 0 → no flags", () => {

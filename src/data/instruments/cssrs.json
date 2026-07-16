@@ -1,0 +1,68 @@
+{
+  "id": "cssrs",
+  "name": "Columbia-Suicide Severity Rating Scale — Screener",
+  "shortName": "C-SSRS",
+  "construct": "Suicide risk",
+  "recallWindow": "Past month (item 6: lifetime, with a past-3-months follow-up)",
+  "stem": "Ask the client each question. Items 1–5 reference the past month; item 6 is lifetime, with a past-3-months follow-up.",
+  "attribution": "Columbia-Suicide Severity Rating Scale (C-SSRS), Screen Version. © 2008 The Research Foundation for Mental Hygiene, Inc.",
+  "responseStyle": "yesNo",
+  "responseOptions": [
+    { "label": "No", "value": 0 },
+    { "label": "Yes", "value": 1 }
+  ],
+  "items": [
+    {
+      "id": "cssrs_1",
+      "num": "1",
+      "text": "Have you wished you were dead or wished you could go to sleep and not wake up?",
+      "tierIfYes": "low"
+    },
+    {
+      "id": "cssrs_2",
+      "num": "2",
+      "text": "Have you had any actual thoughts of killing yourself?",
+      "instruction": "If YES to 2, ask questions 3, 4, 5, and 6. If NO to 2, go directly to question 6.",
+      "tierIfYes": "low"
+    },
+    {
+      "id": "cssrs_3",
+      "num": "3",
+      "text": "Have you been thinking about how you might do this?",
+      "showIf": { "itemId": "cssrs_2", "gte": 1 },
+      "tierIfYes": "moderate"
+    },
+    {
+      "id": "cssrs_4",
+      "num": "4",
+      "text": "Have you had these thoughts and had some intention of acting on them?",
+      "showIf": { "itemId": "cssrs_2", "gte": 1 },
+      "tierIfYes": "high"
+    },
+    {
+      "id": "cssrs_5",
+      "num": "5",
+      "text": "Have you started to work out or worked out the details of how to kill yourself? Do you intend to carry out this plan?",
+      "showIf": { "itemId": "cssrs_2", "gte": 1 },
+      "tierIfYes": "high"
+    },
+    {
+      "id": "cssrs_6",
+      "num": "6",
+      "text": "Have you ever done anything, started to do anything, or prepared to do anything to end your life?",
+      "detail": "Examples: Collected pills, obtained a gun, gave away valuables, wrote a will or suicide note, took out pills but didn’t swallow any, held a gun but changed your mind or it was grabbed from your hand, went to the roof but didn’t jump; or actually took pills, tried to shoot yourself, cut yourself, tried to hang yourself, etc.",
+      "timeFrame": "Lifetime",
+      "tierIfYes": "moderate"
+    },
+    {
+      "id": "cssrs_6_recent",
+      "num": "6a",
+      "text": "Was this within the past 3 months?",
+      "instruction": "If YES, ask:",
+      "showIf": { "itemId": "cssrs_6", "gte": 1 },
+      "timeFrame": "Past 3 months",
+      "tierIfYes": "high"
+    }
+  ],
+  "scoring": { "method": "categorical" }
+}
