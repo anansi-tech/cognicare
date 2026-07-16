@@ -172,6 +172,25 @@ describe("computeRiskSummary — content-anchored trigger + elevation", () => {
   });
 });
 
+// The specialists' output guidance lives in prompts/*.md, loaded at runtime by
+// baseAgent's loadPrompt(agentType) — NOT in src/lib/ai. This pins the R55
+// Risk guidance so a prompt-editing pass can't silently drop it.
+describe("agent prompts carry the elevated-C-SSRS risk guidance", () => {
+  for (const agent of ["treatment", "progress", "documentation"]) {
+    it(`prompts/${agent}.md recommends safety planning + referral, citing the screener`, () => {
+      const src = fs.readFileSync(path.join(process.cwd(), "prompts", `${agent}.md`), "utf8");
+      expect(src).toMatch(/C-SSRS/);
+      expect(src).toMatch(/safety plan/i);
+      expect(src).toMatch(/referral/i);
+    });
+  }
+
+  it("baseAgent builds system prompts from prompts/<agentType>.md", () => {
+    const base = fs.readFileSync(path.join(process.cwd(), "src/lib/ai/baseAgent.js"), "utf8");
+    expect(base).toMatch(/loadPrompt\(agentType\)/);
+  });
+});
+
 describe("safety plan — encryption round-trip + structural invariants", () => {
   function deriveKey(secret) {
     return crypto.createHash("sha256").update(secret).digest("hex").substring(0, 32);
