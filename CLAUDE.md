@@ -160,7 +160,7 @@ RESEND_API_KEY
 
 ### PHI Handling
 
-This is a HIPAA-aligned healthcare product. All client/session data is PHI. Every API route that reads or writes PHI must call `logAudit()`. The repo is private and must never become public.
+This is a HIPAA-aligned healthcare product. All client/session data is PHI. Every API route that reads or writes PHI must call `logAudit()`. The repo is public by owner decision (source only — PHI lives in the database, never in the repo). Because it is public: never commit PHI, credentials, `.env` files, database dumps, or real client data in fixtures, tests, or screenshots.
 
 ## Sky design system (UI overhaul)
 
