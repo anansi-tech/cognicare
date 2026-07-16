@@ -249,7 +249,7 @@ export default function SignupPage() {
                 placeholder="Create password"
               />
               <p style={{ fontSize: 12, color: "#9AAFCE", margin: "6px 0 0" }}>
-                At least 8 characters, with a mix of letters, numbers and symbols.
+                At least 12 characters — a longer passphrase beats symbols.
               </p>
             </div>
 
