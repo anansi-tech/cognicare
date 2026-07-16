@@ -2,13 +2,13 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useEffect, useRef, useState } from "react";
-import { ArrowUp, Copy, Check, Sparkles } from "lucide-react";
+import { ArrowUp, Copy, Check, Sparkles, CircleAlert } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { Spinner } from "@/components/ui/Spinner";
 import { useLiam } from "./LiamProvider";
-import { renderWithCitations, stripCitationTokens } from "./citations";
+import { renderWithCitations, toClipboardText } from "./citations";
 
 const CITATION_ID = /\[(?:session|report):([a-f0-9]{24})\]/gi;
 
@@ -74,7 +74,7 @@ function CopyButton({ text }) {
     <button
       type="button"
       onClick={() => {
-        navigator.clipboard?.writeText(stripCitationTokens(text)).then(() => {
+        navigator.clipboard?.writeText(toClipboardText(text)).then(() => {
           setCopied(true);
           setTimeout(() => setCopied(false), 1500);
         }).catch(() => {});
@@ -104,26 +104,43 @@ export function LiamSheet() {
 
   // `id` keyed by clientId resets the view when the bound client changes.
   // Server memory is per-(user,client) anyway, so each client has its own thread.
-  const { messages, sendMessage, status, setMessages } = useChat({
+  const { messages, sendMessage, status, error, clearError, setMessages } = useChat({
     id: clientId ?? "none",
     transport: new DefaultChatTransport({
       api: "/api/liam/chat",
       body: () => ({ clientId }),
     }),
   });
+  const isBusy = status === "submitted" || status === "streaming";
+
+  // A binding owns all client-specific sheet state. Releasing it on route exit
+  // makes the existing no-client state authoritative outside client records;
+  // rebinding even the same client starts a fresh server-history load.
+  useEffect(() => {
+    seededFor.current = null;
+    requestedIds.current = new Set();
+    setCiteMeta({});
+    setHasSummary(false);
+    setShowClearConfirm(false);
+    setHistoryLoading(false);
+    setInput("");
+  }, [clientId]);
 
   // Seed the message list from the server thread on open / client change so
   // the conversation survives closing the sheet. Skipped mid-stream.
   useEffect(() => {
-    if (!open || !clientId || status === "streaming") return;
+    if (!open || !clientId || isBusy) return;
     if (seededFor.current === clientId) return;
-    seededFor.current = clientId;
     let cancelled = false;
     setHistoryLoading(true);
     fetch(`/api/liam/thread?clientId=${clientId}`)
-      .then((r) => (r.ok ? r.json() : { turns: [], hasSummary: false }))
+      .then((r) => {
+        if (!r.ok) throw new Error("Failed to load LIAM history");
+        return r.json();
+      })
       .then((d) => {
         if (cancelled) return;
+        seededFor.current = clientId;
         setMessages(
           (d.turns ?? []).map((t, i) => ({
             id: `h-${clientId}-${i}`,
@@ -142,12 +159,12 @@ export function LiamSheet() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, clientId, status]);
+  }, [open, clientId, isBusy]);
 
   // Resolve citation metadata for chips ("Session · Jul 9"). Batch lookup of
   // ids we haven't asked about yet; unresolved ids keep generic labels.
   useEffect(() => {
-    if (!clientId || status === "streaming") return;
+    if (!clientId || isBusy) return;
     const ids = new Set();
     for (const m of messages) {
       if (m.role !== "assistant") continue;
@@ -167,7 +184,7 @@ export function LiamSheet() {
         });
       })
       .catch(() => {});
-  }, [messages, status, clientId]);
+  }, [messages, isBusy, clientId]);
 
   // Auto-scroll to the bottom when a new message arrives or while the
   // assistant is still streaming.
@@ -183,7 +200,8 @@ export function LiamSheet() {
 
   const send = (textOverride) => {
     const text = (textOverride ?? input).trim();
-    if (!text || !clientId || status === "streaming") return;
+    if (!text || !clientId || isBusy) return;
+    clearError();
     sendMessage({ text });
     setInput("");
   };
@@ -290,6 +308,7 @@ export function LiamSheet() {
                   {messages.map((msg) => {
                     const text = msg.parts.filter((p) => p.type === "text").map((p) => p.text).join("");
                     const isUser = msg.role === "user";
+                    if (!isUser && !text) return null;
                     const dayLabel = dayLabelFor(msg);
                     const divider = dayLabel !== lastDayLabel ? <Divider>{dayLabel}</Divider> : null;
                     lastDayLabel = dayLabel;
@@ -298,7 +317,9 @@ export function LiamSheet() {
                         {divider}
                         <div className={`group mb-3 flex flex-col ${isUser ? "items-end" : "items-start"}`}>
                           <div
-                            className="max-w-[82%] whitespace-pre-wrap text-sm"
+                            className={`text-sm ${
+                              isUser ? "max-w-[82%] whitespace-pre-wrap" : "max-w-[96%]"
+                            }`}
                             style={{
                               background: isUser ? "#2F80FF" : "#F1F6FC",
                               color: isUser ? "#fff" : "#24344F",
@@ -316,7 +337,17 @@ export function LiamSheet() {
                   })}
                 </>
               )}
-              {status === "streaming" && <TypingBubble />}
+              {isBusy && <TypingBubble />}
+              {error && !isBusy && (
+                <div
+                  role="alert"
+                  className="mb-3 flex items-start gap-2 rounded-xl border border-[#F4D7D3] bg-[#FFF7F5] px-3 py-2.5"
+                  style={{ color: "#8F3B31", fontSize: 12.5, lineHeight: 1.45 }}
+                >
+                  <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={2} />
+                  <span>LIAM couldn&apos;t complete that response. Please try again.</span>
+                </div>
+              )}
             </div>
 
             {/* Composer */}
@@ -338,7 +369,7 @@ export function LiamSheet() {
                 <button
                   type="button"
                   onClick={() => send()}
-                  disabled={!input.trim() || status === "streaming"}
+                  disabled={!input.trim() || isBusy}
                   aria-label="Send"
                   className="absolute bottom-1.5 right-1.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-foreground text-background transition-opacity hover:opacity-90 disabled:opacity-30 disabled:cursor-not-allowed"
                 >

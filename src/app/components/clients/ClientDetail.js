@@ -153,13 +153,14 @@ export default function ClientDetail({ clientId }) {
   const [attendance, setAttendance] = useState(null);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { bindClient, setOpen: setLiamOpen } = useLiam();
+  const { bindClient, releaseClient, setOpen: setLiamOpen } = useLiam();
 
   // Bind LIAM to this client so Ask LIAM / Cmd-K consults this record.
   useEffect(() => {
     if (!clientId) return;
     bindClient(clientId, client?.name ?? "");
-  }, [clientId, client?.name, bindClient]);
+    return () => releaseClient(clientId);
+  }, [clientId, client?.name, bindClient, releaseClient]);
 
   useEffect(() => {
     // Check sessionStorage for the flag on initial load
