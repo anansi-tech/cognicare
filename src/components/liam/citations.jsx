@@ -7,7 +7,20 @@ import { CalendarDays, FileText } from "lucide-react";
 const TOKEN =
   /\[(session|report):([a-f0-9]{24})\]|\*\*([^*\n]+?)\*\*|(?<![*\w])\*([^*\n]+?)\*(?!\w)|`([^`\n]+?)`/gi;
 
-export function renderWithCitations(text, clientId) {
+// Strips citation tokens for plain-text copy of an assistant message.
+export function stripCitationTokens(text) {
+  return String(text ?? "")
+    .replace(/\s?\[(session|report):[a-f0-9]{24}\]/gi, "")
+    .trim();
+}
+
+const titleCase = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+
+// `meta` (optional): { [id]: { kind, date, reportType } } from
+// /api/liam/citations — enriches chip labels to "Session · Jul 9" /
+// "Progress report". Unresolved ids keep the generic label (never a broken
+// chip). `tz`: practice timezone for the session date.
+export function renderWithCitations(text, clientId, meta = {}, tz) {
   if (text == null) return [];
   const out = [];
   let last = 0;
@@ -22,6 +35,18 @@ export function renderWithCitations(text, clientId) {
           ? `/sessions/${id}`
           : `/clients/${clientId}/ai-reports/${id}`;
       const Icon = kind === "session" ? CalendarDays : FileText;
+      const info = meta[id];
+      let label = kind === "session" ? "Session" : "Report";
+      if (info?.kind === "session" && info.date) {
+        const d = new Date(info.date).toLocaleDateString("en-US", {
+          ...(tz ? { timeZone: tz } : {}),
+          month: "short",
+          day: "numeric",
+        });
+        label = `Session · ${d}`;
+      } else if (info?.kind === "report" && info.reportType) {
+        label = `${titleCase(info.reportType)} report`;
+      }
       out.push(
         <Link
           key={`c${i++}`}
@@ -29,7 +54,7 @@ export function renderWithCitations(text, clientId) {
           className="mx-0.5 inline-flex items-center gap-1 rounded-full bg-[#E4F0FF] px-2 py-0.5 align-baseline text-[11px] font-semibold text-primary no-underline transition-colors hover:bg-[#D3E5FF]"
         >
           <Icon className="h-3 w-3" strokeWidth={2.25} />
-          {kind === "session" ? "Session" : "Report"}
+          {label}
         </Link>
       );
     } else if (bold) {
