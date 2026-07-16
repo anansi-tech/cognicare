@@ -5,6 +5,7 @@ import { evaluateProgress } from "./agents/progress";
 import { document as documentSession } from "./agents/documentation";
 import { persistReport } from "@/lib/report-utils";
 import Session from "@/models/session";
+import AIReport from "@/models/aiReport";
 import { connectDB } from "@/lib/mongodb";
 import { resolveUpstream } from "./upstream";
 import { notesHash, payloadHash } from "@/lib/hash";
@@ -60,6 +61,20 @@ export async function runWorkflow({ type, clientId, sessionId, userId, practiceI
     // Load the just-completed session so agents see the clinician's notes.
     // Server-authoritative — don't rely on the client sending sessionData.
     await connectDB();
+    // Idempotency: a prior run may have died between the two saves (progress
+    // saved, documentation agent failed). The retry gate (AutoPostSession)
+    // only checks documentation existence, so a rerun would duplicate the
+    // progress draft and orphan it. Same generate-first/delete-after ordering
+    // as the regenerate route: snapshot the existing session pair, hide it
+    // from agent context, delete it only after BOTH new saves succeed. On
+    // failure nothing is deleted.
+    const staleIds = (
+      await AIReport.find({
+        clientId, sessionId, practiceId,
+        agentType: { $in: ["progress", "documentation"] },
+      }).select("_id").lean()
+    ).map((r) => r._id);
+    const excluded = [...new Set([...(excludeReportIds ?? []), ...staleIds].map(String))];
     const dbSession = await Session.findById(sessionId);
     const sd = sessionData ?? (dbSession ? {
       notes: dbSession.notes ?? "",
@@ -70,10 +85,11 @@ export async function runWorkflow({ type, clientId, sessionId, userId, practiceI
     // Session edge (R54): both artifacts derive from these notes — capture the
     // hash BEFORE the agent calls so a mid-generation edit lands already-stale.
     const sNotesHash = notesHash(sd?.notes);
-    const p = await evaluateProgress({ clientId, sessionData: sd, excludeReportIds });
+    const p = await evaluateProgress({ clientId, sessionData: sd, excludeReportIds: excluded });
     await save(p, { status: "draft", sourceNotesHash: sNotesHash });
-    const doc = await documentSession({ clientId, progress: p, sessionData: sd, excludeReportIds });
+    const doc = await documentSession({ clientId, progress: p, sessionData: sd, excludeReportIds: excluded });
     await save(doc, { sourceNotesHash: sNotesHash });
+    if (staleIds.length) await AIReport.deleteMany({ _id: { $in: staleIds } });
     return { progress: p, documentation: doc };
   }
   throw new Error(`Unknown workflow type: ${type}`);
