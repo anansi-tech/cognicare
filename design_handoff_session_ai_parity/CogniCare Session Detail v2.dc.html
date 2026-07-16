@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #EEF4FB; }
+  html { scroll-behavior: smooth; }
+  ::selection { background: #2F80FF; color: #fff; }
+  a { color: #2F80FF; text-decoration: none; }
+  a:hover { color: #0B2B6B; }
+  .cc-ib { display: grid; place-items: center; width: 32px; height: 32px; border: 1px solid #E3ECF7; border-radius: 9px; background: #fff; color: #55698F; cursor: pointer; transition: all .14s; }
+  .cc-ib:hover { background: #EAF3FF; border-color: #C7DCF5; color: #2F80FF; }
+  .cc-ib.danger:hover { background: #FDECEC; border-color: #F3C2BC; color: #C0392B; }
+  .cc-ib.warn:hover { background: #FBF2DA; border-color: #EBD9A8; color: #A9821F; }
+</style>
+</helmet>
+<div style="font-family: 'Hanken Grotesk', system-ui, sans-serif; color: #0B2B6B; background: #EEF4FB; min-height: 100vh; padding: 28px 32px 64px;">
+  <div style="max-width: 940px; margin: 0 auto;">
+
+    <a href="#" style="display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 600; color: #55698F; margin-bottom: 18px;">‹ All sessions</a>
+
+    <!-- Header -->
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap; margin-bottom: 24px;">
+      <div>
+        <div style="font-size: 12.5px; font-weight: 700; letter-spacing: .12em; color: #2F80FF; text-transform: uppercase;">Session</div>
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 6px;">
+          <h1 style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 30px; letter-spacing: -.025em; margin: 0; color: #0B2B6B;">Individual with Amara Osei</h1>
+          <span style="font-size: 11.5px; font-weight: 700; padding: 3px 11px; border-radius: 999px; background: #E7F6EC; color: #3B9E57;">Completed</span>
+        </div>
+        <p style="font-size: 14.5px; color: #55698F; margin: 6px 0 0;">July 9, 2026 · 2:00 PM · 50 minutes · In-person</p>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+        <button class="cc-ib" title="Edit session"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg></button>
+        <button class="cc-ib danger" title="Delete session"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg></button>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 18px;">
+
+      <!-- Session info (unchanged, context) -->
+      <div style="background: #fff; border: 1px solid #E9F0F9; border-radius: 20px; box-shadow: 0 22px 50px -40px rgba(11,43,107,.4); padding: 22px 24px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 40px;">
+          <div>
+            <h2 style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 15px; margin: 0 0 2px;">Session information</h2>
+            <div style="display: grid; grid-template-columns: 96px 1fr; gap: 0 12px; padding: 9px 0; border-top: 1px solid #F2F6FB; font-size: 13.5px;"><span style="font-size: 12.5px; color: #8298BC; font-weight: 500;">Client</span><a href="#" style="font-weight: 600; color: #0B2B6B;">Amara Osei</a></div>
+            <div style="display: grid; grid-template-columns: 96px 1fr; gap: 0 12px; padding: 9px 0; border-top: 1px solid #F2F6FB; font-size: 13.5px;"><span style="font-size: 12.5px; color: #8298BC; font-weight: 500;">Date &amp; time</span><span style="color: #24344F; font-weight: 500;">July 9, 2026, 2:00 PM</span></div>
+            <div style="display: grid; grid-template-columns: 96px 1fr; gap: 0 12px; padding: 9px 0; border-top: 1px solid #F2F6FB; font-size: 13.5px;"><span style="font-size: 12.5px; color: #8298BC; font-weight: 500;">Type</span><span style="color: #24344F; font-weight: 500;">Individual</span></div>
+          </div>
+          <div>
+            <h2 style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 15px; margin: 0 0 2px;">Record details</h2>
+            <div style="display: grid; grid-template-columns: 96px 1fr; gap: 0 12px; padding: 9px 0; border-top: 1px solid #F2F6FB; font-size: 13.5px;"><span style="font-size: 12.5px; color: #8298BC; font-weight: 500;">Created</span><span style="color: #24344F; font-weight: 500;">July 2, 2026, 9:14 AM</span></div>
+            <div style="display: grid; grid-template-columns: 96px 1fr; gap: 0 12px; padding: 9px 0; border-top: 1px solid #F2F6FB; font-size: 13.5px;"><span style="font-size: 12.5px; color: #8298BC; font-weight: 500;">Last updated</span><span style="color: #24344F; font-weight: 500;">July 9, 2026, 3:02 PM</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI insights card -->
+      <div style="background: #fff; border: 1px solid #E9F0F9; border-radius: 20px; box-shadow: 0 22px 50px -40px rgba(11,43,107,.4); padding: 22px 24px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="display: grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; background: #0B2B6B;"><svg width="16" height="16" viewBox="0 0 512 512" fill="none"><path d="M352 166c-26-24-60-38-98-38-74 0-134 56-134 128s60 128 134 128c38 0 72-14 98-38" stroke="#25B9C8" stroke-width="46" stroke-linecap="round"></path></svg></span>
+            <h2 style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 18px; letter-spacing: -.01em; margin: 0;">AI insights</h2>
+            <span style="font-size: 11.5px; font-weight: 700; padding: 3px 11px; border-radius: 999px; background: #E7F6EC; color: #3B9E57;">Analysis available</span>
+          </div>
+          <button class="cc-ib" title="Regenerate analysis"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><polyline points="21 3 21 9 15 9"></polyline></svg></button>
+        </div>
+
+        <!-- SOAP note (existing SessionNote, context) -->
+        <div style="border: 1px solid #E7EEF7; border-radius: 14px; padding: 16px 18px; margin-bottom: 16px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px;">
+            <h3 style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 15px; margin: 0;">Session note <span style="font-weight: 600; font-size: 12px; color: #8298BC;">SOAP</span></h3>
+            <span style="font-size: 11.5px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: #E7F6EC; color: #3B9E57;">Approved</span>
+          </div>
+          <p style="font-size: 13px; color: #8298BC; margin: 0;">Subjective · Objective · Assessment · Plan — unchanged from the session-detail pass; collapsed here for context.</p>
+        </div>
+
+        <!-- TREATMENT PLAN — document mode -->
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <section style="background: #fff; border: 1px solid #E3ECF7; border-radius: 20px; box-shadow: 0 22px 50px -40px rgba(11,43,107,.25);">
+            <div style="position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px; background: rgba(255,255,255,.94); backdrop-filter: blur(6px); border-bottom: 1px solid #EEF3FA; border-radius: 20px 20px 0 0;">
+              <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+                <span style="display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; background: #0B2B6B; flex-shrink: 0;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 5A5 5 0 1 0 11.5 11" stroke="#fff" stroke-width="2.2" stroke-linecap="round"></path></svg></span>
+                <div>
+                  <h3 style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 16px; margin: 0;">Treatment plan <span style="font-size: 12px; font-weight: 700; color: #8298BC;">v3</span></h3>
+                  <p style="font-size: 11.5px; color: #8298BC; margin: 1px 0 0;">Client-scoped · Updated Jul 10</p>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                <span style="font-size: 11.5px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: #E7F6EC; color: #3B9E57;">Approved</span>
+                <button class="cc-ib" title="Open in client record"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></button>
+              </div>
+            </div>
+            <div style="padding: 4px 20px 20px;">
+              <p style="margin: 14px 0 0; background: #F2F7FD; border-radius: 10px; padding: 10px 14px; font-size: 13.5px; line-height: 1.6; color: #0B2B6B; opacity: .88;">CBT with behavioral activation, weekly sessions for 8 weeks; sleep hygiene protocol and structured job-search scheduling to rebuild routine and mastery.</p>
+              <div style="margin-top: 16px;">
+                <p style="font-size: 11.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: #7C93B8; margin: 0 0 7px;">Goals</p>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                  <div style="border-left: 3px solid #2F80FF; background: #F7FAFE; border-radius: 0 12px 12px 0; padding: 11px 14px;">
+                    <div style="font-weight: 600; color: #24344F; font-size: 13.5px;">Re-establish consistent sleep (7+ hours, 5 nights/week)</div>
+                    <div style="margin-top: 4px; font-size: 13px; color: #158A98;">Measure: sleep diary; ISI at weeks 4 and 8</div>
+                  </div>
+                  <div style="border-left: 3px solid #2F80FF; background: #F7FAFE; border-radius: 0 12px 12px 0; padding: 11px 14px;">
+                    <div style="font-weight: 600; color: #24344F; font-size: 13.5px;">Increase pleasant/mastery activities to 3 per week</div>
+                    <div style="margin-top: 4px; font-size: 13px; color: #158A98;">Measure: activity log reviewed in session</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- PROGRESS REPORT — session-scoped, document mode -->
+          <section style="background: #fff; border: 1px solid #E3ECF7; border-radius: 20px; box-shadow: 0 22px 50px -40px rgba(11,43,107,.25);">
+            <div style="position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px; background: rgba(255,255,255,.94); backdrop-filter: blur(6px); border-bottom: 1px solid #EEF3FA; border-radius: 20px 20px 0 0;">
+              <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+                <span style="display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; background: #0B2B6B; flex-shrink: 0;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 5A5 5 0 1 0 11.5 11" stroke="#fff" stroke-width="2.2" stroke-linecap="round"></path></svg></span>
+                <div>
+                  <h3 style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 16px; margin: 0;">Progress report</h3>
+                  <p style="font-size: 11.5px; color: #8298BC; margin: 1px 0 0;">This session · Generated Jul 9</p>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                <span style="font-size: 11.5px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: #E7F6EC; color: #3B9E57;">Approved</span>
+                <button class="cc-ib" title="Open in client record"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></button>
+              </div>
+            </div>
+            <div style="padding: 4px 20px 20px;">
+              <p style="margin: 14px 0 0; background: #F2F7FD; border-radius: 10px; padding: 10px 14px; font-size: 13.5px; line-height: 1.6; color: #0B2B6B; opacity: .88;">Depressive symptoms improving with behavioral activation; anxiety plateaued. Sleep goal on track. Consider GAD-7-targeted work next phase.</p>
+              <div style="margin-top: 16px;">
+                <p style="font-size: 11.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: #7C93B8; margin: 0 0 7px;">Goal progress</p>
+                <div style="display: flex; flex-direction: column; gap: 9px;">
+                  <div style="display: flex; gap: 11px; align-items: flex-start;">
+                    <span style="flex-shrink: 0; min-width: 92px; text-align: center; text-transform: uppercase; font-size: 10.5px; font-weight: 700; letter-spacing: .04em; padding: 3px 9px; border-radius: 6px; background: #FBF2DA; color: #A9821F;">progressing</span>
+                    <div><div style="font-size: 13px; font-weight: 600; color: #24344F; line-height: 1.45;">Re-establish consistent sleep</div><div style="font-size: 12px; color: #7C8DA8; margin-top: 2px;">Averaging 6.5h; early-waking down to 2 nights/week.</div></div>
+                  </div>
+                  <div style="display: flex; gap: 11px; align-items: flex-start;">
+                    <span style="flex-shrink: 0; min-width: 92px; text-align: center; text-transform: uppercase; font-size: 10.5px; font-weight: 700; letter-spacing: .04em; padding: 3px 9px; border-radius: 6px; background: #E7F6EC; color: #3B9E57;">met</span>
+                    <div><div style="font-size: 13px; font-weight: 600; color: #24344F; line-height: 1.45;">Increase pleasant/mastery activities to 3 per week</div><div style="font-size: 12px; color: #7C8DA8; margin-top: 2px;">Four activities logged in each of the last two weeks.</div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1040,&quot;height&quot;:940}}"></script>
+</body>
+</html>

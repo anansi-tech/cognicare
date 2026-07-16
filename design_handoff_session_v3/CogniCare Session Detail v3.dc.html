@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #EEF4FB; }
+  html { scroll-behavior: smooth; }
+  ::selection { background: #2F80FF; color: #fff; }
+  a { color: #2F80FF; text-decoration: none; }
+  a:hover { color: #0B2B6B; }
+  .cc-ib { display: grid; place-items: center; width: 32px; height: 32px; border: 1px solid #E3ECF7; border-radius: 9px; background: #fff; color: #55698F; cursor: pointer; transition: all .14s; }
+  .cc-ib:hover { background: #EAF3FF; border-color: #C7DCF5; color: #2F80FF; }
+  .cc-ib.danger:hover { background: #FDECEC; border-color: #F3C2BC; color: #C0392B; }
+  .cc-approve { display: inline-flex; align-items: center; gap: 6px; border: none; border-radius: 9px; background: #2F80FF; color: #fff; font-family: inherit; font-size: 12.5px; font-weight: 700; padding: 7px 13px; cursor: pointer; box-shadow: 0 10px 24px -12px rgba(47,128,255,.7); transition: transform .15s, box-shadow .15s; }
+  .cc-approve:hover { transform: translateY(-1px); }
+  .cc-nav { display: flex; align-items: center; gap: 9px; width: 100%; border: none; text-align: left; font-family: inherit; padding: 8px 10px; border-radius: 9px; cursor: pointer; transition: background .13s; background: transparent; }
+  .cc-nav:hover { background: #F0F6FD; }
+</style>
+</helmet>
+<div style="font-family: 'Hanken Grotesk', system-ui, sans-serif; color: #0B2B6B; background: #EEF4FB; min-height: 100vh; padding: 26px 28px 70px;">
+  <div style="max-width: 1240px; margin: 0 auto;">
+
+    <a href="#" style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: #55698F; margin-bottom: 14px;">‹ All sessions</a>
+
+    <!-- Header -->
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap; margin-bottom: 22px;">
+      <div>
+        <div style="font-size: 12.5px; font-weight: 700; letter-spacing: .12em; color: #2F80FF; text-transform: uppercase;">Session</div>
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 6px;">
+          <h1 style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 28px; letter-spacing: -.025em; margin: 0; color: #0B2B6B;">Individual with Amara Osei</h1>
+          <span style="font-size: 11.5px; font-weight: 700; padding: 3px 11px; border-radius: 999px; background: #E7F6EC; color: #3B9E57;">Completed</span>
+        </div>
+        <p style="font-size: 14px; color: #55698F; margin: 6px 0 0;">July 9, 2026 · 2:00 PM · 50 minutes</p>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+        <button class="cc-ib" title="Edit session"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg></button>
+        <button class="cc-ib danger" title="Delete session"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg></button>
+      </div>
+    </div>
+
+    <!-- Two-column: sticky rail + document -->
+    <div style="display: grid; grid-template-columns: 252px minmax(0, 1fr); gap: 24px; align-items: start;">
+
+      <!-- ===== RAIL ===== -->
+      <div style="position: sticky; top: 20px; display: flex; flex-direction: column; gap: 14px;">
+        <div style="background: #fff; border: 1px solid #E3ECF7; border-radius: 16px; padding: 10px; box-shadow: 0 22px 50px -40px rgba(11,43,107,.3);">
+          <div style="font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #8298BC; padding: 6px 10px 8px;">This session</div>
+          <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="5">
+            <button class="cc-nav" onClick="{{ n.onClick }}" style="background: {{ n.bg }};">
+              <span style="flex-shrink: 0; width: 7px; height: 7px; border-radius: 50%; background: {{ n.dot }};"></span>
+              <span style="min-width: 0; flex: 1;">
+                <span style="display: block; font-size: 13px; font-weight: {{ n.weight }}; color: {{ n.color }};">{{ n.label }}</span>
+                <span style="display: block; font-size: 11px; color: #A6B8D4; margin-top: 1px;">{{ n.meta }}</span>
+              </span>
+            </button>
+          </sc-for>
+        </div>
+
+        <!-- Client chip -->
+        <div style="background: #fff; border: 1px solid #E3ECF7; border-radius: 16px; padding: 12px 14px; box-shadow: 0 22px 50px -40px rgba(11,43,107,.3); display: flex; align-items: center; gap: 11px;">
+          <span style="display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: #E2F4F2; color: #158A98; font-weight: 700; font-size: 14px; flex-shrink: 0;">AO</span>
+          <div style="min-width: 0;">
+            <a href="#" style="display: block; font-size: 13.5px; font-weight: 700; color: #0B2B6B;">Amara Osei</a>
+            <span style="font-size: 11.5px; color: #8298BC;">Open client record ›</span>
+          </div>
+        </div>
+
+        <!-- Session measures -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div style="background: #fff; border: 1px solid #E3ECF7; border-radius: 14px; padding: 10px 12px;">
+            <div style="font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #8298BC;">PHQ-9</div>
+            <div style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 21px; margin-top: 1px;">9 <span style="font-size: 13px; color: #3B9E57;">↓</span></div>
+            <div style="font-size: 11.5px; color: #55698F;">Mild</div>
+          </div>
+          <div style="background: #fff; border: 1px solid #E3ECF7; border-radius: 14px; padding: 10px 12px;">
+            <div style="font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #8298BC;">GAD-7</div>
+            <div style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 21px; margin-top: 1px;">11 <span style="font-size: 13px; color: #8298BC;">→</span></div>
+            <div style="font-size: 11.5px; color: #55698F;">Moderate</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== DOCUMENT ===== -->
+      <div style="display: flex; flex-direction: column; gap: 18px;">
+
+        <!-- SESSION INFO -->
+        <section id="sec-info" style="background: #fff; border: 1px solid #E3ECF7; border-radius: 20px; box-shadow: 0 22px 50px -40px rgba(11,43,107,.25); padding: 18px 20px 20px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 40px;">
+            <div>
+              <h3 style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 15px; margin: 0 0 2px;">Session information</h3>
+              <div style="display: grid; grid-template-columns: 96px 1fr; gap: 0 12px; padding: 9px 0; border-top: 1px solid #F2F6FB; font-size: 13.5px;"><span style="font-size: 12.5px; color: #8298BC; font-weight: 500;">Client</span><a href="#" style="font-weight: 600; color: #0B2B6B;">Amara Osei</a></div>
+              <div style="display: grid; grid-template-columns: 96px 1fr; gap: 0 12px; padding: 9px 0; border-top: 1px solid #F2F6FB; font-size: 13.5px;"><span style="font-size: 12.5px; color: #8298BC; font-weight: 500;">Date &amp; time</span><span style="color: #24344F; font-weight: 500;">July 9, 2026, 2:00 PM</span></div>
+              <div style="display: grid; grid-template-columns: 96px 1fr; gap: 0 12px; padding: 9px 0; border-top: 1px solid #F2F6FB; font-size: 13.5px;"><span style="font-size: 12.5px; color: #8298BC; font-weight: 500;">Type · Format</span><span style="color: #24344F; font-weight: 500;">Individual · In-person</span></div>
+            </div>
+            <div>
+              <h3 style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 15px; margin: 0 0 2px;">Record details</h3>
+              <div style="display: grid; grid-template-columns: 96px 1fr; gap: 0 12px; padding: 9px 0; border-top: 1px solid #F2F6FB; font-size: 13.5px;"><span style="font-size: 12.5px; color: #8298BC; font-weight: 500;">Created</span><span style="color: #24344F; font-weight: 500;">July 2, 2026, 9:14 AM</span></div>
+              <div style="display: grid; grid-template-columns: 96px 1fr; gap: 0 12px; padding: 9px 0; border-top: 1px solid #F2F6FB; font-size: 13.5px;"><span style="font-size: 12.5px; color: #8298BC; font-weight: 500;">Last updated</span><span style="color: #24344F; font-weight: 500;">July 9, 2026, 3:02 PM</span></div>
+              <div style="display: grid; grid-template-columns: 96px 1fr; gap: 0 12px; padding: 9px 0; border-top: 1px solid #F2F6FB; font-size: 13.5px;"><span style="font-size: 12.5px; color: #8298BC; font-weight: 500;">Session notes</span><span style="color: #41557A; font-weight: 500; font-size: 13px; line-height: 1.5;">Reviewed activity log; client reported better sleep…</span></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SESSION NOTE (SOAP) -->
+        <section id="sec-note" style="background: #fff; border: 1px solid {{ noteBorder }}; border-radius: 20px; box-shadow: 0 22px 50px -40px rgba(11,43,107,.25);">
+          <div style="position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px; background: rgba(255,255,255,.94); backdrop-filter: blur(6px); border-bottom: 1px solid #EEF3FA; border-radius: 20px 20px 0 0;">
+            <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+              <span style="display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; background: #0B2B6B; flex-shrink: 0;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 5A5 5 0 1 0 11.5 11" stroke="#fff" stroke-width="2.2" stroke-linecap="round"></path></svg></span>
+              <div>
+                <h3 style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 16px; margin: 0;">Session note</h3>
+                <p style="font-size: 11.5px; color: #8298BC; margin: 1px 0 0;">SOAP · This session</p>
+              </div>
+            </div>
+            <sc-if value="{{ noteDraft }}" hint-placeholder-val="{{ false }}">
+              <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;">
+                <span style="font-size: 12px; color: #8298BC;">Saving…</span>
+                <button class="cc-approve">Approve note</button>
+              </div>
+            </sc-if>
+            <sc-if value="{{ noteApproved }}" hint-placeholder-val="{{ true }}">
+              <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                <span style="font-size: 11.5px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: #E7F6EC; color: #3B9E57;">Approved</span>
+                <button class="cc-ib" title="Edit note"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg></button>
+              </div>
+            </sc-if>
+          </div>
+          <sc-if value="{{ showStaleNudge }}" hint-placeholder-val="{{ true }}">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 12px 20px 0; background: #FEF9EC; border: 1px solid #F6E6BC; border-radius: 11px; padding: 9px 14px;">
+              <span style="font-size: 12.5px; color: #7A6020; flex: 1; min-width: 200px;">Session notes changed since this note and progress were generated. Regenerate them? This replaces the current versions.</span>
+              <button style="flex-shrink: 0; border: none; border-radius: 8px; background: #A9821F; color: #fff; font-family: inherit; font-size: 12px; font-weight: 700; padding: 6px 12px; cursor: pointer;">Regenerate</button>
+            </div>
+          </sc-if>
+          <div style="padding: 4px 20px 20px;">
+            <sc-for list="{{ soap }}" as="s" hint-placeholder-count="4">
+              <div style="margin-top: 16px;">
+                <p style="font-size: 11.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: #7C93B8; margin: 0 0 7px;">{{ s.label }}</p>
+                <p style="font-size: 13.5px; line-height: 1.62; color: #41557A; margin: 0;">{{ s.text }}</p>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+
+        <!-- TREATMENT PLAN (client-scoped, read-only) -->
+        <section id="sec-treatment" style="background: #fff; border: 1px solid #E3ECF7; border-radius: 20px; box-shadow: 0 22px 50px -40px rgba(11,43,107,.25);">
+          <div style="position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px; background: rgba(255,255,255,.94); backdrop-filter: blur(6px); border-bottom: 1px solid #EEF3FA; border-radius: 20px 20px 0 0;">
+            <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+              <span style="display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; background: #0B2B6B; flex-shrink: 0;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 5A5 5 0 1 0 11.5 11" stroke="#fff" stroke-width="2.2" stroke-linecap="round"></path></svg></span>
+              <div>
+                <h3 style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 16px; margin: 0;">Treatment plan <span style="font-size: 12px; font-weight: 700; color: #8298BC;">v3</span></h3>
+                <p style="font-size: 11.5px; color: #8298BC; margin: 1px 0 0;">Client-scoped · Updated Jul 10</p>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+              <span style="font-size: 11.5px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: #E7F6EC; color: #3B9E57;">Approved</span>
+              <button class="cc-ib" title="Open in client record"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></button>
+            </div>
+          </div>
+          <div style="padding: 4px 20px 20px;">
+            <p style="margin: 14px 0 0; background: #F2F7FD; border-radius: 10px; padding: 10px 14px; font-size: 13.5px; line-height: 1.6; color: #0B2B6B; opacity: .88;">CBT with behavioral activation, weekly sessions for 8 weeks; sleep hygiene protocol and structured job-search scheduling to rebuild routine and mastery.</p>
+            <div style="margin-top: 16px;">
+              <p style="font-size: 11.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: #7C93B8; margin: 0 0 7px;">Goals</p>
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="border-left: 3px solid #2F80FF; background: #F7FAFE; border-radius: 0 12px 12px 0; padding: 11px 14px;">
+                  <div style="font-weight: 600; color: #24344F; font-size: 13.5px;">Re-establish consistent sleep (7+ hours, 5 nights/week)</div>
+                  <div style="margin-top: 4px; font-size: 13px; color: #158A98;">Measure: sleep diary; ISI at weeks 4 and 8</div>
+                </div>
+                <div style="border-left: 3px solid #2F80FF; background: #F7FAFE; border-radius: 0 12px 12px 0; padding: 11px 14px;">
+                  <div style="font-weight: 600; color: #24344F; font-size: 13.5px;">Increase pleasant/mastery activities to 3 per week</div>
+                  <div style="margin-top: 4px; font-size: 13px; color: #158A98;">Measure: activity log reviewed in session</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PROGRESS REPORT (session-scoped, read-only) -->
+        <section id="sec-progress" style="background: #fff; border: 1px solid #E3ECF7; border-radius: 20px; box-shadow: 0 22px 50px -40px rgba(11,43,107,.25);">
+          <div style="position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px; background: rgba(255,255,255,.94); backdrop-filter: blur(6px); border-bottom: 1px solid #EEF3FA; border-radius: 20px 20px 0 0;">
+            <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+              <span style="display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; background: #0B2B6B; flex-shrink: 0;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 5A5 5 0 1 0 11.5 11" stroke="#fff" stroke-width="2.2" stroke-linecap="round"></path></svg></span>
+              <div>
+                <h3 style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 16px; margin: 0;">Progress report</h3>
+                <p style="font-size: 11.5px; color: #8298BC; margin: 1px 0 0;">This session · Generated Jul 9</p>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+              <span style="font-size: 11.5px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: #FBF2DA; color: #A9821F;">Draft — review</span>
+              <button class="cc-ib" title="Open in client record"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></button>
+            </div>
+          </div>
+          <div style="padding: 4px 20px 20px;">
+            <p style="margin: 14px 0 0; background: #F2F7FD; border-radius: 10px; padding: 10px 14px; font-size: 13.5px; line-height: 1.6; color: #0B2B6B; opacity: .88;">Depressive symptoms improving with behavioral activation; anxiety plateaued. Sleep goal on track. Consider GAD-7-targeted work next phase.</p>
+            <div style="margin-top: 16px;">
+              <p style="font-size: 11.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: #7C93B8; margin: 0 0 7px;">Goal progress</p>
+              <div style="display: flex; flex-direction: column; gap: 9px;">
+                <div style="display: flex; gap: 11px; align-items: flex-start;">
+                  <span style="flex-shrink: 0; min-width: 92px; text-align: center; text-transform: uppercase; font-size: 10.5px; font-weight: 700; letter-spacing: .04em; padding: 3px 9px; border-radius: 6px; background: #FBF2DA; color: #A9821F;">progressing</span>
+                  <div><div style="font-size: 13px; font-weight: 600; color: #24344F; line-height: 1.45;">Re-establish consistent sleep</div><div style="font-size: 12px; color: #7C8DA8; margin-top: 2px;">Averaging 6.5h; early-waking down to 2 nights/week.</div></div>
+                </div>
+                <div style="display: flex; gap: 11px; align-items: flex-start;">
+                  <span style="flex-shrink: 0; min-width: 92px; text-align: center; text-transform: uppercase; font-size: 10.5px; font-weight: 700; letter-spacing: .04em; padding: 3px 9px; border-radius: 6px; background: #E7F6EC; color: #3B9E57;">met</span>
+                  <div><div style="font-size: 13px; font-weight: 600; color: #24344F; line-height: 1.45;">Increase pleasant/mastery activities to 3 per week</div><div style="font-size: 12px; color: #7C8DA8; margin-top: 2px;">Four activities logged in each of the last two weeks.</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:940},&quot;noteDraft&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;States&quot;},&quot;showStaleNudge&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;States&quot;}}">
+class Component extends DCLogic {
+  state = { active: 'info' };
+  componentDidMount() {
+    this.ids = ['info', 'note', 'treatment', 'progress'];
+    this.onScroll = () => {
+      const y = window.scrollY + 130;
+      let cur = this.ids[0];
+      for (const id of this.ids) {
+        const el = document.getElementById('sec-' + id);
+        if (el && el.offsetTop <= y) cur = id;
+      }
+      if (cur !== this.state.active) this.setState({ active: cur });
+    };
+    window.addEventListener('scroll', this.onScroll, { passive: true });
+  }
+  componentWillUnmount() { window.removeEventListener('scroll', this.onScroll); }
+  renderVals() {
+    const noteDraft = this.props.noteDraft ?? false;
+    const go = (id) => () => {
+      const el = document.getElementById('sec-' + id);
+      if (el) window.scrollTo({ top: el.offsetTop - 16, behavior: 'smooth' });
+    };
+    const item = (id, label, meta, dot) => ({
+      label, meta, dot,
+      onClick: go(id),
+      bg: this.state.active === id ? '#EAF3FF' : 'transparent',
+      color: this.state.active === id ? '#2F80FF' : '#33465F',
+      weight: this.state.active === id ? 700 : 600,
+    });
+    return {
+      noteDraft,
+      noteApproved: !noteDraft,
+      noteBorder: noteDraft ? '#F0DFAE' : '#E3ECF7',
+      showStaleNudge: this.props.showStaleNudge ?? true,
+      navItems: [
+        item('info', 'Session information', 'Completed · Jul 9', '#3B9E57'),
+        item('note', 'Session note', noteDraft ? 'Draft — not in record' : 'Approved · SOAP', noteDraft ? '#E3B341' : '#3B9E57'),
+        item('treatment', 'Treatment plan v3', 'Client-scoped · Approved', '#3B9E57'),
+        item('progress', 'Progress report', 'Draft — needs review', '#E3B341'),
+      ],
+      soap: [
+        { label: 'Subjective', text: 'Client reports improved mood this week, crediting the activity schedule. Sleep averaging 6.5 hours; still waking early twice a week. Worry about job search persists but feels "more manageable."' },
+        { label: 'Objective', text: 'Engaged, brighter affect than prior session. Completed activity log for the second consecutive week. PHQ-9 9 (down from 11), GAD-7 11 (unchanged).' },
+        { label: 'Assessment', text: 'Behavioral activation producing measurable gains in mood and engagement; anxiety plateaued and remains the primary residual symptom domain.' },
+        { label: 'Plan', text: 'Continue weekly CBT. Introduce worry-postponement experiment; maintain sleep protocol. Re-administer ISI at week 4 as planned.' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

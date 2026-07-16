@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  ::selection { background: #2F80FF; color: #fff; }
+  a { color: #2F80FF; text-decoration: none; }
+  .cc-chip:hover { background: #D3E5FF !important; }
+  .cc-starter:hover { background: #EAF3FF !important; border-color: #C7DCF5 !important; color: #2F80FF !important; }
+  .cc-ib:hover { background: #F0F5FC !important; color: #0B2B6B !important; }
+  .cc-msg .cc-copy { opacity: 0; transition: opacity .15s; }
+  .cc-msg:hover .cc-copy { opacity: 1; }
+  .cc-copy:hover { background: #EAF3FF !important; color: #2F80FF !important; }
+  .cc-ghost:hover { background: #F5F9FE !important; }
+  .cc-danger:hover { background: #A93226 !important; }
+</style>
+</helmet>
+<div style="font-family: 'Hanken Grotesk', system-ui, sans-serif; color: #0B2B6B; min-height: 100vh; background: rgba(11,43,107,.35); display: flex; justify-content: flex-end;">
+
+  <!-- Sheet (480px) -->
+  <div style="position: relative; width: 480px; min-height: 100vh; background: #fff; box-shadow: -30px 0 70px -30px rgba(11,43,107,.45); display: flex; flex-direction: column;">
+
+    <!-- Header -->
+    <div style="flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; border-bottom: 1px solid #E3ECF7;">
+      <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+        <span style="display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: #0B2B6B; flex-shrink: 0;"><svg width="19" height="19" viewBox="0 0 512 512" fill="none"><path d="M352 166c-26-24-60-38-98-38-74 0-134 56-134 128s60 128 134 128c38 0 72-14 98-38" stroke="#25B9C8" stroke-width="46" stroke-linecap="round"></path></svg></span>
+        <div style="min-width: 0;">
+          <div style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 17px; line-height: 1.2;">Ask LIAM</div>
+          <p style="font-size: 12.5px; color: #8298BC; margin: 2px 0 0; line-height: 1;">grounded in Amara Osei's record</p>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+        <button class="cc-ib" title="New topic — clears this conversation" style="display: inline-flex; align-items: center; gap: 6px; border: none; background: transparent; color: #8298BC; font-family: inherit; font-size: 12.5px; font-weight: 600; padding: 7px 10px; border-radius: 8px; cursor: pointer; transition: all .13s;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M5.6 5.6l2.8 2.8M2 12h4M5.6 18.4l2.8-2.8M12 22v-4M18.4 18.4l-2.8-2.8M22 12h-4M18.4 5.6l-2.8 2.8"></path></svg>New topic</button>
+        <button class="cc-ib" title="Close (Esc)" style="display: grid; place-items: center; width: 32px; height: 32px; border: none; background: transparent; color: #8298BC; border-radius: 8px; cursor: pointer; transition: all .13s;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
+      </div>
+    </div>
+
+    <!-- Thread -->
+    <div style="flex: 1; overflow-y: auto; padding: 16px 20px 8px;">
+
+      <sc-if value="{{ showEmpty }}" hint-placeholder-val="{{ false }}">
+        <div style="padding: 26px 6px 0;">
+          <p style="font-size: 14px; color: #55698F; line-height: 1.55; margin: 0 0 16px;">Ask about <strong style="color: #0B2B6B;">Amara</strong> — LIAM answers from her sessions, reports, and measures, with sources.</p>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <sc-for list="{{ starters }}" as="s" hint-placeholder-count="4">
+              <button class="cc-starter" style="text-align: left; border: 1px solid #E3ECF7; background: #FBFDFF; color: #33465F; font-family: inherit; font-size: 13.5px; font-weight: 600; padding: 11px 14px; border-radius: 12px; cursor: pointer; transition: all .14s;">{{ s }}</button>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showHistory }}" hint-placeholder-val="{{ true }}">
+        <div>
+          <!-- Summary marker -->
+          <div style="display: flex; align-items: center; gap: 10px; margin: 4px 0 14px;">
+            <span style="flex: 1; height: 1px; background: #EAF0F8;"></span>
+            <span style="font-size: 11.5px; color: #A6B8D4; font-weight: 600;">Earlier conversation summarized — LIAM remembers it</span>
+            <span style="flex: 1; height: 1px; background: #EAF0F8;"></span>
+          </div>
+          <!-- Day divider -->
+          <div style="text-align: center; margin: 0 0 12px;"><span style="font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #A6B8D4;">Mon Jul 13</span></div>
+
+          <div style="display: flex; justify-content: flex-end; margin-bottom: 12px;">
+            <div style="max-width: 82%; background: #2F80FF; color: #fff; border-radius: 16px 16px 4px 16px; padding: 9px 13px; font-size: 14px; line-height: 1.5;">What did we cover last session?</div>
+          </div>
+          <div class="cc-msg" style="display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 12px;">
+            <div style="max-width: 82%; background: #F1F6FC; color: #24344F; border-radius: 16px 16px 16px 4px; padding: 9px 13px; font-size: 14px; line-height: 1.55;">Your Jul 9 session <span class="cc-chip" style="display: inline-flex; align-items: center; gap: 4px; background: #E4F0FF; color: #2F80FF; border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 700; cursor: pointer; vertical-align: baseline;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></svg>Session · Jul 9</span> focused on reviewing her activity log — she completed it for the second week running — and introducing the worry-postponement experiment. Sleep is averaging 6.5h with early waking down to twice a week.</div>
+            <button class="cc-copy" title="Copy" style="display: inline-flex; align-items: center; gap: 5px; border: none; background: transparent; color: #A6B8D4; font-family: inherit; font-size: 11.5px; font-weight: 600; padding: 4px 8px; border-radius: 7px; cursor: pointer; margin-top: 2px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>Copy</button>
+          </div>
+
+          <!-- Day divider -->
+          <div style="text-align: center; margin: 6px 0 12px;"><span style="font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #A6B8D4;">Today</span></div>
+
+          <div style="display: flex; justify-content: flex-end; margin-bottom: 12px;">
+            <div style="max-width: 82%; background: #2F80FF; color: #fff; border-radius: 16px 16px 4px 16px; padding: 9px 13px; font-size: 14px; line-height: 1.5;">Any measure changes I should know about?</div>
+          </div>
+          <div class="cc-msg" style="display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 12px;">
+            <div style="max-width: 82%; background: #F1F6FC; color: #24344F; border-radius: 16px 16px 16px 4px; padding: 9px 13px; font-size: 14px; line-height: 1.55;">Yes — her <strong>PHQ-9 dropped to 9</strong> (from 11), a reliable improvement into the mild range <span class="cc-chip" style="display: inline-flex; align-items: center; gap: 4px; background: #E4F0FF; color: #2F80FF; border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 700; cursor: pointer; vertical-align: baseline;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path></svg>Progress report</span>. GAD-7 is unchanged at 11 — anxiety is now the primary residual domain. Worth watching whether the worry-postponement work moves it <span class="cc-chip" style="display: inline-flex; align-items: center; gap: 4px; background: #E4F0FF; color: #2F80FF; border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 700; cursor: pointer; vertical-align: baseline;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></svg>Session · Jul 9</span>.</div>
+            <button class="cc-copy" title="Copy" style="display: inline-flex; align-items: center; gap: 5px; border: none; background: transparent; color: #A6B8D4; font-family: inherit; font-size: 11.5px; font-weight: 600; padding: 4px 8px; border-radius: 7px; cursor: pointer; margin-top: 2px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>Copy</button>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+
+    <!-- Composer -->
+    <div style="flex-shrink: 0; padding: 8px 16px 14px;">
+      <div style="position: relative; border: 1px solid #DCE6F3; border-radius: 16px; background: #fff; box-shadow: 0 2px 8px -4px rgba(11,43,107,.12);">
+        <textarea rows="2" placeholder="Ask LIAM…" style="width: 100%; resize: none; border: none; outline: none; background: transparent; font-family: inherit; font-size: 14px; color: #0B2B6B; padding: 11px 48px 11px 14px; border-radius: 16px;"></textarea>
+        <button title="Send" style="position: absolute; right: 7px; bottom: 7px; display: grid; place-items: center; width: 32px; height: 32px; border: none; border-radius: 50%; background: #0B2B6B; color: #fff; cursor: pointer;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></button>
+      </div>
+      <p style="font-size: 11.5px; color: #8298BC; margin: 6px 0 0; text-align: center;">Verify before clinical use · Esc closes</p>
+    </div>
+
+    <!-- Confirm-clear dialog -->
+    <sc-if value="{{ showConfirm }}" hint-placeholder-val="{{ false }}">
+      <div style="position: absolute; inset: 0; background: rgba(11,43,107,.3); display: grid; place-items: center; padding: 24px;">
+        <div style="background: #fff; border-radius: 18px; box-shadow: 0 30px 70px -25px rgba(11,43,107,.5); padding: 22px 24px; max-width: 360px;">
+          <h3 style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 16px; margin: 0;">Start a new topic?</h3>
+          <p style="font-size: 13.5px; color: #55698F; line-height: 1.55; margin: 8px 0 0;">This permanently deletes LIAM's conversation history for Amara Osei — including its memory of earlier discussions. LIAM will start over from her record alone.</p>
+          <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px;">
+            <button class="cc-ghost" style="border: 1px solid #DCE6F3; background: #fff; color: #55698F; font-family: inherit; font-size: 13.5px; font-weight: 600; padding: 8px 15px; border-radius: 10px; cursor: pointer; transition: background .14s;">Cancel</button>
+            <button class="cc-danger" style="border: none; background: #C0392B; color: #fff; font-family: inherit; font-size: 13.5px; font-weight: 700; padding: 8px 15px; border-radius: 10px; cursor: pointer; transition: background .14s;">Delete and start fresh</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:900,&quot;height&quot;:860},&quot;view&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;history&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;history&quot;,&quot;empty&quot;,&quot;confirm-clear&quot;],&quot;section&quot;:&quot;States&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const view = this.props.view ?? 'history';
+    return {
+      showEmpty: view === 'empty',
+      showHistory: view !== 'empty',
+      showConfirm: view === 'confirm-clear',
+      starters: [
+        "Summarize this client's progress since intake",
+        'What did we cover last session?',
+        'Any measure changes I should know about?',
+        'Draft talking points for the next session',
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

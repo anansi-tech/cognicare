@@ -339,23 +339,32 @@ export default function DashboardPage() {
         <div style={{ padding: "16px 24px", borderBottom: "1px solid #EEF3FA" }}>
           <h2 style={{ ...H2, fontSize: 15 }}>Recent activity</h2>
         </div>
-        <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
-          {stats.recentActivity.map((activity, index) => (
-            <li
-              key={index}
-              className="flex items-center justify-between gap-4 hover:bg-[#F5F9FE] transition-colors duration-[130ms] cursor-pointer"
-              style={{ padding: "11px 24px", borderBottom: "1px solid #F2F6FB" }}
-              onClick={() => handleActivityClick(activity)}
-            >
-              <span style={{ fontSize: 13.5, color: "#41557A", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {activity.type === "report"
-                  ? `${activity.reportType ? activity.reportType.charAt(0).toUpperCase() + activity.reportType.slice(1) + " report" : "Report"} generated for ${activity.clientName}`
-                  : `Session ${activity.status === "completed" ? "completed" : activity.status === "scheduled" ? "scheduled" : "updated"} with ${activity.clientName}`}
-              </span>
-              <span style={{ fontSize: 12, color: "#A6B8D4", flexShrink: 0 }}>{relativeDate(activity.date)}</span>
-            </li>
-          ))}
-        </ul>
+        {stats.recentActivity.length === 0 ? (
+          <div style={{ padding: "30px 24px", textAlign: "center" }}>
+            <p style={{ fontSize: 14, fontWeight: 600, color: "#55698F", margin: 0 }}>No recent activity yet.</p>
+            <p style={{ fontSize: 12.5, color: "#8298BC", margin: "5px 0 0" }}>
+              Completed sessions and generated reports will appear here.
+            </p>
+          </div>
+        ) : (
+          <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+            {stats.recentActivity.map((activity, index) => (
+              <li
+                key={index}
+                className="flex items-center justify-between gap-4 hover:bg-[#F5F9FE] transition-colors duration-[130ms] cursor-pointer"
+                style={{ padding: "11px 24px", borderBottom: "1px solid #F2F6FB" }}
+                onClick={() => handleActivityClick(activity)}
+              >
+                <span style={{ fontSize: 13.5, color: "#41557A", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {activity.type === "report"
+                    ? `${activity.reportType ? activity.reportType.charAt(0).toUpperCase() + activity.reportType.slice(1) + " report" : "Report"} generated for ${activity.clientName}`
+                    : `Session ${activity.status === "completed" ? "completed" : activity.status === "scheduled" ? "scheduled" : "updated"} with ${activity.clientName}`}
+                </span>
+                <span style={{ fontSize: 12, color: "#A6B8D4", flexShrink: 0 }}>{relativeDate(activity.date)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
     </div>

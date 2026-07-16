@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #EEF4FB; }
+  html { scroll-behavior: smooth; }
+  ::selection { background: #2F80FF; color: #fff; }
+  a { color: #2F80FF; text-decoration: none; }
+  a:hover { color: #0B2B6B; }
+  .cc-ib { display: grid; place-items: center; width: 32px; height: 32px; border: 1px solid #E3ECF7; border-radius: 9px; background: #fff; color: #55698F; cursor: pointer; transition: all .14s; }
+  .cc-ib:hover { background: #EAF3FF; border-color: #C7DCF5; color: #2F80FF; }
+  .cc-ib.danger:hover { background: #FDECEC; border-color: #F3C2BC; color: #C0392B; }
+  .cc-approve { display: inline-flex; align-items: center; gap: 6px; border: none; border-radius: 9px; background: #3B9E57; color: #fff; font-family: inherit; font-size: 12.5px; font-weight: 700; padding: 7px 13px; cursor: pointer; box-shadow: 0 10px 24px -12px rgba(59,158,87,.7); transition: transform .15s, box-shadow .15s; }
+  .cc-approve:hover { transform: translateY(-1px); box-shadow: 0 14px 28px -12px rgba(59,158,87,.8); }
+  .cc-nav { display: flex; align-items: center; gap: 9px; width: 100%; border: none; text-align: left; font-family: inherit; padding: 8px 10px; border-radius: 9px; cursor: pointer; transition: background .13s; background: transparent; }
+  .cc-nav:hover { background: #F0F6FD; }
+</style>
+</helmet>
+<div style="font-family: 'Hanken Grotesk', system-ui, sans-serif; color: #0B2B6B; background: #EEF4FB; min-height: 100vh; padding: 26px 28px 70px;">
+  <div style="max-width: 1240px; margin: 0 auto;">
+
+    <a href="#" style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: #55698F; margin-bottom: 14px;">‹ All clients</a>
+
+    <!-- Header card -->
+    <div style="background: #fff; border: 1px solid #E3ECF7; border-radius: 20px; padding: 18px 22px; box-shadow: 0 22px 50px -40px rgba(11,43,107,.3); margin-bottom: 22px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+      <div style="display: flex; align-items: center; gap: 15px; min-width: 0;">
+        <span style="display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: #E2F4F2; color: #158A98; font-weight: 700; font-size: 19px; flex-shrink: 0;">AO</span>
+        <div>
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <h1 style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 25px; letter-spacing: -.02em; margin: 0; color: #0B2B6B;">Amara Osei</h1>
+            <span style="background: #E7F6EC; color: #3B9E57; font-weight: 600; font-size: 12px; padding: 3px 10px; border-radius: 999px;">Active</span>
+            <span style="background: #E7F6EC; color: #3B9E57; font-weight: 600; font-size: 12px; padding: 3px 10px; border-radius: 999px;">Consent: signed</span>
+          </div>
+          <p style="font-size: 13px; color: #55698F; margin: 5px 0 0;">Assigned to <strong style="color: #0B2B6B;">Dr. Naomi Wanjiru</strong> · 31 / Female · Next session Thu, Jul 16</p>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+        <button class="cc-ib" title="Reassign clinician"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"></path><path d="M21 3l-7 7"></path><path d="M8 21H3v-5"></path><path d="M3 21l7-7"></path></svg></button>
+        <button class="cc-ib" title="Edit client"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg></button>
+        <button class="cc-ib danger" title="Delete client"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg></button>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div style="display: flex; border-bottom: 1px solid #E3ECF7; margin-bottom: 22px;">
+      <span style="padding: 10px 18px; font-size: 13.5px; font-weight: 700; color: #0B2B6B; border-bottom: 2.5px solid #2F80FF; margin-bottom: -1px;">Overview</span>
+      <span style="padding: 10px 18px; font-size: 13.5px; font-weight: 500; color: #55698F;">Sessions</span>
+      <span style="padding: 10px 18px; font-size: 13.5px; font-weight: 500; color: #55698F;">Assessments</span>
+      <span style="padding: 10px 18px; font-size: 13.5px; font-weight: 500; color: #55698F;">Reports</span>
+      <span style="padding: 10px 18px; font-size: 13.5px; font-weight: 500; color: #55698F;">Billing &amp; Consent</span>
+    </div>
+
+    <!-- Two-column: sticky rail + document -->
+    <div style="display: grid; grid-template-columns: 252px minmax(0, 1fr); gap: 24px; align-items: start;">
+
+      <!-- ===== RAIL ===== -->
+      <div style="position: sticky; top: 20px; display: flex; flex-direction: column; gap: 14px;">
+        <div style="background: #fff; border: 1px solid #E3ECF7; border-radius: 16px; padding: 10px; box-shadow: 0 22px 50px -40px rgba(11,43,107,.3);">
+          <div style="font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #8298BC; padding: 6px 10px 8px;">Clinical picture</div>
+          <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="5">
+            <button class="cc-nav" onClick="{{ n.onClick }}" style="background: {{ n.bg }};">
+              <span style="flex-shrink: 0; width: 7px; height: 7px; border-radius: 50%; background: {{ n.dot }};"></span>
+              <span style="min-width: 0; flex: 1;">
+                <span style="display: block; font-size: 13px; font-weight: {{ n.weight }}; color: {{ n.color }};">{{ n.label }}</span>
+                <span style="display: block; font-size: 11px; color: #A6B8D4; margin-top: 1px;">{{ n.meta }}</span>
+              </span>
+            </button>
+          </sc-for>
+        </div>
+
+        <!-- Score chips -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div style="background: #fff; border: 1px solid #E3ECF7; border-radius: 14px; padding: 10px 12px;">
+            <div style="font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #8298BC;">PHQ-9</div>
+            <div style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 21px; margin-top: 1px;">9 <span style="font-size: 13px; color: #3B9E57;">↓</span></div>
+            <div style="font-size: 11.5px; color: #55698F;">Mild</div>
+          </div>
+          <div style="background: #fff; border: 1px solid #E3ECF7; border-radius: 14px; padding: 10px 12px;">
+            <div style="font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #8298BC;">GAD-7</div>
+            <div style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 21px; margin-top: 1px;">11 <span style="font-size: 13px; color: #8298BC;">→</span></div>
+            <div style="font-size: 11.5px; color: #55698F;">Moderate</div>
+          </div>
+        </div>
+
+        <!-- Client facts -->
+        <div style="background: #fff; border: 1px solid #E3ECF7; border-radius: 16px; padding: 14px 16px; box-shadow: 0 22px 50px -40px rgba(11,43,107,.3);">
+          <div style="font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #8298BC; margin-bottom: 8px;">Client facts</div>
+          <sc-for list="{{ facts }}" as="f" hint-placeholder-count="5">
+            <div style="display: grid; grid-template-columns: 74px 1fr; gap: 8px; padding: 6px 0; border-top: 1px solid #F2F6FB; font-size: 12.5px;">
+              <span style="color: #8298BC;">{{ f.k }}</span>
+              <span style="color: #24344F; font-weight: 500; overflow-wrap: anywhere;">{{ f.v }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- ===== DOCUMENT ===== -->
+      <div style="display: flex; flex-direction: column; gap: 18px;">
+
+        <!-- ASSESSMENT (approved, or editing when tweaked) -->
+        <section id="sec-assessment" style="background: #fff; border: 1px solid #E3ECF7; border-radius: 20px; box-shadow: 0 22px 50px -40px rgba(11,43,107,.25);">
+          <div style="position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px; background: rgba(255,255,255,.94); backdrop-filter: blur(6px); border-bottom: 1px solid #EEF3FA; border-radius: 20px 20px 0 0;">
+            <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+              <span style="display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; background: #0B2B6B; flex-shrink: 0;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 5A5 5 0 1 0 11.5 11" stroke="#fff" stroke-width="2.2" stroke-linecap="round"></path></svg></span>
+              <div>
+                <h3 style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 16px; margin: 0;">Assessment</h3>
+                <p style="font-size: 11.5px; color: #8298BC; margin: 1px 0 0;">Updated Jul 8</p>
+              </div>
+            </div>
+            <sc-if value="{{ editingAssessment }}" hint-placeholder-val="{{ false }}">
+              <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;">
+                <span style="font-size: 12px; color: #8298BC;">Saving…</span>
+                <button class="cc-approve" style="background: #2F80FF; box-shadow: 0 10px 24px -12px rgba(47,128,255,.7);"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Done</button>
+              </div>
+            </sc-if>
+            <sc-if value="{{ notEditingAssessment }}" hint-placeholder-val="{{ true }}">
+              <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                <span style="font-size: 11.5px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: #E7F6EC; color: #3B9E57;">Approved</span>
+                <button class="cc-ib" title="Edit assessment"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg></button>
+              </div>
+            </sc-if>
+          </div>
+          <div style="padding: 4px 20px 20px;">
+            <p style="margin: 14px 0 0; background: #F2F7FD; border-radius: 10px; padding: 10px 14px; font-size: 13.5px; line-height: 1.6; color: #0B2B6B; opacity: .88;">Client presents with persistent low mood and anxiety following a job loss three months ago, with disrupted sleep and social withdrawal. Motivated for treatment; no acute risk identified.</p>
+            <div style="margin-top: 16px;">
+              <p style="font-size: 11.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: #7C93B8; margin: 0 0 7px;">Risk level</p>
+              <span style="text-transform: uppercase; font-size: 10.5px; font-weight: 700; letter-spacing: .04em; padding: 3px 9px; border-radius: 6px; background: #E7F6EC; color: #3B9E57;">low</span>
+            </div>
+            <div style="margin-top: 16px;">
+              <p style="font-size: 11.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: #7C93B8; margin: 0 0 7px;">Primary concerns</p>
+              <div style="display: flex; flex-direction: column; gap: 7px;">
+                <div style="display: flex; gap: 10px;"><span style="flex-shrink: 0; width: 6px; height: 6px; border-radius: 50%; background: #9FB6D8; margin-top: 7px;"></span><span style="font-size: 13px; line-height: 1.55; color: #41557A;">Depressed mood most days, loss of interest in previously enjoyed activities</span></div>
+                <div style="display: flex; gap: 10px;"><span style="flex-shrink: 0; width: 6px; height: 6px; border-radius: 50%; background: #9FB6D8; margin-top: 7px;"></span><span style="font-size: 13px; line-height: 1.55; color: #41557A;">Persistent worry about finances and re-employment</span></div>
+                <div style="display: flex; gap: 10px;"><span style="flex-shrink: 0; width: 6px; height: 6px; border-radius: 50%; background: #9FB6D8; margin-top: 7px;"></span><span style="font-size: 13px; line-height: 1.55; color: #41557A;">Initial insomnia and early-morning waking (~5h/night)</span></div>
+              </div>
+            </div>
+            <div style="margin-top: 16px;">
+              <p style="font-size: 11.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: #7C93B8; margin: 0 0 7px;">Clinical observations</p>
+              <p style="font-size: 13.5px; line-height: 1.6; color: #41557A; margin: 0;">Well-groomed, cooperative, congruent affect with restricted range. Speech normal in rate and tone. Thought process linear; no perceptual disturbance. Insight and judgment good.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- DIAGNOSIS (draft) -->
+        <section id="sec-diagnosis" style="background: #fff; border: 1px solid {{ dxBorder }}; border-radius: 20px; box-shadow: 0 22px 50px -40px rgba(11,43,107,.25);">
+          <div style="position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px; background: rgba(255,255,255,.94); backdrop-filter: blur(6px); border-bottom: 1px solid #EEF3FA; border-radius: 20px 20px 0 0;">
+            <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+              <span style="display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; background: #0B2B6B; flex-shrink: 0;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 5A5 5 0 1 0 11.5 11" stroke="#fff" stroke-width="2.2" stroke-linecap="round"></path></svg></span>
+              <div>
+                <h3 style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 16px; margin: 0;">Diagnostic impression</h3>
+                <p style="font-size: 11.5px; color: #8298BC; margin: 1px 0 0;">Updated Jul 10</p>
+              </div>
+            </div>
+            <sc-if value="{{ draftDiagnosis }}" hint-placeholder-val="{{ true }}">
+              <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                <span style="font-size: 11.5px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: #FBF2DA; color: #A9821F;">Draft — review</span>
+                <button class="cc-ib" title="Edit diagnosis"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg></button>
+                <button class="cc-approve" title="Approve diagnosis"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Approve</button>
+              </div>
+            </sc-if>
+            <sc-if value="{{ approvedDiagnosis }}" hint-placeholder-val="{{ false }}">
+              <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                <span style="font-size: 11.5px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: #E7F6EC; color: #3B9E57;">Approved</span>
+                <button class="cc-ib" title="Edit diagnosis"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg></button>
+              </div>
+            </sc-if>
+          </div>
+          <div style="padding: 4px 20px 20px;">
+            <p style="margin: 14px 0 0; background: #F2F7FD; border-radius: 10px; padding: 10px 14px; font-size: 13.5px; line-height: 1.6; color: #0B2B6B; opacity: .88;">Presentation is most consistent with an adjustment disorder with mixed anxiety and depressed mood; MDD remains a differential pending symptom course.</p>
+            <div style="margin-top: 16px;">
+              <p style="font-size: 11.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: #7C93B8; margin: 0 0 7px;">Primary diagnosis</p>
+              <div style="border: 1px solid #E7EEF7; background: #F9FBFE; border-radius: 12px; padding: 12px 14px;">
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                  <span style="font-family: 'Bricolage Grotesque', sans-serif; background: #0B2B6B; color: #fff; font-weight: 700; padding: 3px 9px; border-radius: 7px; font-size: 12px;">F43.23</span>
+                  <span style="font-weight: 600; font-size: 13.5px;">Adjustment disorder, with mixed anxiety and depressed mood</span>
+                  <span style="text-transform: uppercase; font-size: 10.5px; font-weight: 700; letter-spacing: .04em; padding: 3px 9px; border-radius: 6px; background: #E7F6EC; color: #3B9E57;">high</span>
+                </div>
+                <p style="font-size: 12.5px; color: #7C8DA8; line-height: 1.5; margin: 5px 0 0;">Symptom onset within 3 months of an identifiable stressor (job loss); distress in excess of expected, with functional impact.</p>
+              </div>
+            </div>
+            <div style="margin-top: 16px;">
+              <p style="font-size: 11.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: #7C93B8; margin: 0 0 7px;">Differentials</p>
+              <div style="border: 1px solid #E7EEF7; background: #F9FBFE; border-radius: 12px; padding: 12px 14px;">
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                  <span style="font-family: 'Bricolage Grotesque', sans-serif; background: #0B2B6B; color: #fff; font-weight: 700; padding: 3px 9px; border-radius: 7px; font-size: 12px;">F32.1</span>
+                  <span style="font-weight: 600; font-size: 13.5px;">Major depressive disorder, single episode, moderate</span>
+                  <span style="text-transform: uppercase; font-size: 10.5px; font-weight: 700; letter-spacing: .04em; padding: 3px 9px; border-radius: 6px; background: #FBF2DA; color: #A9821F;">low</span>
+                </div>
+                <p style="font-size: 12.5px; color: #7C8DA8; line-height: 1.5; margin: 5px 0 0;">Monitor if symptoms persist beyond stressor resolution or intensify (PHQ-9 trend currently improving).</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- TREATMENT (approved, revise nudge) -->
+        <section id="sec-treatment" style="background: #fff; border: 1px solid #E3ECF7; border-radius: 20px; box-shadow: 0 22px 50px -40px rgba(11,43,107,.25);">
+          <div style="position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px; background: rgba(255,255,255,.94); backdrop-filter: blur(6px); border-bottom: 1px solid #EEF3FA; border-radius: 20px 20px 0 0;">
+            <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+              <span style="display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; background: #0B2B6B; flex-shrink: 0;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 5A5 5 0 1 0 11.5 11" stroke="#fff" stroke-width="2.2" stroke-linecap="round"></path></svg></span>
+              <div>
+                <h3 style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 16px; margin: 0;">Treatment plan <span style="font-size: 12px; font-weight: 700; color: #8298BC;">v3</span></h3>
+                <p style="font-size: 11.5px; color: #8298BC; margin: 1px 0 0;">Updated Jul 10</p>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+              <span style="font-size: 11.5px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: #E7F6EC; color: #3B9E57;">Approved</span>
+              <button class="cc-ib" title="Revise plan (new version)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><polyline points="21 3 21 9 15 9"></polyline></svg></button>
+              <button class="cc-ib" title="Edit plan"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg></button>
+            </div>
+          </div>
+          <sc-if value="{{ showNudge }}" hint-placeholder-val="{{ true }}">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 12px 20px 0; background: #FEF9EC; border: 1px solid #F6E6BC; border-radius: 11px; padding: 9px 14px;">
+              <span style="font-size: 12.5px; color: #7A6020;">The diagnosis changed since v3 was created. Revise the plan in light of it? Your current plan is preserved.</span>
+              <button style="flex-shrink: 0; border: none; border-radius: 8px; background: #A9821F; color: #fff; font-family: inherit; font-size: 12px; font-weight: 700; padding: 6px 12px; cursor: pointer;">Revise plan</button>
+            </div>
+          </sc-if>
+          <div style="padding: 4px 20px 20px;">
+            <p style="margin: 14px 0 0; background: #F2F7FD; border-radius: 10px; padding: 10px 14px; font-size: 13.5px; line-height: 1.6; color: #0B2B6B; opacity: .88;">CBT with behavioral activation, weekly sessions for 8 weeks; sleep hygiene protocol and structured job-search scheduling to rebuild routine and mastery.</p>
+            <div style="margin-top: 16px;">
+              <p style="font-size: 11.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: #7C93B8; margin: 0 0 7px;">Goals</p>
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="border-left: 3px solid #2F80FF; background: #F7FAFE; border-radius: 0 12px 12px 0; padding: 11px 14px;">
+                  <div style="font-weight: 600; color: #24344F; font-size: 13.5px;">Re-establish consistent sleep (7+ hours, 5 nights/week)</div>
+                  <div style="margin-top: 4px; font-size: 13px; color: #158A98;">Measure: sleep diary; ISI at weeks 4 and 8</div>
+                  <div style="margin-top: 6px;"><span style="display: inline-flex; background: #EAF3FF; color: #2F80FF; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">4 weeks</span></div>
+                </div>
+                <div style="border-left: 3px solid #2F80FF; background: #F7FAFE; border-radius: 0 12px 12px 0; padding: 11px 14px;">
+                  <div style="font-weight: 600; color: #24344F; font-size: 13.5px;">Increase pleasant/mastery activities to 3 per week</div>
+                  <div style="margin-top: 4px; font-size: 13px; color: #158A98;">Measure: activity log reviewed in session</div>
+                  <div style="margin-top: 6px;"><span style="display: inline-flex; background: #EAF3FF; color: #2F80FF; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">6 weeks</span></div>
+                </div>
+              </div>
+            </div>
+            <div style="margin-top: 16px;">
+              <p style="font-size: 11.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: #7C93B8; margin: 0 0 7px;">Interventions</p>
+              <div style="display: flex; flex-direction: column; gap: 7px;">
+                <div style="display: flex; gap: 10px;"><span style="flex-shrink: 0; width: 6px; height: 6px; border-radius: 50%; background: #9FB6D8; margin-top: 7px;"></span><span style="font-size: 13px; line-height: 1.55; color: #41557A;">Behavioral activation with graded task assignment</span></div>
+                <div style="display: flex; gap: 10px;"><span style="flex-shrink: 0; width: 6px; height: 6px; border-radius: 50%; background: #9FB6D8; margin-top: 7px;"></span><span style="font-size: 13px; line-height: 1.55; color: #41557A;">Cognitive restructuring targeting catastrophic financial predictions</span></div>
+                <div style="display: flex; gap: 10px;"><span style="flex-shrink: 0; width: 6px; height: 6px; border-radius: 50%; background: #9FB6D8; margin-top: 7px;"></span><span style="font-size: 13px; line-height: 1.55; color: #41557A;">Stimulus-control sleep protocol</span></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PROGRESS -->
+        <section id="sec-progress" style="background: #fff; border: 1px solid #E3ECF7; border-radius: 20px; box-shadow: 0 22px 50px -40px rgba(11,43,107,.25);">
+          <div style="position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px; background: rgba(255,255,255,.94); backdrop-filter: blur(6px); border-bottom: 1px solid #EEF3FA; border-radius: 20px 20px 0 0;">
+            <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+              <span style="display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; background: #0B2B6B; flex-shrink: 0;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 5A5 5 0 1 0 11.5 11" stroke="#fff" stroke-width="2.2" stroke-linecap="round"></path></svg></span>
+              <div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <h3 style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 16px; margin: 0;">Progress report</h3>
+                  <span style="font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 999px; background: #FBF2DA; color: #A9821F;">Reassessment recommended</span>
+                </div>
+                <p style="font-size: 11.5px; color: #8298BC; margin: 1px 0 0;">Updated Jul 11 · after session 6</p>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+              <span style="font-size: 11.5px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: #E7F6EC; color: #3B9E57;">Approved</span>
+              <button class="cc-ib" title="Edit progress"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg></button>
+            </div>
+          </div>
+          <div style="padding: 4px 20px 20px;">
+            <p style="margin: 14px 0 0; background: #F2F7FD; border-radius: 10px; padding: 10px 14px; font-size: 13.5px; line-height: 1.6; color: #0B2B6B; opacity: .88;">Depressive symptoms improving with behavioral activation; anxiety plateaued. Sleep goal on track. Consider GAD-7-targeted work next phase.</p>
+            <div style="margin-top: 16px;">
+              <p style="font-size: 11.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: #7C93B8; margin: 0 0 7px;">Measure interpretation</p>
+              <div style="display: flex; flex-direction: column; gap: 9px;">
+                <div style="display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap;">
+                  <div style="flex-shrink: 0; display: flex; align-items: center; gap: 7px; min-width: 172px;">
+                    <span style="font-size: 12px; font-weight: 700;">PHQ-9</span>
+                    <span style="font-size: 12.5px; color: #55698F;">14 → 9</span>
+                    <span style="display: inline-flex; gap: 3px; background: #E7F6EC; color: #3B9E57; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">↗ improved</span>
+                    <span style="background: #EAF3FF; color: #2F80FF; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Reliable change</span>
+                  </div>
+                  <span style="font-size: 12.5px; color: #7C8DA8; line-height: 1.5; flex: 1; min-width: 220px;">Five-point drop since baseline exceeds the reliable-change index; consistent with behavioral-activation response.</span>
+                </div>
+                <div style="display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap;">
+                  <div style="flex-shrink: 0; display: flex; align-items: center; gap: 7px; min-width: 172px;">
+                    <span style="font-size: 12px; font-weight: 700;">GAD-7</span>
+                    <span style="font-size: 12.5px; color: #55698F;">12 → 11</span>
+                    <span style="display: inline-flex; gap: 3px; background: #EEF1F5; color: #6E7E97; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">→ unchanged</span>
+                  </div>
+                  <span style="font-size: 12.5px; color: #7C8DA8; line-height: 1.5; flex: 1; min-width: 220px;">Anxiety broadly stable; worry content remains financial and anticipatory.</span>
+                </div>
+              </div>
+            </div>
+            <div style="margin-top: 16px;">
+              <p style="font-size: 11.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: #7C93B8; margin: 0 0 7px;">Goal progress</p>
+              <div style="display: flex; flex-direction: column; gap: 9px;">
+                <div style="display: flex; gap: 11px; align-items: flex-start;">
+                  <span style="flex-shrink: 0; min-width: 92px; text-align: center; text-transform: uppercase; font-size: 10.5px; font-weight: 700; letter-spacing: .04em; padding: 3px 9px; border-radius: 6px; background: #FBF2DA; color: #A9821F;">progressing</span>
+                  <div><div style="font-size: 13px; font-weight: 600; color: #24344F; line-height: 1.45;">Re-establish consistent sleep</div><div style="font-size: 12px; color: #7C8DA8; margin-top: 2px;">Averaging 6.5h; early-waking down to 2 nights/week.</div></div>
+                </div>
+                <div style="display: flex; gap: 11px; align-items: flex-start;">
+                  <span style="flex-shrink: 0; min-width: 92px; text-align: center; text-transform: uppercase; font-size: 10.5px; font-weight: 700; letter-spacing: .04em; padding: 3px 9px; border-radius: 6px; background: #E7F6EC; color: #3B9E57;">met</span>
+                  <div><div style="font-size: 13px; font-weight: 600; color: #24344F; line-height: 1.45;">Increase pleasant/mastery activities to 3 per week</div><div style="font-size: 12px; color: #7C8DA8; margin-top: 2px;">Four activities logged in each of the last two weeks.</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- INTAKE NOTE -->
+        <section id="sec-intake" style="background: #fff; border: 1px solid #E3ECF7; border-radius: 20px; box-shadow: 0 22px 50px -40px rgba(11,43,107,.25);">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px; border-bottom: 1px solid #EEF3FA;">
+            <div>
+              <h3 style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 16px; margin: 0;">Intake note</h3>
+              <p style="font-size: 11.5px; color: #8298BC; margin: 1px 0 0;">Written at client creation · source of the AI assessment</p>
+            </div>
+            <button class="cc-ib" title="New session"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button>
+          </div>
+          <div style="padding: 14px 20px 20px;">
+            <div style="background: #F2F7FD; border-radius: 12px; padding: 14px 16px;">
+              <p style="font-size: 13.5px; color: #0B2B6B; line-height: 1.65; margin: 0; white-space: pre-line;">Client self-referred after losing her position as a project manager in April. Reports low mood, worry about finances, poor sleep, and withdrawing from friends. No prior mental-health treatment. No SI/HI; no substance-use concerns. Strong family support; motivated to return to work.</p>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:940},&quot;draftDiagnosis&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;States&quot;},&quot;editingAssessment&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;States&quot;},&quot;showReviseNudge&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;States&quot;}}">
+class Component extends DCLogic {
+  state = { active: 'assessment' };
+  componentDidMount() {
+    this.ids = ['assessment', 'diagnosis', 'treatment', 'progress', 'intake'];
+    this.onScroll = () => {
+      const y = window.scrollY + 130;
+      let cur = this.ids[0];
+      for (const id of this.ids) {
+        const el = document.getElementById('sec-' + id);
+        if (el && el.offsetTop <= y) cur = id;
+      }
+      if (cur !== this.state.active) this.setState({ active: cur });
+    };
+    window.addEventListener('scroll', this.onScroll, { passive: true });
+  }
+  componentWillUnmount() { window.removeEventListener('scroll', this.onScroll); }
+  renderVals() {
+    const editingAssessment = this.props.editingAssessment ?? false;
+    const draftDiagnosis = this.props.draftDiagnosis ?? true;
+    const go = (id) => () => {
+      const el = document.getElementById('sec-' + id);
+      if (el) window.scrollTo({ top: el.offsetTop - 16, behavior: 'smooth' });
+    };
+    const item = (id, label, meta, dot) => ({
+      label, meta, dot,
+      onClick: go(id),
+      bg: this.state.active === id ? '#EAF3FF' : 'transparent',
+      color: this.state.active === id ? '#2F80FF' : '#33465F',
+      weight: this.state.active === id ? 700 : 600,
+    });
+    return {
+      editingAssessment,
+      notEditingAssessment: !editingAssessment,
+      draftDiagnosis,
+      approvedDiagnosis: !draftDiagnosis,
+      showNudge: this.props.showReviseNudge ?? true,
+      dxBorder: draftDiagnosis ? '#F0DFAE' : '#E3ECF7',
+      navItems: [
+        item('assessment', 'Assessment', 'Approved · Jul 8', '#3B9E57'),
+        item('diagnosis', 'Diagnostic impression', draftDiagnosis ? 'Draft — needs review' : 'Approved · Jul 10', draftDiagnosis ? '#E3B341' : '#3B9E57'),
+        item('treatment', 'Treatment plan v3', 'Approved · Jul 10', '#3B9E57'),
+        item('progress', 'Progress report', 'Reassessment recommended', '#E3B341'),
+        item('intake', 'Intake note', 'At creation', '#A6B8D4'),
+      ],
+      facts: [
+        { k: 'Email', v: 'amara.osei@example.com' },
+        { k: 'Phone', v: '(305) 555-0164' },
+        { k: 'Emergency', v: 'Kwame Osei, spouse' },
+        { k: 'DOB', v: 'Mar 14, 1995 (31)' },
+        { k: 'Client since', v: 'Apr 22, 2026' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>
