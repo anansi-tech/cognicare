@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { SaveIndicator, IconButton, PencilIcon } from "@/components/ai/editable";
+import { FileText } from "lucide-react";
 
 const FIELDS = [
   ["subjective", "Subjective"],
@@ -112,10 +113,8 @@ export function SessionNote({ sessionId, refreshKey, id, nudge }) {
       {/* Sticky header — sits below the app navbar */}
       <div style={{ position: "sticky", top: 64, zIndex: 5, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "14px 20px", background: "rgba(255,255,255,.94)", backdropFilter: "blur(6px)", borderBottom: "1px solid #EEF3FA", borderRadius: "20px 20px 0 0" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-          <span style={{ display: "grid", placeItems: "center", width: 30, height: 30, borderRadius: 8, background: "#0B2B6B", flexShrink: 0 }}>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M11.5 5A5 5 0 1 0 11.5 11" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" />
-            </svg>
+          <span style={{ display: "grid", placeItems: "center", width: 30, height: 30, borderRadius: 8, background: "#EAF3FF", color: "#2F80FF", flexShrink: 0 }}>
+            <FileText size={16} />
           </span>
           <div>
             <h3 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 16, margin: 0, color: "#0B2B6B" }}>Session note</h3>

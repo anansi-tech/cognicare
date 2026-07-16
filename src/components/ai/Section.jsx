@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 
-const LogoTile = () => (
-  <span style={{ display: "grid", placeItems: "center", width: 30, height: 30, borderRadius: 8, background: "#0B2B6B", flexShrink: 0 }}>
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <path d="M11.5 5A5 5 0 1 0 11.5 11" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" />
-    </svg>
+// Per-section semantic icon (a 16px lucide element passed via `icon`).
+// No icon → no tile.
+const IconTile = ({ children }) => (
+  <span style={{ display: "grid", placeItems: "center", width: 30, height: 30, borderRadius: 8, background: "#EAF3FF", color: "#2F80FF", flexShrink: 0 }}>
+    {children}
   </span>
 );
 
@@ -38,6 +38,7 @@ export function Section({
   defaultOpen = true,
   subtitle,
   badge,
+  icon,
   id,
   sticky = false,
   actions,
@@ -65,7 +66,7 @@ export function Section({
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-            <LogoTile />
+            {icon && <IconTile>{icon}</IconTile>}
             <div style={{ minWidth: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                 <h3 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 16, color: "#0B2B6B", margin: 0 }}>
@@ -99,7 +100,7 @@ export function Section({
 
   const titleBlock = (
     <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: 1 }}>
-      <LogoTile />
+      {icon && <IconTile>{icon}</IconTile>}
       <div style={{ minWidth: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <h3 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 16, color: "#0B2B6B", margin: 0 }}>

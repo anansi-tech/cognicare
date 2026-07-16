@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AgentReportBody } from "@/components/ai/AgentReportBody";
 import { Section, Empty } from "@/components/ai/Section";
+import { ClipboardList, Stethoscope, Route, TrendingUp } from "lucide-react";
 import { IconButton } from "@/components/ai/editable";
 
 // Renders the four specialist agent envelopes (assessment/diagnostic/treatment/progress)
@@ -167,6 +168,7 @@ export default function SessionAIInsights({ session, refreshKey = 0, focus, onNo
           id="sec-assessment"
           sticky
           title="Assessment"
+          icon={<ClipboardList size={16} />}
           summary={assessment?.summary}
           subtitle={fmtDate(assessment?.createdAt) ? `Updated ${fmtDate(assessment?.createdAt)}` : undefined}
           draft={assessment?.status === "draft"}
@@ -184,6 +186,7 @@ export default function SessionAIInsights({ session, refreshKey = 0, focus, onNo
           id="sec-diagnosis"
           sticky
           title="Diagnostic impression"
+          icon={<Stethoscope size={16} />}
           summary={diagnostic?.summary}
           subtitle={fmtDate(diagnostic?.createdAt) ? `Updated ${fmtDate(diagnostic?.createdAt)}` : undefined}
           draft={diagnostic?.status === "draft"}
@@ -205,6 +208,7 @@ export default function SessionAIInsights({ session, refreshKey = 0, focus, onNo
             {treatment?.version ? <span style={{ fontSize: 12, fontWeight: 700, color: "#8298BC", marginLeft: 6 }}>v{treatment.version}</span> : null}
           </>
         }
+        icon={<Route size={16} />}
         summary={treatment?.summary}
         subtitle={fmtDate(treatment?.createdAt) ? `Client-scoped · Updated ${fmtDate(treatment?.createdAt)}` : undefined}
         draft={treatment?.status === "draft"}
@@ -220,6 +224,7 @@ export default function SessionAIInsights({ session, refreshKey = 0, focus, onNo
         id="sec-progress"
         sticky
         title="Progress report"
+        icon={<TrendingUp size={16} />}
         summary={progress?.summary}
         subtitle={fmtDate(progress?.createdAt) ? `This session · Generated ${fmtDate(progress?.createdAt)}` : undefined}
         draft={progress?.status === "draft"}

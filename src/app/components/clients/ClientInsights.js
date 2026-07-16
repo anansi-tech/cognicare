@@ -5,6 +5,7 @@ import { useLiam } from "@/components/liam/LiamProvider";
 import { AgentReportBody, TreatmentBody, AssessmentBody, DiagnosticBody, ProgressBody } from "@/components/ai/AgentReportBody";
 import { Section, Empty } from "@/components/ai/Section";
 import { SectionHeaderActions, IconButton } from "@/components/ai/editable";
+import { ClipboardList, Stethoscope, Route, TrendingUp } from "lucide-react";
 import { useEditableReport } from "@/components/ai/useEditableReport";
 
 // Client-scoped agent insights. Renders the latest envelope of each agent type
@@ -263,6 +264,7 @@ export default function ClientInsights({ clientId, refreshKey = 0, onRegenerated
         id="sec-assessment"
         sticky
         title="Assessment"
+        icon={<ClipboardList size={16} />}
         summary={assessment?.summary}
         subtitle={fmtDate(assessment?.createdAt) ? `Updated ${fmtDate(assessment?.createdAt)}` : "Assessment agent"}
         draft={assessment?.status === "draft"}
@@ -292,6 +294,7 @@ export default function ClientInsights({ clientId, refreshKey = 0, onRegenerated
         id="sec-diagnosis"
         sticky
         title="Diagnostic impression"
+        icon={<Stethoscope size={16} />}
         summary={diagnostic?.summary}
         subtitle={fmtDate(diagnostic?.createdAt) ? `Updated ${fmtDate(diagnostic?.createdAt)}` : "Diagnostic agent"}
         draft={diagnostic?.status === "draft"}
@@ -326,6 +329,7 @@ export default function ClientInsights({ clientId, refreshKey = 0, onRegenerated
             {treatmentVersion ? <span style={{ fontSize: 12, fontWeight: 700, color: "#8298BC", marginLeft: 6 }}>v{treatmentVersion}</span> : null}
           </>
         }
+        icon={<Route size={16} />}
         summary={treatment?.summary}
         subtitle={fmtDate(treatment?.createdAt) ? `Updated ${fmtDate(treatment?.createdAt)}` : "Treatment agent"}
         draft={treatment?.status === "draft"}
@@ -381,6 +385,7 @@ export default function ClientInsights({ clientId, refreshKey = 0, onRegenerated
         id="sec-progress"
         sticky
         title="Progress report"
+        icon={<TrendingUp size={16} />}
         summary={progress?.summary}
         subtitle={fmtDate(progress?.createdAt) ? `Updated ${fmtDate(progress?.createdAt)}` : "Progress agent"}
         draft={progress?.status === "draft"}
