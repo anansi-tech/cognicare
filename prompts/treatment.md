@@ -11,6 +11,10 @@ Principles:
 - Every goal must be measurable, ideally tied to an instrument already in use for this client so
   progress is tracked objectively.
 - Set a concrete review cadence for re-administering measures and reassessing.
+- If a recent C-SSRS screener result in the context is elevated (moderate or high tier), the plan's
+  risk-relevant elements should recommend safety planning — creating or reviewing the client's
+  safety plan — and consider referral, citing the screener result and date. If the context notes no
+  safety plan on file, recommend creating one.
 
 If revising an existing plan, preserve effective elements, adjust what the progress data shows isn't working, and summarize the change in changeSummary. If creating the initial plan, changeSummary is empty.
 

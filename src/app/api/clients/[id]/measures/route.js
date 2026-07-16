@@ -16,7 +16,7 @@ export async function POST(req, { params }) {
     return NextResponse.json({ error: "instrumentId and responses required" }, { status: 400 });
   }
 
-  const { total, severityBand, flags, complete } = scoreInstrument(instrumentId, responses);
+  const { total, severityBand, flags, complete, tier, positives } = scoreInstrument(instrumentId, responses);
   if (!complete) return NextResponse.json({ error: "Answer all items" }, { status: 400 });
 
   await connectDB();
@@ -32,12 +32,13 @@ export async function POST(req, { params }) {
     sessionId,
     instrumentId,
     responses,
-    total,
+    total: total ?? undefined,
     severityBand,
     flags,
+    tier, // undefined for summed instruments
     isBaseline: priorCount === 0,
   });
-  return NextResponse.json({ id: doc._id, total, severityBand, flags });
+  return NextResponse.json({ id: doc._id, total, severityBand, flags, tier, positives });
 }
 
 export async function GET(req, { params }) {

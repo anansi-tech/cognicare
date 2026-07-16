@@ -14,6 +14,15 @@ export function computeDirection(delta, inst) {
 
 /** Oldest -> newest series for an instrument, plus reliable-change vs the prior point. */
 export async function getTrend(clientId, instrumentId, limit = 6) {
+  // Categorical screeners (C-SSRS) have no total: trend/RCI math is undefined
+  // for them. Surface risk via the tier banners/signals instead.
+  const instDef = getInstrument(instrumentId);
+  if (instDef.scoring?.method === "categorical") {
+    return {
+      instrumentId, name: instDef.name, shortName: instDef.shortName,
+      categorical: true, points: [], direction: "insufficient-data",
+    };
+  }
   await connectDB();
   const docs = await MeasureAdministration.find({ clientId, instrumentId })
     .sort({ administeredAt: -1 }).limit(limit);

@@ -9,6 +9,7 @@ import Client from "@/models/client";
 import AIReport from "@/models/aiReport";
 import ConsentForm from "@/models/consentForm";
 import MeasureAdministration from "@/models/measureAdministration";
+import SafetyPlan from "@/models/safetyPlan";
 import { dayRangeInTz } from "@/lib/timezone";
 import { notesHash } from "@/lib/hash";
 import { isConsented } from "@/lib/consent";
@@ -109,7 +110,7 @@ export const GET = requireAuth(async (req) => {
       ConsentForm.find({ ...clientScopeFilter, status: { $in: ["pending", "signed"] } })
         .select("clientId status requestedAt createdAt").lean(),
       MeasureAdministration.find(clientScopeFilter)
-        .select("clientId instrumentId total administeredAt").sort({ administeredAt: 1 }).lean(),
+        .select("clientId instrumentId total administeredAt tier").sort({ administeredAt: 1 }).lean(),
       AIReport.find({ ...clientScopeFilter, agentType: "treatment" })
         .select("clientId sessionId version status sourceDiagnosticHash createdAt").lean(),
       AIReport.find({ ...clientScopeFilter, agentType: "diagnostic", sessionId: null })
@@ -279,12 +280,27 @@ export const GET = requireAuth(async (req) => {
       byClientInstrument.get(key).push(a);
     }
     const worsened = [], overdue = [], improved = [];
+    // Elevated C-SSRS (Round 55): the LATEST categorical administration's
+    // tier decides — a newer lower-tier administration clears it, time never
+    // does. `tier` is unencrypted metadata; no decryption happens here.
+    const latestCategoricalByClient = new Map();
     // Heuristic overdue threshold pending a per-practice cadence setting.
     const OVERDUE_MS = 28 * 24 * 60 * 60 * 1000;
     const now = Date.now();
     for (const [key, list] of byClientInstrument) {
       const inst = fullInstrument(list[0].instrumentId);
       if (!inst) continue;
+      // Categorical screeners: no RCI/overdue math — they surface as risk
+      // signals below, not as trend movements or cadence reminders.
+      if (inst.scoring?.method === "categorical") {
+        const latest = list[list.length - 1];
+        const cid = latest.clientId.toString();
+        const cur = latestCategoricalByClient.get(cid);
+        if (!cur || new Date(latest.administeredAt) > new Date(cur.administeredAt)) {
+          latestCategoricalByClient.set(cid, { ...latest, shortName: inst.shortName });
+        }
+        continue;
+      }
       const latest = list[list.length - 1];
       const prev = list.length > 1 ? list[list.length - 2] : null;
       const cid = latest.clientId.toString();
@@ -306,8 +322,27 @@ export const GET = requireAuth(async (req) => {
         overdue.push({ ...base, severity: "overdue", text: `${inst.shortName} re-administration overdue (last: ${weeks} weeks ago)` });
       }
     }
+    // Elevated C-SSRS goes ABOVE deteriorations. Safety-plan existence +
+    // reviewedAt are lean-safe metadata; content stays encrypted.
+    const elevatedEntries = [...latestCategoricalByClient.entries()]
+      .filter(([, a]) => a.tier === "moderate" || a.tier === "high");
+    const plansByClient = elevatedEntries.length
+      ? new Set(
+          (await SafetyPlan.find({ practiceId, clientId: { $in: elevatedEntries.map(([cid]) => cid) } })
+            .select("clientId").lean()).map((p) => p.clientId.toString())
+        )
+      : new Set();
+    const risk = elevatedEntries.map(([cid, a]) => ({
+      clientId: cid,
+      clientName: clientName(cid),
+      date: a.administeredAt,
+      severity: "risk",
+      text: `${a.shortName} elevated (${a.tier})${plansByClient.has(cid) ? "" : " · no safety plan on file"}`,
+    }));
+
     const byRecency = (a, b) => new Date(b.date) - new Date(a.date);
     const signals = [
+      ...risk.sort(byRecency),
       ...worsened.sort(byRecency),
       ...overdue.sort(byRecency),
       ...improved.sort(byRecency),

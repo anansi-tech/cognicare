@@ -33,6 +33,8 @@
   "reliableChange": 5,
   "criticalItems": [
     { "itemId": "phq9_9", "threshold": 1, "flag": "suicidal-ideation",
-      "note": "Any non-zero response triggers a same-day risk review." }
+      "note": "Any non-zero response triggers a same-day risk review." },
+    { "itemId": "phq9_9", "threshold": 1, "flag": "phq9-item9-positive",
+      "note": "Consider administering the C-SSRS screener." }
   ]
 }

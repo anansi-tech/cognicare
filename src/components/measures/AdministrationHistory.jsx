@@ -98,7 +98,7 @@ export function AdministrationHistory({ clientId, refreshKey, onDeleted }) {
           <span style={{ fontSize: 12, color: "#8298BC", fontVariantNumeric: "tabular-nums" }}>
             {new Date(adm.administeredAt).toLocaleDateString()}
           </span>
-          <span style={{ fontSize: 14, fontWeight: 700, color: "#0B2B6B" }}>{adm.total}</span>
+          <span style={{ fontSize: 14, fontWeight: 700, color: "#0B2B6B" }}>{adm.total ?? "—"}</span>
           <span style={{ fontSize: 12.5, color: "#55698F" }}>{adm.severityBand}</span>
           <span style={{ display: "flex", gap: 7, flexWrap: "nowrap" }}>
             {adm.isBaseline && (
@@ -125,12 +125,15 @@ export function AdministrationHistory({ clientId, refreshKey, onDeleted }) {
             <ul style={{ margin: 0, padding: "10px 18px 10px", listStyle: "none", display: "flex", flexDirection: "column", gap: 6 }}>
               {inst.items.map((item, i) => {
                 const resp = adm.responses?.find((r) => r.itemId === item.id);
+                // Branching instruments: an unanswered conditional item was
+                // never shown — don't render it as a missing answer.
+                if (!resp && item.showIf) return null;
                 const optLabel = inst.responseOptions.find(
                   (o) => o.value === Number(resp?.value)
                 )?.label ?? "—";
                 return (
                   <li key={item.id} style={{ fontSize: 12, color: "#41557A" }}>
-                    <span style={{ fontWeight: 600 }}>Q{i + 1}.</span> {item.text}{" "}
+                    <span style={{ fontWeight: 600 }}>Q{item.num ?? i + 1}.</span> {item.text}{" "}
                     <span style={{ color: "#8298BC" }}>— {optLabel} ({resp?.value ?? "—"})</span>
                   </li>
                 );

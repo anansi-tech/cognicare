@@ -13,6 +13,7 @@ import { RegenerateButton } from "@/components/ai/RegenerateButton";
 import { IconButton, PencilIcon } from "@/components/ai/editable";
 import { SessionNote } from "@/components/sessions/SessionNote";
 import { MeasuresPanel } from "@/components/measures/MeasuresPanel";
+import { RiskBanners } from "@/components/measures/RiskBanners";
 import { Spinner } from "@/components/ui/Spinner";
 import { avatarColors, initials } from "@/lib/avatar";
 
@@ -46,6 +47,7 @@ export default function SessionDetail({ sessionId }) {
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [aiRefreshKey, setAiRefreshKey] = useState(0);
+  const [riskRefreshKey, setRiskRefreshKey] = useState(0);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [cancelApplyToFuture, setCancelApplyToFuture] = useState(false);
@@ -547,6 +549,15 @@ export default function SessionDetail({ sessionId }) {
 
         const documentColumn = (
           <div style={{ display: "flex", flexDirection: "column", gap: 18, minWidth: 0 }}>
+            {/* Risk surfacing: elevated C-SSRS + PHQ-9 item-9 trigger (R55).
+                An in-banner C-SSRS administration binds to this session. */}
+            <RiskBanners
+              clientId={clientId}
+              sessionId={session._id}
+              refreshKey={riskRefreshKey}
+              onOpenSafetyPlan={() => router.push(`/clients/${clientId}?tab=overview`)}
+            />
+
             {/* Session information — merged card */}
             <section id="sec-info" style={CARD}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 40px" }}>
@@ -589,6 +600,7 @@ export default function SessionDetail({ sessionId }) {
                     clientId={clientId}
                     sessionId={session._id}
                     compact
+                    onSaved={() => setRiskRefreshKey((k) => k + 1)}
                   />
                 </div>
                 <h2 style={SECTION_H2}>Session notes</h2>

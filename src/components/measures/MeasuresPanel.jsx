@@ -102,9 +102,12 @@ export function MeasuresPanel({ clientId, sessionId, onSaved: onSavedProp, secti
     </>
   );
 
+  // Categorical screeners (C-SSRS) have no score series — no trend card.
+  const trendInstruments = instruments.filter((i) => !i.categorical);
+
   const trendsBlock = (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-      {instruments.map((i) => (
+      {trendInstruments.map((i) => (
         <MeasureTrend
           key={i.id}
           clientId={clientId}
@@ -198,7 +201,7 @@ export function MeasuresPanel({ clientId, sessionId, onSaved: onSavedProp, secti
             Trends
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 16 }}>
-            {instruments.map((i) => (
+            {trendInstruments.map((i) => (
               <MeasureTrend key={i.id} clientId={clientId} instrumentId={i.id} refreshKey={refreshKey} />
             ))}
           </div>
