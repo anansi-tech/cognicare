@@ -152,6 +152,44 @@ export function SectionHeaderActions({ tx, report, editLabel = "Edit", extra = n
   );
 }
 
+// Header strip for a full-record inline editor (client profile, session
+// editor): eyebrow + title on the left, SaveDot + Done on the right, with the
+// validation-problems banner underneath. Done is UI-state only — autosave owns
+// persistence.
+export function RecordEditHeader({ eyebrow, title, saveState, savedAt, updatedAt, onDone, doneLabel = "Done", problems = [] }) {
+  return (
+    <>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, flexWrap: "wrap", marginBottom: 18 }}>
+        <div>
+          {eyebrow && (
+            <p style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: ".12em", color: "#2F80FF", textTransform: "uppercase", margin: 0 }}>{eyebrow}</p>
+          )}
+          <h1 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 28, letterSpacing: "-.025em", margin: "6px 0 0", color: "#0B2B6B" }}>
+            {title}
+          </h1>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <SaveDot state={saveState} savedAt={savedAt} updatedAt={updatedAt} />
+          <button
+            type="button"
+            onClick={onDone}
+            style={{ border: "none", cursor: "pointer", fontFamily: "inherit", background: "#2F80FF", color: "#fff", fontWeight: 700, fontSize: 13, padding: "9px 20px", borderRadius: 10, boxShadow: "0 10px 24px -12px rgba(47,128,255,.7)" }}
+          >
+            {doneLabel}
+          </button>
+        </div>
+      </div>
+      {problems.length > 0 && (
+        <div style={{ background: "#FDECEC", border: "1px solid #F5C6C0", borderRadius: 12, padding: "10px 14px", marginBottom: 14 }}>
+          {problems.map((p) => (
+            <p key={p} style={{ fontSize: 12.5, color: "#C0392B", margin: 0 }}>{p} — changes aren&apos;t saved until fixed.</p>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Inline per-field editing (replaces the all-fields-editable draft mode).
 //

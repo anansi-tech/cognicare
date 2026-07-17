@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
-  SaveDot, InlineEditScope, InlineField, InlineInput, InlineText, InlineEnum,
+  RecordEditHeader, InlineEditScope, InlineField, InlineInput, InlineText, InlineEnum,
 } from "@/components/ai/editable";
+import { useAutosaveRecord } from "@/components/ai/useAutosaveRecord";
 import {
   parseInitialAssessment, composeInitialAssessment, clientFormValue,
 } from "./ClientForm";
@@ -58,71 +59,42 @@ const H = ({ children }) => (
 export default function InlineClientProfile({ client, onChanged, onDone }) {
   const [formData, setFormData] = useState(() => clientFormValue(client));
   const [intake, setIntake] = useState(() => parseInitialAssessment(client.initialAssessment));
-  const [saveState, setSaveState] = useState("idle");
-  const [savedAt, setSavedAt] = useState(null);
-  const [problems, setProblems] = useState([]);
 
   const stateRef = useRef({ formData, intake });
   stateRef.current = { formData, intake };
-  const dirtyRef = useRef(false);
-  const timerRef = useRef(null);
-  const lastSavedRef = useRef(JSON.stringify({ ...clientFormValue(client), initialAssessment: client.initialAssessment ?? "" }));
 
-  // The creation form's validation rules, applied before any save.
-  const validate = (fd, ik) => {
-    const errs = [];
-    if (!fd.name.trim()) errs.push("Name is required");
-    const dob = new Date(fd.dateOfBirth);
-    if (!fd.dateOfBirth || Number.isNaN(dob.getTime())) errs.push("Enter a valid date of birth");
-    else if (dob > new Date()) errs.push("Date of birth must be in the past");
-    if (!composeInitialAssessment(ik).trim()) errs.push("At least one intake section is required");
-    return errs;
-  };
-
-  const saveNow = useCallback(async () => {
-    if (!dirtyRef.current) return;
-    dirtyRef.current = false;
-    const { formData: fd, intake: ik } = stateRef.current;
-    const errs = validate(fd, ik);
-    setProblems(errs);
-    if (errs.length) {
-      setSaveState("error");
-      return;
-    }
-    // Whole body through the existing endpoint — same shape ClientForm sent.
-    const body = { ...fd, initialAssessment: composeInitialAssessment(ik) };
-    if (JSON.stringify(body) === lastSavedRef.current) {
-      setSaveState("idle");
-      return;
-    }
-    setSaveState("saving");
-    try {
+  // Shared autosave engine: whole body through the existing endpoint — the
+  // same shape ClientForm sent — with the creation form's validation rules
+  // applied before any save.
+  const { touch, saveState, savedAt, problems } = useAutosaveRecord({
+    seed: { ...clientFormValue(client), initialAssessment: client.initialAssessment ?? "" },
+    getBody: () => {
+      const { formData: fd, intake: ik } = stateRef.current;
+      return { ...fd, initialAssessment: composeInitialAssessment(ik) };
+    },
+    validate: () => {
+      const { formData: fd, intake: ik } = stateRef.current;
+      const errs = [];
+      if (!fd.name.trim()) errs.push("Name is required");
+      const dob = new Date(fd.dateOfBirth);
+      if (!fd.dateOfBirth || Number.isNaN(dob.getTime())) errs.push("Enter a valid date of birth");
+      else if (dob > new Date()) errs.push("Date of birth must be in the past");
+      if (!composeInitialAssessment(ik).trim()) errs.push("At least one intake section is required");
+      return errs;
+    },
+    save: async (body) => {
       const res = await fetch(`/api/clients/${client._id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
         keepalive: true,
       });
-      if (!res.ok) {
-        setSaveState("error");
-        return;
-      }
-      const saved = await res.json();
-      lastSavedRef.current = JSON.stringify(body);
-      setSaveState("saved");
-      setSavedAt(new Date());
-      onChanged?.(saved);
-    } catch {
-      setSaveState("error");
-    }
-  }, [client._id, onChanged]);
+      if (!res.ok) return false;
+      onChanged?.(await res.json());
+      return true;
+    },
+  });
 
-  const touch = () => {
-    dirtyRef.current = true;
-    setSaveState("saving");
-    clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(saveNow, 800);
-  };
   const setField = (k, v) => { setFormData((f) => ({ ...f, [k]: v })); touch(); };
   const setContact = (k, v) => {
     setFormData((f) => ({ ...f, contactInfo: { ...f.contactInfo, [k]: v } }));
@@ -137,49 +109,20 @@ export default function InlineClientProfile({ client, onChanged, onDone }) {
   };
   const setIntakeField = (k, v) => { setIntake((i) => ({ ...i, [k]: v })); touch(); };
 
-  // Flush the debounce window on hide/unmount — same contract as SessionNote.
-  useEffect(() => {
-    const flush = () => { clearTimeout(timerRef.current); saveNow(); };
-    window.addEventListener("pagehide", flush);
-    document.addEventListener("visibilitychange", flush);
-    return () => {
-      window.removeEventListener("pagehide", flush);
-      document.removeEventListener("visibilitychange", flush);
-      flush();
-    };
-  }, [saveNow]);
-
   const emergency = formData.contactInfo.emergencyContact;
   const emergencySummary = [emergency.name, emergency.relationship, emergency.phone].filter(Boolean).join(", ");
 
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, flexWrap: "wrap", marginBottom: 18 }}>
-        <div>
-          <p style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: ".12em", color: "#2F80FF", textTransform: "uppercase", margin: 0 }}>Client</p>
-          <h1 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 28, letterSpacing: "-.025em", margin: "6px 0 0", color: "#0B2B6B" }}>
-            Edit {formData.name || client.name}
-          </h1>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <SaveDot state={saveState} savedAt={savedAt} updatedAt={client.updatedAt} />
-          <button
-            type="button"
-            onClick={onDone}
-            style={{ border: "none", cursor: "pointer", fontFamily: "inherit", background: "#2F80FF", color: "#fff", fontWeight: 700, fontSize: 13, padding: "9px 20px", borderRadius: 10, boxShadow: "0 10px 24px -12px rgba(47,128,255,.7)" }}
-          >
-            Done
-          </button>
-        </div>
-      </div>
-
-      {problems.length > 0 && (
-        <div style={{ background: "#FDECEC", border: "1px solid #F5C6C0", borderRadius: 12, padding: "10px 14px", marginBottom: 14 }}>
-          {problems.map((p) => (
-            <p key={p} style={{ fontSize: 12.5, color: "#C0392B", margin: 0 }}>{p} — changes aren&apos;t saved until fixed.</p>
-          ))}
-        </div>
-      )}
+      <RecordEditHeader
+        eyebrow="Client"
+        title={`Edit ${formData.name || client.name}`}
+        saveState={saveState}
+        savedAt={savedAt}
+        updatedAt={client.updatedAt}
+        onDone={onDone}
+        problems={problems}
+      />
 
       <InlineEditScope>
         <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>

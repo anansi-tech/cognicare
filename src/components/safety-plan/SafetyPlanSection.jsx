@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Section } from "@/components/ai/Section";
 import { SaveDot, InlineEditScope, InlineField, InlineList, InlineText } from "@/components/ai/editable";
+import { useAutosaveRecord } from "@/components/ai/useAutosaveRecord";
 import { LifeBuoy } from "lucide-react";
 
 // Stanley-Brown step headings — verbatim from the 2021 template. Free for
@@ -51,13 +52,8 @@ const StepList = ({ items }) =>
 export function SafetyPlanSection({ clientId, onPlanChanged }) {
   const [plan, setPlan] = useState(null); // null = loading; {exists:false} = none yet
   const [fields, setFields] = useState(null); // arrays per step + reasonsForLiving string
-  const [saveState, setSaveState] = useState("idle");
-  const [savedAt, setSavedAt] = useState(null);
   const [busy, setBusy] = useState(false);
-  const timerRef = useRef(null);
   const fieldsRef = useRef(null);
-  const dirtyRef = useRef(false);
-  const lastSavedRef = useRef(null); // canonical body of the last known server state
 
   const seed = (data) =>
     Object.fromEntries([
@@ -71,22 +67,6 @@ export function SafetyPlanSection({ clientId, onPlanChanged }) {
       )
     );
 
-  useEffect(() => {
-    fetch(`/api/clients/${clientId}/safety-plan`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (!data) return;
-        setPlan(data);
-        if (data.exists) {
-          const f = seed(data);
-          setFields(f);
-          fieldsRef.current = f;
-          lastSavedRef.current = JSON.stringify(toBody(f));
-        }
-      })
-      .catch(() => {});
-  }, [clientId]);
-
   const put = useCallback(async (body) => {
     const res = await fetch(`/api/clients/${clientId}/safety-plan`, {
       method: "PUT",
@@ -97,39 +77,37 @@ export function SafetyPlanSection({ clientId, onPlanChanged }) {
     return res.ok ? res.json() : null;
   }, [clientId]);
 
-  const saveNow = useCallback(async () => {
-    if (!dirtyRef.current || !fieldsRef.current) return;
-    dirtyRef.current = false;
-    // Whole document through the existing PUT — never partial payloads.
-    const body = toBody(fieldsRef.current);
-    // No-op gate: a cancelled edit (Escape restores the pre-edit value) or an
-    // editor round-trip must never fire a PUT.
-    if (JSON.stringify(body) === lastSavedRef.current) {
-      setSaveState("idle");
-      return;
-    }
-    setSaveState("saving");
-    const saved = await put(body);
-    setSaveState(saved ? "saved" : "error");
-    if (saved) {
-      lastSavedRef.current = JSON.stringify(body);
-      setSavedAt(new Date());
+  // Shared autosave engine: whole document through the existing PUT — never
+  // partial payloads. The no-op gate keeps cancelled edits (Escape restores
+  // the pre-edit value) and editor round-trips from firing a PUT.
+  const { touch, saveState, savedAt, markSaved } = useAutosaveRecord({
+    delay: 900,
+    getBody: () => toBody(fieldsRef.current ?? {}),
+    save: async (body) => {
+      const saved = await put(body);
+      if (!saved) return false;
       setPlan((p) => ({ ...p, ...saved }));
       onPlanChanged?.(saved);
-    }
-  }, [put, onPlanChanged]);
+      return true;
+    },
+  });
 
-  // Flush pending edits when the tab hides or the section unmounts.
   useEffect(() => {
-    const flush = () => { clearTimeout(timerRef.current); saveNow(); };
-    window.addEventListener("pagehide", flush);
-    document.addEventListener("visibilitychange", flush);
-    return () => {
-      window.removeEventListener("pagehide", flush);
-      document.removeEventListener("visibilitychange", flush);
-      flush();
-    };
-  }, [saveNow]);
+    fetch(`/api/clients/${clientId}/safety-plan`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!data) return;
+        setPlan(data);
+        if (data.exists) {
+          const f = seed(data);
+          setFields(f);
+          fieldsRef.current = f;
+          markSaved(toBody(f));
+        }
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clientId]);
 
   const edit = (key, value) => {
     setFields((f) => {
@@ -137,10 +115,7 @@ export function SafetyPlanSection({ clientId, onPlanChanged }) {
       fieldsRef.current = next;
       return next;
     });
-    dirtyRef.current = true;
-    setSaveState("saving");
-    clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(saveNow, 900);
+    touch();
   };
 
   const create = async () => {
@@ -152,7 +127,7 @@ export function SafetyPlanSection({ clientId, onPlanChanged }) {
       const f = seed(saved);
       setFields(f);
       fieldsRef.current = f;
-      lastSavedRef.current = JSON.stringify(toBody(f));
+      markSaved(toBody(f));
       onPlanChanged?.(saved);
     }
   };
