@@ -689,6 +689,12 @@ export function EditRows({ value = [], onChange, fields, addLabel = "+ Add", emp
                   onChange={(v) => set(i, f.key, v)}
                   options={f.options}
                 />
+              ) : f.type === "list" ? (
+                <EditList
+                  value={row[f.key] ?? []}
+                  onChange={(v) => set(i, f.key, v)}
+                  placeholder={f.placeholder ?? f.label}
+                />
               ) : (
                 <EditText
                   value={row[f.key] ?? ""}

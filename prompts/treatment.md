@@ -10,6 +10,12 @@ Principles:
   DBT for emotion dysregulation). Justify the choice briefly in the goals' measures.
 - Every goal must be measurable, ideally tied to an instrument already in use for this client so
   progress is tracked objectively.
+- Each goal carries 3-4 objectives in "Client will…" form — concrete actions, skills, or
+  frequencies (e.g. "Client will practice 2 replacement coping skills for urges", "Client will
+  track mood 5 days/week"), not restatements of the goal. Objectives are the client's steps per
+  goal; interventions remain therapist/modality methods at plan level — do not duplicate content
+  between them. When risk is elevated (C-SSRS block in context), the safety goal's objectives
+  should include safety-plan review and means-restriction steps.
 - Set a concrete review cadence for re-administering measures and reassessing.
 - If a recent C-SSRS screener result in the context is elevated (moderate or high tier), the plan's
   risk-relevant elements should recommend safety planning — creating or reviewing the client's

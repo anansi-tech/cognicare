@@ -276,6 +276,7 @@ export function DiagnosticBody({ payload: p, editable = false, onChange }) {
 
 const GOAL_FIELDS = [
   { key: "goal", label: "Goal", type: "text", rows: 2 },
+  { key: "objectives", label: "Objectives", type: "list", placeholder: "Client will…" },
   { key: "measurable", label: "How measured", type: "text", rows: 2 },
   { key: "targetTimeframe", label: "Timeframe", type: "text", rows: 1 },
 ];
@@ -303,6 +304,18 @@ export function TreatmentBody({ payload: p, editable = false, onChange }) {
       {p.goals.map((g, i) => (
         <div key={i} style={{ borderLeft: "3px solid #2F80FF", background: "#F7FAFE", borderRadius: "0 12px 12px 0", padding: "11px 14px" }}>
           <div style={{ fontWeight: 600, color: "#24344F", fontSize: 13.5 }}>{g.goal}</div>
+          {/* Per-goal objectives — the client's concrete steps. Optional:
+              plans generated before the field render without it. */}
+          {g.objectives?.length ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 6 }}>
+              {g.objectives.map((o, j) => (
+                <div key={j} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                  <span style={{ flexShrink: 0, width: 4, height: 4, borderRadius: "50%", background: "#B8C9DC", marginTop: 7 }} />
+                  <span style={{ fontSize: 12.5, color: "#55698F", lineHeight: 1.5 }}>{o}</span>
+                </div>
+              ))}
+            </div>
+          ) : null}
           {g.measurable && (
             <div style={{ marginTop: 4, fontSize: 13, color: "#158A98" }}>
               Measure: {g.measurable}
@@ -349,7 +362,7 @@ export function TreatmentBody({ payload: p, editable = false, onChange }) {
             onChange={(v) => set("goals", v)}
             fields={GOAL_FIELDS}
             addLabel="+ Add goal"
-            emptyRow={{ goal: "", measurable: "", targetTimeframe: "" }}
+            emptyRow={{ goal: "", objectives: [], measurable: "", targetTimeframe: "" }}
           />
         }
       />

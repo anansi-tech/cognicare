@@ -42,6 +42,7 @@ export const treatmentPayload = z.object({
   approach: z.string().describe("Primary evidence-based modality, e.g. CBT, DBT, ACT"),
   goals: z.array(z.object({
     goal: z.string(),
+    objectives: z.array(z.string()).describe("3-4 concrete client-facing steps toward this goal — 'Client will…' phrasing, skill/action-based, specific and countable where possible"),
     measurable: z.string().describe("How progress is measured, ideally tied to an instrument"),
     targetTimeframe: z.string(),
   })),
