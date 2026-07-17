@@ -50,21 +50,24 @@ const PILL = { fontSize: 11.5, fontWeight: 700, padding: "3px 10px", borderRadiu
 const SOLID_BTN = { display: "inline-flex", alignItems: "center", gap: 6, border: "none", borderRadius: 9, color: "#fff", fontFamily: "inherit", fontSize: 12.5, fontWeight: 700, padding: "7px 13px", cursor: "pointer" };
 
 // Dot-time save indicator (inline-editing header): 7px dot — idle #D9E5F4,
-// saving #F0C24B, saved #3B9E57 — plus last-saved time once saved. Errors
-// stay loud text; a silent gray dot must never mean "failed".
-export function SaveDot({ state, savedAt }) {
+// saving #F0C24B, saved #3B9E57 — the transient state. The timestamp is
+// PERSISTENT: seeded from the record's updatedAt on load, replaced by this
+// session's savedAt after a save. Errors stay loud text; a silent gray dot
+// must never mean "failed".
+export function SaveDot({ state, savedAt, updatedAt }) {
   if (state === "error") return <span className="text-xs text-destructive">Couldn&apos;t save</span>;
   const color = state === "saving" ? "#F0C24B" : state === "saved" ? "#3B9E57" : "#D9E5F4";
-  const time = savedAt
-    ? new Date(savedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+  const ts = savedAt ?? updatedAt;
+  const label = ts
+    ? `Updated ${new Date(ts).toLocaleDateString(undefined, { month: "short", day: "numeric" })}, ${new Date(ts).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`
     : null;
   return (
     <span
-      title={time ? `All changes saved at ${time}` : "No changes yet"}
+      title={label ? `All changes saved · ${label.toLowerCase()}` : "No changes yet"}
       style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, color: "#8298BC", whiteSpace: "nowrap" }}
     >
       <span style={{ width: 7, height: 7, borderRadius: "50%", background: color, transition: "background .2s", flexShrink: 0 }} />
-      {state !== "saving" && time ? time : null}
+      {label}
     </span>
   );
 }
@@ -115,7 +118,7 @@ export function SectionHeaderActions({ tx, report, editLabel = "Edit", extra = n
   if (!isDraft && tx.isEditing) {
     return (
       <>
-        <SaveDot state={tx.saveState} savedAt={tx.savedAt} />
+        <SaveDot state={tx.saveState} savedAt={tx.savedAt} updatedAt={report.updatedAt} />
         <button type="button" onClick={tx.approve} style={{ ...SOLID_BTN, background: "#2F80FF", boxShadow: "0 10px 24px -12px rgba(47,128,255,.7)" }}>
           <CheckIcon />Done
         </button>
@@ -128,7 +131,7 @@ export function SectionHeaderActions({ tx, report, editLabel = "Edit", extra = n
     return (
       <>
         <span style={{ ...PILL, background: "#FBF2DA", color: "#A9821F" }}>Draft — review</span>
-        <SaveDot state={tx.saveState} savedAt={tx.savedAt} />
+        <SaveDot state={tx.saveState} savedAt={tx.savedAt} updatedAt={report.updatedAt} />
         {extra}
         <ApproveControl onApprove={tx.approve} />
       </>
@@ -261,18 +264,11 @@ export function InlineField({ id, label, value, onChange, read, editor, bare = f
       {isOpen ? (
         <div>
           {typeof editor === "function" ? editor({ commit, cancel }) : editor}
+          {/* No field-level Done: it wouldn't save anything (autosave does) —
+              Esc cancels, Enter/outside-click commits. */}
           {!bare && (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginTop: 8 }}>
-              <span style={{ fontSize: 11.5, color: "#8298BC" }}>Saves automatically · Esc to cancel</span>
-              <button
-                type="button"
-                onClick={() => commit()}
-                style={{ border: "none", cursor: "pointer", fontFamily: "inherit", background: "#2F80FF", color: "#fff", fontSize: 12, fontWeight: 700, padding: "6px 14px", borderRadius: 8 }}
-                onFocus={(e) => (e.currentTarget.style.boxShadow = "0 0 0 2px #2F80FF, 0 0 0 4px #fff inset")}
-                onBlur={(e) => (e.currentTarget.style.boxShadow = "none")}
-              >
-                Done
-              </button>
+            <div style={{ marginTop: 8 }}>
+              <span style={{ fontSize: 11.5, color: "#8298BC" }}>Saves automatically · Esc to cancel · click outside to close</span>
             </div>
           )}
         </div>
@@ -318,6 +314,23 @@ export function InlineText({ value = "", onChange, rows = 3, placeholder, autoFo
       rows={rows}
       placeholder={placeholder}
       style={{ ...INLINE_INPUT, resize: "vertical" }}
+      onFocus={focusRing}
+      onBlur={blurRing}
+    />
+  );
+}
+
+// Single-line inline editor (names, codes, phone numbers…): Enter commits
+// via the wrapper's INPUT rule.
+export function InlineInput({ value = "", onChange, placeholder, autoFocus = true, type = "text" }) {
+  return (
+    <input
+      type={type}
+      autoFocus={autoFocus}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      style={{ ...INLINE_INPUT, padding: "8px 12px" }}
       onFocus={focusRing}
       onBlur={blurRing}
     />

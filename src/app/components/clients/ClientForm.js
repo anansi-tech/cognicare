@@ -7,7 +7,7 @@ import { useFormDraft } from "@/hooks/useFormDraft";
 import { DraftRestoredNotice, DraftSaveIndicator } from "@/components/ui/DraftRestoredNotice";
 
 // Inverse of composeInitialAssessment — splits the stored text back into fields.
-function parseInitialAssessment(text = "") {
+export function parseInitialAssessment(text = "") {
   const labelMap = {
     "Presenting Concerns": "presentingConcerns",
     "Relevant History": "relevantHistory",
@@ -44,7 +44,22 @@ const EMPTY_INTAKE = {
   currentStressors: "",
 };
 
-function clientFormValue(client) {
+// Compose the structured intake sections into the single initialAssessment
+// string the agents consume. Pure — shared with the inline profile editor.
+export function composeInitialAssessment(intake) {
+  const sections = [
+    ["Presenting Concerns", intake.presentingConcerns],
+    ["Relevant History", intake.relevantHistory],
+    ["Risk Indicators", intake.riskIndicators],
+    ["Current Stressors", intake.currentStressors],
+  ];
+  return sections
+    .filter(([, v]) => v && v.trim())
+    .map(([label, v]) => `${label}:\n${v.trim()}`)
+    .join("\n\n");
+}
+
+export function clientFormValue(client) {
   if (!client) return EMPTY_FORM;
   return {
     name: client.name || "",
@@ -150,19 +165,6 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
     }
   };
 
-  const composeInitialAssessment = () => {
-    const sections = [
-      ["Presenting Concerns", intake.presentingConcerns],
-      ["Relevant History", intake.relevantHistory],
-      ["Risk Indicators", intake.riskIndicators],
-      ["Current Stressors", intake.currentStressors],
-    ];
-    return sections
-      .filter(([, v]) => v && v.trim())
-      .map(([label, v]) => `${label}:\n${v.trim()}`)
-      .join("\n\n");
-  };
-
   const validateForm = () => {
     const errors = {};
 
@@ -178,7 +180,7 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
       }
     }
     if (!formData.gender) errors.gender = "Gender is required";
-    if (!composeInitialAssessment().trim())
+    if (!composeInitialAssessment(intake).trim())
       errors.initialAssessment = "Fill at least one section of the initial assessment.";
 
     setValidationErrors(errors);
@@ -205,7 +207,7 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
 
       // Save client data — compose the structured intake into the single
       // initialAssessment string the agents consume.
-      const payload = { ...formData, initialAssessment: composeInitialAssessment() };
+      const payload = { ...formData, initialAssessment: composeInitialAssessment(intake) };
       const response = await fetch(url, {
         method,
         headers: {

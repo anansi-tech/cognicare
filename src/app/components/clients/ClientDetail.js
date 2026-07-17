@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ConsentMarkdown } from "@/components/ai/ConsentMarkdown";
 import toast from "react-hot-toast";
-import ClientForm from "./ClientForm";
+import InlineClientProfile from "./InlineClientProfile";
 import ClientInsights from "./ClientInsights";
 import ClientAnalytics from "./ClientAnalytics";
 import ReassignControl from "./ReassignControl";
@@ -677,18 +677,14 @@ export default function ClientDetail({ clientId }) {
   }
 
   if (isEditing) {
+    // Existing records edit inline (read-document + per-field pencils);
+    // ClientForm remains the creation form only.
     return (
-      <div>
-        <p style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: ".12em", color: "#2F80FF", textTransform: "uppercase", margin: 0 }}>Client</p>
-        <h1 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 28, letterSpacing: "-.025em", margin: "6px 0 24px", color: "#0B2B6B" }}>
-          Edit {client.name}
-        </h1>
-        <ClientForm
-          client={client}
-          onSuccess={handleEditSuccess}
-          onCancel={() => setIsEditing(false)}
-        />
-      </div>
+      <InlineClientProfile
+        client={client}
+        onChanged={(saved) => setClient((prev) => ({ ...prev, ...saved }))}
+        onDone={handleEditSuccess}
+      />
     );
   }
 

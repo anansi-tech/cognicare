@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { Textarea } from "@/components/ui/textarea";
-import { SaveIndicator, IconButton, PencilIcon } from "@/components/ai/editable";
+import { SaveDot, IconButton, PencilIcon, InlineEditScope, InlineField, InlineText } from "@/components/ai/editable";
 import { FileText } from "lucide-react";
 
 const FIELDS = [
@@ -19,6 +18,7 @@ export function SessionNote({ sessionId, refreshKey, id, nudge }) {
   const [soap, setSoap] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [saveState, setSaveState] = useState("idle");
+  const [savedAt, setSavedAt] = useState(null);
   const seeded = useRef(false);
 
   const load = () =>
@@ -44,6 +44,7 @@ export function SessionNote({ sessionId, refreshKey, id, nudge }) {
           const data = await res.json();
           setNote((prev) => ({ ...prev, payload: data.payload }));
           setSaveState("saved");
+          setSavedAt(new Date());
         } else setSaveState("error");
       } catch { setSaveState("error"); }
     }, 800);
@@ -127,7 +128,7 @@ export function SessionNote({ sessionId, refreshKey, id, nudge }) {
           </span>
           {editorOpen ? (
             <>
-              <SaveIndicator state={saveState} />
+              <SaveDot state={saveState} savedAt={savedAt} updatedAt={note.updatedAt} />
               <button
                 onClick={approve}
                 style={{ display: "inline-flex", alignItems: "center", gap: 6, border: "none", cursor: "pointer", fontFamily: "inherit", background: "#2F80FF", color: "#fff", fontWeight: 700, fontSize: 12.5, padding: "7px 13px", borderRadius: 9, boxShadow: "0 10px 24px -12px rgba(47,128,255,.7)" }}
@@ -136,6 +137,8 @@ export function SessionNote({ sessionId, refreshKey, id, nudge }) {
               </button>
             </>
           ) : (
+            // Signed records require intent: approved notes keep one
+            // deliberate edit entry (drafts are inline-editable directly).
             <IconButton title="Edit note" onClick={() => setIsEditing(true)}>
               <PencilIcon />
             </IconButton>
@@ -145,23 +148,36 @@ export function SessionNote({ sessionId, refreshKey, id, nudge }) {
 
       {nudge}
 
-      {/* Body */}
+      {/* Body — inline per-field editing when the note is a draft (or an
+          approved note re-opened via the pencil). Same setSoap merge, same
+          debounced autosave + flush lifecycle as before. */}
       <div style={{ padding: "4px 20px 20px" }}>
-        {FIELDS.map(([key, label]) => (
-          <div key={key} style={{ marginTop: 16 }}>
-            <div style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: "#7C93B8" }}>{label}</div>
-            {editorOpen ? (
-              <Textarea
+        {editorOpen ? (
+          <InlineEditScope>
+            {FIELDS.map(([key, label]) => (
+              <InlineField
+                key={key}
+                id={key}
+                label={label}
                 value={soap?.[key] ?? ""}
-                rows={3}
-                className="mt-1 focus:ring-2 focus:ring-ring border-input"
-                onChange={(e) => setSoap((s) => ({ ...s, [key]: e.target.value }))}
+                onChange={(v) => setSoap((s) => ({ ...s, [key]: v }))}
+                read={
+                  <p style={{ fontSize: 13.5, lineHeight: 1.62, color: "#41557A", margin: 0, whiteSpace: "pre-wrap" }}>{soap?.[key]}</p>
+                }
+                editor={
+                  <InlineText value={soap?.[key] ?? ""} onChange={(v) => setSoap((s) => ({ ...s, [key]: v }))} rows={4} />
+                }
               />
-            ) : (
+            ))}
+          </InlineEditScope>
+        ) : (
+          FIELDS.map(([key, label]) => (
+            <div key={key} style={{ marginTop: 16 }}>
+              <div style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: "#7C93B8" }}>{label}</div>
               <p style={{ fontSize: 13.5, lineHeight: 1.62, color: "#41557A", margin: "7px 0 0", whiteSpace: "pre-wrap" }}>{soap?.[key]}</p>
-            )}
-          </div>
-        ))}
+            </div>
+          ))
+        )}
       </div>
     </section>
   );

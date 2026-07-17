@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Section } from "@/components/ai/Section";
-import { SaveIndicator } from "@/components/ai/editable";
+import { SaveDot, InlineEditScope, InlineField, InlineList, InlineText } from "@/components/ai/editable";
 import { LifeBuoy } from "lucide-react";
 
 // Stanley-Brown step headings — verbatim from the 2021 template. Free for
@@ -21,22 +21,55 @@ const ATTRIBUTION =
 const fmt = (d) =>
   new Date(d).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 
-const toText = (v) => (Array.isArray(v) ? v.join("\n") : v ?? "");
+const LIFELINE = (
+  <div style={{ fontSize: 12.5, fontWeight: 600, color: "#158A98", background: "#E2F4F2", borderRadius: 8, padding: "6px 11px", marginBottom: 6 }}>
+    988 Suicide &amp; Crisis Lifeline — call or text 988
+  </div>
+);
+
+const StepList = ({ items }) =>
+  items?.length ? (
+    <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+      {items.map((x, i) => (
+        <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+          <span style={{ flexShrink: 0, width: 6, height: 6, borderRadius: "50%", background: "#9FB6D8", marginTop: 7 }} />
+          <span style={{ fontSize: 13, lineHeight: 1.55, color: "#41557A" }}>{x}</span>
+        </div>
+      ))}
+    </div>
+  ) : (
+    <p style={{ fontSize: 13, color: "#8298BC", margin: 0 }}>Nothing entered yet.</p>
+  );
 
 /**
- * Per-client chart artifact (Round 55): one active Stanley-Brown safety plan,
- * edit-in-place with debounced server autosave, "Reviewed today" stamping
- * reviewedAt. Content is encrypted server-side; this component only ever
- * holds the decrypted working copy.
+ * Per-client chart artifact (Round 55): one active Stanley-Brown safety plan.
+ * Rendered as a read document with inline per-field editing (hover pencil per
+ * step) — same InlineField pattern as AI reports. Edits merge into the full
+ * plan and save through the existing debounced whole-document PUT; "Reviewed
+ * today" stamps reviewedAt. Content is encrypted server-side.
  */
 export function SafetyPlanSection({ clientId, onPlanChanged }) {
   const [plan, setPlan] = useState(null); // null = loading; {exists:false} = none yet
-  const [fields, setFields] = useState(null); // string working copy per step
+  const [fields, setFields] = useState(null); // arrays per step + reasonsForLiving string
   const [saveState, setSaveState] = useState("idle");
+  const [savedAt, setSavedAt] = useState(null);
   const [busy, setBusy] = useState(false);
   const timerRef = useRef(null);
   const fieldsRef = useRef(null);
   const dirtyRef = useRef(false);
+  const lastSavedRef = useRef(null); // canonical body of the last known server state
+
+  const seed = (data) =>
+    Object.fromEntries([
+      ...STEPS.map((s) => [s.key, Array.isArray(data?.[s.key]) ? data[s.key] : []]),
+      ["reasonsForLiving", data?.reasonsForLiving ?? ""],
+    ]);
+  const toBody = (f) =>
+    Object.fromEntries(
+      Object.entries(f).map(([k, v]) =>
+        k === "reasonsForLiving" ? [k, v] : [k, v.filter((line) => line.trim() !== "")]
+      )
+    );
 
   useEffect(() => {
     fetch(`/api/clients/${clientId}/safety-plan`)
@@ -45,9 +78,10 @@ export function SafetyPlanSection({ clientId, onPlanChanged }) {
         if (!data) return;
         setPlan(data);
         if (data.exists) {
-          setFields(Object.fromEntries(
-            [...STEPS.map((s) => s.key), "reasonsForLiving"].map((k) => [k, toText(data[k])])
-          ));
+          const f = seed(data);
+          setFields(f);
+          fieldsRef.current = f;
+          lastSavedRef.current = JSON.stringify(toBody(f));
         }
       })
       .catch(() => {});
@@ -66,16 +100,20 @@ export function SafetyPlanSection({ clientId, onPlanChanged }) {
   const saveNow = useCallback(async () => {
     if (!dirtyRef.current || !fieldsRef.current) return;
     dirtyRef.current = false;
+    // Whole document through the existing PUT — never partial payloads.
+    const body = toBody(fieldsRef.current);
+    // No-op gate: a cancelled edit (Escape restores the pre-edit value) or an
+    // editor round-trip must never fire a PUT.
+    if (JSON.stringify(body) === lastSavedRef.current) {
+      setSaveState("idle");
+      return;
+    }
     setSaveState("saving");
-    const f = fieldsRef.current;
-    const body = Object.fromEntries(
-      Object.entries(f).map(([k, v]) =>
-        k === "reasonsForLiving" ? [k, v] : [k, v.split("\n").filter((line) => line.trim() !== "")]
-      )
-    );
     const saved = await put(body);
     setSaveState(saved ? "saved" : "error");
     if (saved) {
+      lastSavedRef.current = JSON.stringify(body);
+      setSavedAt(new Date());
       setPlan((p) => ({ ...p, ...saved }));
       onPlanChanged?.(saved);
     }
@@ -111,9 +149,10 @@ export function SafetyPlanSection({ clientId, onPlanChanged }) {
     setBusy(false);
     if (saved) {
       setPlan(saved);
-      setFields(Object.fromEntries(
-        [...STEPS.map((s) => s.key), "reasonsForLiving"].map((k) => [k, ""])
-      ));
+      const f = seed(saved);
+      setFields(f);
+      fieldsRef.current = f;
+      lastSavedRef.current = JSON.stringify(toBody(f));
       onPlanChanged?.(saved);
     }
   };
@@ -133,7 +172,7 @@ export function SafetyPlanSection({ clientId, onPlanChanged }) {
 
   const actions = exists ? (
     <>
-      <SaveIndicator state={saveState} />
+      <SaveDot state={saveState} savedAt={savedAt} updatedAt={plan.updatedAt} />
       {plan.reviewedAt && (
         <span style={{ fontSize: 11.5, fontWeight: 700, padding: "3px 10px", borderRadius: 999, whiteSpace: "nowrap", background: "#E7F6EC", color: "#3B9E57" }}>
           Reviewed {fmt(plan.reviewedAt)}
@@ -149,20 +188,6 @@ export function SafetyPlanSection({ clientId, onPlanChanged }) {
       </button>
     </>
   ) : undefined;
-
-  const textareaStyle = {
-    width: "100%",
-    minHeight: 64,
-    border: "1px solid #E3ECF7",
-    borderRadius: 10,
-    padding: "9px 12px",
-    fontSize: 13.5,
-    fontFamily: "inherit",
-    color: "#24344F",
-    lineHeight: 1.55,
-    resize: "vertical",
-    background: "#FAFCFF",
-  };
 
   return (
     <Section
@@ -191,36 +216,46 @@ export function SafetyPlanSection({ clientId, onPlanChanged }) {
           </button>
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          {STEPS.map((s) => (
-            <div key={s.key}>
-              <div style={{ fontSize: 12.5, fontWeight: 700, color: "#0B2B6B", marginBottom: 6 }}>{s.label}</div>
-              {s.key === "professionals" && (
-                <div style={{ fontSize: 12.5, fontWeight: 600, color: "#158A98", background: "#E2F4F2", borderRadius: 8, padding: "6px 11px", marginBottom: 6 }}>
-                  988 Suicide &amp; Crisis Lifeline — call or text 988
-                </div>
-              )}
-              <textarea
-                value={fields[s.key]}
-                onChange={(e) => edit(s.key, e.target.value)}
-                placeholder="One entry per line"
-                style={textareaStyle}
-              />
-            </div>
-          ))}
+        <InlineEditScope>
           <div>
-            <div style={{ fontSize: 12.5, fontWeight: 700, color: "#0B2B6B", marginBottom: 6 }}>
-              The one thing that is most important to me and worth living for is
-              <span style={{ fontWeight: 500, color: "#8298BC" }}> (optional)</span>
-            </div>
-            <textarea
+            {STEPS.map((s) => (
+              <InlineField
+                key={s.key}
+                id={s.key}
+                label={s.label}
+                value={fields[s.key]}
+                onChange={(v) => edit(s.key, v)}
+                read={
+                  <>
+                    {s.key === "professionals" && LIFELINE}
+                    <StepList items={fields[s.key]} />
+                  </>
+                }
+                editor={
+                  <>
+                    {s.key === "professionals" && LIFELINE}
+                    <InlineList value={fields[s.key]} onChange={(v) => edit(s.key, v)} placeholder="One entry per line" />
+                  </>
+                }
+              />
+            ))}
+            <InlineField
+              id="reasonsForLiving"
+              label="The one thing that is most important to me and worth living for is (optional)"
               value={fields.reasonsForLiving}
-              onChange={(e) => edit("reasonsForLiving", e.target.value)}
-              style={{ ...textareaStyle, minHeight: 48 }}
+              onChange={(v) => edit("reasonsForLiving", v)}
+              read={
+                fields.reasonsForLiving ? (
+                  <p style={{ fontSize: 13.5, lineHeight: 1.6, color: "#41557A", margin: 0 }}>{fields.reasonsForLiving}</p>
+                ) : (
+                  <p style={{ fontSize: 13, color: "#8298BC", margin: 0 }}>Nothing entered yet.</p>
+                )
+              }
+              editor={<InlineText value={fields.reasonsForLiving} onChange={(v) => edit("reasonsForLiving", v)} rows={2} />}
             />
+            <p style={{ fontSize: 11, color: "#A6B8D4", margin: "14px 0 0" }}>{ATTRIBUTION}</p>
           </div>
-          <p style={{ fontSize: 11, color: "#A6B8D4", margin: 0 }}>{ATTRIBUTION}</p>
-        </div>
+        </InlineEditScope>
       )}
     </Section>
   );
