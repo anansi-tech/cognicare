@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -154,14 +154,20 @@ export default function SessionDetail({ sessionId }) {
   };
 
   // Banner lifetime: the AutoPostSession panel appearing is the durable
-  // feedback (dismisses it immediately); ~8s is the fallback.
+  // feedback and hands off — but the panel shows up in under a second, so a
+  // minimum display time keeps the announcement readable. ~8s is the cap.
+  const NOTICE_MIN_MS = 4000;
+  const noticeShownAtRef = useRef(0);
   useEffect(() => {
     if (!completedNotice) return;
     const t = setTimeout(() => setCompletedNotice(false), 8000);
     return () => clearTimeout(t);
   }, [completedNotice]);
   const handleGeneratingChange = useCallback((generating) => {
-    if (generating) setCompletedNotice(false);
+    if (!generating) return;
+    const remaining = Math.max(0, NOTICE_MIN_MS - (Date.now() - noticeShownAtRef.current));
+    if (remaining === 0) setCompletedNotice(false);
+    else setTimeout(() => setCompletedNotice(false), remaining);
   }, []);
 
   const handleEditSuccess = (promoted) => {
@@ -170,7 +176,10 @@ export default function SessionDetail({ sessionId }) {
     // Announced, not silent (and not a confirm): the quiet Done-time flip
     // gets a transient informational banner. State-driven only — never
     // derived from session status, so reopening a completed session is quiet.
-    if (promoted === true) setCompletedNotice(true);
+    if (promoted === true) {
+      noticeShownAtRef.current = Date.now();
+      setCompletedNotice(true);
+    }
   };
 
   // Same endpoint + confirm as RegenerateButton — the nudge is just a second
