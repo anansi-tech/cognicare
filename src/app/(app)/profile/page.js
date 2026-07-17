@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import UserForm from "@/app/components/users/UserForm";
+import InlineUserProfile from "@/app/components/users/InlineUserProfile";
 import { Spinner } from "@/components/ui/Spinner";
 
 export default function ProfilePage() {
@@ -38,14 +38,6 @@ export default function ProfilePage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleSuccess = () => {
-    fetchUserProfile();
-  };
-
-  const handleCancel = () => {
-    router.push("/dashboard");
   };
 
   if (status === "loading" || loading) {
@@ -101,7 +93,7 @@ export default function ProfilePage() {
             boxShadow: "0 22px 50px -40px rgba(11,43,107,.3)",
           }}
         >
-          <UserForm user={user} onSuccess={handleSuccess} onCancel={handleCancel} />
+          <InlineUserProfile user={user} onChanged={(saved) => setUser((prev) => ({ ...prev, ...saved }))} />
         </div>
       )}
     </div>

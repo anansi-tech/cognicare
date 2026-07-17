@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import SessionForm from "./SessionForm";
+import InlineSessionEditor from "./InlineSessionEditor";
 import SessionAIInsights from "./SessionAIInsights";
 import { useLiam } from "@/components/liam/LiamProvider";
 import { AutoSessionPrep } from "@/components/ai/AutoSessionPrep";
@@ -297,11 +297,14 @@ export default function SessionDetail({ sessionId }) {
   }
 
   if (isEditing) {
+    // Existing records edit inline (read-document + per-field pencils);
+    // SessionForm remains the creation form only.
     return (
-      <div style={{ maxWidth: 940, margin: "0 auto", padding: "28px 32px 64px" }}>
-        <h1 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 22, color: "#0B2B6B", marginBottom: 24 }}>Edit session</h1>
-        <SessionForm session={session} onSuccess={handleEditSuccess} onCancel={() => setIsEditing(false)} />
-      </div>
+      <InlineSessionEditor
+        session={session}
+        onChanged={(saved) => setSession((prev) => ({ ...prev, ...saved, clientId: prev.clientId }))}
+        onDone={handleEditSuccess}
+      />
     );
   }
 

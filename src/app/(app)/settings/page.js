@@ -3,8 +3,9 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { SaveIndicator } from "@/components/ai/editable";
+import { useEffect, useRef, useState } from "react";
+import { SaveDot, InlineEditScope, InlineField, InlineInput } from "@/components/ai/editable";
+import { useAutosaveRecord } from "@/components/ai/useAutosaveRecord";
 
 export default function SettingsPage() {
   const { data: session, status } = useSession();
@@ -15,8 +16,6 @@ export default function SettingsPage() {
   const [practiceAddress, setPracticeAddress] = useState("");
   const [practicePhone, setPracticePhone] = useState("");
   const [practiceTimezone, setPracticeTimezone] = useState("");
-  const [saveState, setSaveState] = useState("idle");
-  const inFlight = useRef(false);
 
   const TZ_OPTIONS = [
     { value: "America/New_York", label: "Eastern (ET)" },
@@ -63,53 +62,55 @@ export default function SettingsPage() {
   }, [status]);
 
   // Autosave owns persistence — there is no Save button. It must whisper: a
-  // quiet SaveIndicator, never a toast, consistent with every other surface.
-  // Only changed fields are PATCHed, so a settled form is a no-op.
-  const persistPracticeSettings = useCallback(async () => {
-    if (inFlight.current) return;
-    const nameChanged = practiceName.trim() && practiceName.trim() !== practice?.name;
-    const tzChanged = practiceTimezone && practiceTimezone !== practice?.timezone;
-    const addressChanged = practiceAddress.trim() !== (practice?.address || "");
-    const phoneChanged = practicePhone.trim() !== (practice?.phone || "");
-    if (!nameChanged && !tzChanged && !addressChanged && !phoneChanged) return;
+  // quiet SaveDot, never a toast, consistent with every other surface.
+  // Only changed fields are PATCHed, so a settled form is a no-op (the R53
+  // contract, preserved through the shared engine).
+  const valuesRef = useRef({});
+  valuesRef.current = {
+    name: practiceName.trim(),
+    address: practiceAddress.trim(),
+    phone: practicePhone.trim(),
+    timezone: practiceTimezone,
+  };
+  const practiceRef = useRef(practice);
+  practiceRef.current = practice;
 
-    inFlight.current = true;
-    try {
+  const { touch, saveState, savedAt, problems, markSaved } = useAutosaveRecord({
+    getBody: () => ({ ...valuesRef.current }),
+    validate: () => (valuesRef.current.name ? [] : ["Practice name is required"]),
+    save: async (full) => {
+      // Changed-fields-only PATCH, exactly as before.
+      const p = practiceRef.current;
       const body = {};
-      if (nameChanged) body.name = practiceName.trim();
-      if (tzChanged) body.timezone = practiceTimezone;
-      if (addressChanged) body.address = practiceAddress.trim();
-      if (phoneChanged) body.phone = practicePhone.trim();
+      if (full.name && full.name !== p?.name) body.name = full.name;
+      if (full.timezone && full.timezone !== p?.timezone) body.timezone = full.timezone;
+      if (full.address !== (p?.address || "")) body.address = full.address;
+      if (full.phone !== (p?.phone || "")) body.phone = full.phone;
+      if (Object.keys(body).length === 0) return true;
       const res = await fetch("/api/practice", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
+        keepalive: true,
       });
+      if (!res.ok) return false;
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Could not save");
-      setPractice((p) => ({ ...p, ...data }));
-      setSaveState("saved");
-    } catch {
-      // The next keystroke re-arms the debounce, so a transient failure
-      // retries on its own. Nothing to recover here.
-      setSaveState("error");
-    } finally {
-      inFlight.current = false;
-    }
-  }, [practice, practiceName, practiceAddress, practicePhone, practiceTimezone]);
+      setPractice((prev) => ({ ...prev, ...data }));
+      return true;
+    },
+  });
 
+  // Seed the no-op baseline once the practice loads.
   useEffect(() => {
-    if (!practice?.isOwner) return;
-    const changed =
-      (practiceName.trim() && practiceName.trim() !== practice.name) ||
-      practiceTimezone !== practice.timezone ||
-      practiceAddress.trim() !== (practice.address || "") ||
-      practicePhone.trim() !== (practice.phone || "");
-    if (!changed) return;
-    setSaveState("saving");
-    const timer = setTimeout(persistPracticeSettings, 800);
-    return () => clearTimeout(timer);
-  }, [practice, practiceName, practiceAddress, practicePhone, practiceTimezone, persistPracticeSettings]);
+    if (!practice) return;
+    markSaved({
+      name: practice.name || "",
+      address: practice.address || "",
+      phone: practice.phone || "",
+      timezone: practice.timezone || "America/New_York",
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [practice?._id]);
 
   if (status === "loading") {
     return <div className="text-center p-4 text-muted-foreground">Loading...</div>;
@@ -158,69 +159,67 @@ export default function SettingsPage() {
               <h3 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 18, margin: 0, color: "#0B2B6B" }}>
                 Practice
               </h3>
-              {practice.isOwner && <SaveIndicator state={saveState} />}
+              {practice.isOwner && <SaveDot state={saveState} savedAt={savedAt} updatedAt={practice.updatedAt} />}
             </div>
             {practice.isOwner ? (
-              <form onSubmit={(e) => e.preventDefault()} className="mt-5 space-y-4">
-                <div>
-                  <label htmlFor="practiceName" style={{ fontSize: 13.5, fontWeight: 500, color: "#55698F" }}>
-                    Practice name
-                  </label>
-                  <input
-                    id="practiceName"
-                    type="text"
-                    value={practiceName}
-                    onChange={(e) => setPracticeName(e.target.value)}
-                    style={INPUT_STYLE}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="practiceAddress" style={{ fontSize: 13.5, fontWeight: 500, color: "#55698F" }}>
-                    Address
-                  </label>
-                  <input
-                    id="practiceAddress"
-                    type="text"
-                    value={practiceAddress}
-                    onChange={(e) => setPracticeAddress(e.target.value)}
-                    placeholder="123 Main St, Suite 4, City, ST 00000"
-                    style={INPUT_STYLE}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="practicePhone" style={{ fontSize: 13.5, fontWeight: 500, color: "#55698F" }}>
-                    Phone
-                  </label>
-                  <input
-                    id="practicePhone"
-                    type="tel"
-                    value={practicePhone}
-                    onChange={(e) => setPracticePhone(e.target.value)}
-                    placeholder="(555) 000-0000"
-                    style={INPUT_STYLE}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="practiceTimezone" style={{ fontSize: 13.5, fontWeight: 500, color: "#55698F" }}>
-                    Timezone
-                  </label>
-                  <select
-                    id="practiceTimezone"
-                    value={practiceTimezone}
-                    onChange={(e) => setPracticeTimezone(e.target.value)}
-                    style={{ ...INPUT_STYLE, background: "#fff" }}
-                  >
-                    {TZ_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
-                  </select>
-                </div>
-                {saveState === "error" && (
-                  <p className="text-xs text-destructive">
-                    Couldn&apos;t save — retrying on next change.
-                  </p>
+              <div className="mt-3">
+                {problems.length > 0 && (
+                  <p className="text-xs text-destructive" style={{ margin: "0 0 6px" }}>{problems.join(" · ")} — changes aren&apos;t saved until fixed.</p>
                 )}
-              </form>
+                <InlineEditScope>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", columnGap: 28 }}>
+                    <InlineField
+                      id="practiceName"
+                      label="Practice name"
+                      value={practiceName}
+                      onChange={(v) => { setPracticeName(v); touch(); }}
+                      read={<p style={{ fontSize: 13.5, lineHeight: 1.6, color: "#41557A", margin: 0 }}>{practiceName || "—"}</p>}
+                      editor={<InlineInput value={practiceName} onChange={(v) => { setPracticeName(v); touch(); }} placeholder="Practice name" />}
+                    />
+                    <InlineField
+                      id="practicePhone"
+                      label="Phone"
+                      value={practicePhone}
+                      onChange={(v) => { setPracticePhone(v); touch(); }}
+                      read={<p style={{ fontSize: 13.5, lineHeight: 1.6, color: practicePhone ? "#41557A" : "#8298BC", margin: 0 }}>{practicePhone || "Not set"}</p>}
+                      editor={<InlineInput type="tel" value={practicePhone} onChange={(v) => { setPracticePhone(v); touch(); }} placeholder="(555) 000-0000" />}
+                    />
+                    <div style={{ gridColumn: "1 / -1" }}>
+                      <InlineField
+                        id="practiceAddress"
+                        label="Address"
+                        value={practiceAddress}
+                        onChange={(v) => { setPracticeAddress(v); touch(); }}
+                        read={<p style={{ fontSize: 13.5, lineHeight: 1.6, color: practiceAddress ? "#41557A" : "#8298BC", margin: 0 }}>{practiceAddress || "Not set"}</p>}
+                        editor={<InlineInput value={practiceAddress} onChange={(v) => { setPracticeAddress(v); touch(); }} placeholder="123 Main St, Suite 4, City, ST 00000" />}
+                      />
+                    </div>
+                    <InlineField
+                      id="practiceTimezone"
+                      label="Timezone"
+                      value={practiceTimezone}
+                      onChange={(v) => { setPracticeTimezone(v); touch(); }}
+                      read={
+                        <p style={{ fontSize: 13.5, lineHeight: 1.6, color: "#41557A", margin: 0 }}>
+                          {TZ_OPTIONS.find((o) => o.value === practiceTimezone)?.label ?? practiceTimezone}
+                        </p>
+                      }
+                      editor={
+                        <select
+                          autoFocus
+                          value={practiceTimezone}
+                          onChange={(e) => { setPracticeTimezone(e.target.value); touch(); }}
+                          style={{ ...INPUT_STYLE, marginTop: 0, background: "#fff" }}
+                        >
+                          {TZ_OPTIONS.map((o) => (
+                            <option key={o.value} value={o.value}>{o.label}</option>
+                          ))}
+                        </select>
+                      }
+                    />
+                  </div>
+                </InlineEditScope>
+              </div>
             ) : (
               <p className="mt-4 text-sm text-muted-foreground">
                 Practice: <span className="font-medium text-foreground">{practice.name}</span>
