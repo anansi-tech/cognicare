@@ -148,16 +148,15 @@ export default function SessionAIInsights({ session, refreshKey = 0, focus, onNo
   }
 
   // Status pill + a jump to the client record, where these reports are edited.
-  const openInRecord = (
-    <IconButton title="Open in client record" onClick={() => router.push(`/clients/${clientId}?tab=overview`)}>
-      <ExternalLinkIcon />
-    </IconButton>
-  );
-  const actionsFor = (report) =>
+  // `sec` deep-links to the matching Overview section (ClientDetail scrolls
+  // once the document has rendered).
+  const actionsFor = (report, sec) =>
     report ? (
       <>
         <StatusPill status={report.status} />
-        {openInRecord}
+        <IconButton title="Open in client record" onClick={() => router.push(`/clients/${clientId}?tab=overview&sec=${sec}`)}>
+          <ExternalLinkIcon />
+        </IconButton>
       </>
     ) : undefined;
 
@@ -172,7 +171,7 @@ export default function SessionAIInsights({ session, refreshKey = 0, focus, onNo
           summary={assessment?.summary}
           subtitle={fmtDate(assessment?.createdAt) ? `Generated ${fmtDate(assessment?.createdAt)}` : undefined}
           draft={assessment?.status === "draft"}
-          actions={actionsFor(assessment)}
+          actions={actionsFor(assessment, "assessment")}
         >
           {assessment ? (
             <AgentReportBody agentType="assessment" payload={assessment.payload} />
@@ -190,7 +189,7 @@ export default function SessionAIInsights({ session, refreshKey = 0, focus, onNo
           summary={diagnostic?.summary}
           subtitle={fmtDate(diagnostic?.createdAt) ? `Generated ${fmtDate(diagnostic?.createdAt)}` : undefined}
           draft={diagnostic?.status === "draft"}
-          actions={actionsFor(diagnostic)}
+          actions={actionsFor(diagnostic, "diagnosis")}
         >
           {diagnostic ? (
             <AgentReportBody agentType="diagnostic" payload={diagnostic.payload} />
@@ -212,7 +211,7 @@ export default function SessionAIInsights({ session, refreshKey = 0, focus, onNo
         summary={treatment?.summary}
         subtitle={fmtDate(treatment?.createdAt) ? `Client-scoped · Generated ${fmtDate(treatment?.createdAt)}` : undefined}
         draft={treatment?.status === "draft"}
-        actions={actionsFor(treatment)}
+        actions={actionsFor(treatment, "treatment")}
       >
         {treatment ? (
           <AgentReportBody agentType="treatment" payload={treatment.payload} />
@@ -228,7 +227,7 @@ export default function SessionAIInsights({ session, refreshKey = 0, focus, onNo
         summary={progress?.summary}
         subtitle={fmtDate(progress?.createdAt) ? `This session · Generated ${fmtDate(progress?.createdAt)}` : undefined}
         draft={progress?.status === "draft"}
-        actions={actionsFor(progress)}
+        actions={actionsFor(progress, "progress")}
       >
         {progress ? (
           <AgentReportBody agentType="progress" payload={progress.payload} />

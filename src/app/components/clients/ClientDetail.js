@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ConsentMarkdown } from "@/components/ai/ConsentMarkdown";
@@ -151,12 +151,30 @@ export default function ClientDetail({ clientId }) {
   const [risk, setRisk] = useState(null); // /api/clients/[id]/risk summary (RiskBanners feeds it up)
   const [riskRefreshKey, setRiskRefreshKey] = useState(0);
   const [isNarrow, setIsNarrow] = useState(false);
-  const handleReportsChange = useCallback((r) => setOverviewReports(r), []);
+  // Deep-link target from the session view's open-in-record arrows
+  // (?tab=overview&sec=treatment). One-shot: undefined = not yet seeded.
+  const pendingSecRef = useRef(undefined);
+  const handleReportsChange = useCallback((r) => {
+    setOverviewReports(r);
+    // This callback fires only after ClientInsights has rendered its
+    // sections, so the sec-* anchor exists — no polling needed. The banners
+    // and rail cards above mount slightly later and shift the layout, so one
+    // corrective scroll after they settle keeps the landing accurate.
+    if (pendingSecRef.current) {
+      const id = `sec-${pendingSecRef.current}`;
+      pendingSecRef.current = null;
+      goToSection(id);
+      setTimeout(() => goToSection(id), 800);
+    }
+  }, []);
   const [latestBaselineAt, setLatestBaselineAt] = useState(null);
   const [counselor, setCounselor] = useState(null);
   const [attendance, setAttendance] = useState(null);
   const router = useRouter();
   const searchParams = useSearchParams();
+  if (pendingSecRef.current === undefined) {
+    pendingSecRef.current = searchParams.get("sec");
+  }
   const { bindClient, releaseClient, setOpen: setLiamOpen } = useLiam();
 
   // Bind LIAM to this client so Ask LIAM / Cmd-K consults this record.
