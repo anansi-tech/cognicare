@@ -48,9 +48,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // without forcing a logout.
       if (token.id) {
         await connectDB();
-        const fresh = await User.findById(token.id).select("practiceId role").lean();
+        const fresh = await User.findById(token.id).select("practiceId role email name").lean();
         token.role = fresh?.role ?? token.role;
         token.practiceId = fresh?.practiceId ? fresh.practiceId.toString() : null;
+        // Profile edits (email/name) reflect in the session without re-login,
+        // same as role/practiceId above.
+        token.email = fresh?.email ?? token.email;
+        token.name = fresh?.name ?? token.name;
         if (token.practiceId) {
           const practice = await Practice.findById(token.practiceId)
             .select("stripeSubscriptionStatus ownerId timezone")
