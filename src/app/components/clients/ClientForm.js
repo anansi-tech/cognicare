@@ -1,10 +1,15 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { toDateInputValue } from "@/lib/age";
 import { useFormDraft } from "@/hooks/useFormDraft";
 import { DraftRestoredNotice, DraftSaveIndicator } from "@/components/ui/DraftRestoredNotice";
+import { InlineEnum } from "@/components/ai/editable";
+
+// CREATION form only (Sky document vocabulary): one atomic POST on Create,
+// validation on submit, localStorage drafts — no autosave to the server.
+// Editing an existing client lives in InlineClientProfile.
 
 // Inverse of composeInitialAssessment — splits the stored text back into fields.
 export function parseInitialAssessment(text = "") {
@@ -79,16 +84,41 @@ export function clientFormValue(client) {
   };
 }
 
-export default function ClientForm({ client, onSuccess, onCancel }) {
-  const [formData, setFormData] = useState(() => clientFormValue(client));
+const GENDER_OPTIONS = [
+  { value: "female", label: "Female" },
+  { value: "male", label: "Male" },
+  { value: "non-binary", label: "Non-binary" },
+  { value: "transgender", label: "Transgender" },
+  { value: "other", label: "Other" },
+  { value: "prefer-not-to-say", label: "Prefer not to say" },
+];
+const GENDER_COLORS = Object.fromEntries(GENDER_OPTIONS.map((o) => [o.value, { bg: "#EAF3FF", color: "#2F80FF" }]));
+
+// Sky document vocabulary (matches InlineSessionEditor / Overview sections)
+const CARD = { background: "#fff", border: "1px solid #E3ECF7", borderRadius: 20, boxShadow: "0 22px 50px -40px rgba(11,43,107,.25)", padding: "6px 20px 20px" };
+const H = ({ children }) => (
+  <h3 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 16, color: "#0B2B6B", margin: "18px 0 2px" }}>{children}</h3>
+);
+const LABEL = { display: "block", fontSize: 11.5, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: "#7C93B8", margin: "16px 0 7px" };
+const OPTIONAL = <span style={{ fontWeight: 500, textTransform: "none", letterSpacing: 0, color: "#A6B8D4" }}> (optional)</span>;
+const REQUIRED = <span style={{ color: "#C0392B" }}> *</span>;
+const fieldStyle = (invalid) => ({
+  width: "100%", border: `1px solid ${invalid ? "#E4A9A2" : "#D9E5F4"}`, borderRadius: 10,
+  padding: "9px 12px", fontSize: 13.5, lineHeight: 1.6, color: "#24344F", fontFamily: "inherit",
+  outline: "none", background: "#fff", boxSizing: "border-box",
+});
+const focusRing = (e) => (e.target.style.boxShadow = "inset 0 0 0 2px #2F80FF");
+const blurRing = (e) => (e.target.style.boxShadow = "none");
+const Err = ({ children }) =>
+  children ? <p style={{ fontSize: 12.5, color: "#C0392B", margin: "6px 0 0" }}>{children}</p> : null;
+const HINT = { fontSize: 12, color: "#8298BC", margin: "2px 0 0" };
+
+export default function ClientForm({ onSuccess, onCancel }) {
+  const [formData, setFormData] = useState(EMPTY_FORM);
   // Light-structured initial assessment (Round 16). On submit these get
   // concatenated under headers into the single `initialAssessment` string
-  // that the agents consume. When editing an existing client whose
-  // initialAssessment is a single blob, we preload it into Presenting
-  // Concerns so nothing is lost — we don't try to parse old blobs.
-  const [intake, setIntake] = useState(() =>
-    client ? parseInitialAssessment(client.initialAssessment) : EMPTY_INTAKE
-  );
+  // that the agents consume.
+  const [intake, setIntake] = useState(EMPTY_INTAKE);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
@@ -100,23 +130,12 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
     if (next.intake) setIntake((prev) => ({ ...prev, ...next.intake }));
   }, []);
   const { draftRestored, dismissRestored, clearDraft, saveState } = useFormDraft(
-    `client-draft-${client?._id ?? "new"}`,
+    "client-draft-new",
     draftValue,
     applyDraft,
     true,
-    { serverUpdatedAt: client?.updatedAt }
+    {}
   );
-
-  useEffect(() => {
-    if (client) {
-      // Populate form with client data for editing
-      setFormData(clientFormValue(client));
-      setIntake(parseInitialAssessment(client.initialAssessment));
-    }
-    // Depend only on the client id — a background refetch returning the same
-    // client with a new object reference must not clobber in-progress edits.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [client?._id]);
 
   const clearError = (field) => {
     if (validationErrors[field]) {
@@ -201,15 +220,11 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
     }
 
     try {
-      // Determine if this is a create or update operation
-      const method = client ? "PATCH" : "POST";
-      const url = client ? `/api/clients/${client._id}` : "/api/clients";
-
       // Save client data — compose the structured intake into the single
       // initialAssessment string the agents consume.
       const payload = { ...formData, initialAssessment: composeInitialAssessment(intake) };
-      const response = await fetch(url, {
-        method,
+      const response = await fetch("/api/clients", {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
@@ -233,7 +248,7 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
           setLoading(false);
           return;
         }
-        setError(client ? "Failed to update client" : "Failed to create client");
+        setError("Failed to create client");
         setLoading(false);
         return;
       }
@@ -253,31 +268,44 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
     }
   };
 
+  const intakeSection = (key, label, rows, placeholder) => (
+    <div>
+      <label style={LABEL}>{label}</label>
+      <textarea
+        value={intake[key]}
+        onChange={(e) => {
+          clearError("initialAssessment");
+          setIntake((s) => ({ ...s, [key]: e.target.value }));
+        }}
+        rows={rows}
+        style={{ ...fieldStyle(false), resize: "vertical" }}
+        onFocus={focusRing}
+        onBlur={blurRing}
+        placeholder={placeholder}
+      />
+    </div>
+  );
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
       {draftRestored && (
         <DraftRestoredNotice
           onDismiss={dismissRestored}
           onDiscard={() => {
-            const nextForm = clientFormValue(client);
-            const nextIntake = client ? parseInitialAssessment(client.initialAssessment) : EMPTY_INTAKE;
-            clearDraft({ formData: nextForm, intake: nextIntake });
-            setFormData(nextForm);
-            setIntake(nextIntake);
+            clearDraft({ formData: EMPTY_FORM, intake: EMPTY_INTAKE });
+            setFormData(EMPTY_FORM);
+            setIntake(EMPTY_INTAKE);
           }}
         />
       )}
       {error && (
-        <div
-          className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative"
-          role="alert"
-        >
-          <span className="block sm:inline">{error}</span>
+        <div role="alert" style={{ background: "#FDECEC", border: "1px solid #F5C6C0", borderRadius: 12, padding: "10px 14px" }}>
+          <p style={{ fontSize: 13, color: "#C0392B", margin: 0 }}>{error}</p>
           {error.includes("free trial client limit") && (
-            <div className="mt-4">
+            <div style={{ marginTop: 10 }}>
               <Link
                 href="/subscription"
-                className="inline-block px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
+                style={{ display: "inline-block", background: "#2F80FF", color: "#fff", fontWeight: 700, fontSize: 12.5, padding: "8px 15px", borderRadius: 10, textDecoration: "none" }}
               >
                 Upgrade Plan
               </Link>
@@ -286,260 +314,173 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Basic Information */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Name <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            className={`w-full p-2 border rounded ${
-              validationErrors.name ? "border-red-500" : "border-gray-300"
-            }`}
-          />
-          {validationErrors.name && (
-            <p className="text-red-500 text-xs mt-1">{validationErrors.name}</p>
-          )}
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
+      <div style={CARD}>
+        <H>Identity</H>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", columnGap: 28 }}>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Date of birth <span className="text-red-500">*</span>
-            </label>
+            <label style={LABEL}>Name{REQUIRED}</label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              style={fieldStyle(!!validationErrors.name)}
+              onFocus={focusRing}
+              onBlur={blurRing}
+              placeholder="Full name"
+            />
+            <Err>{validationErrors.name}</Err>
+          </div>
+          <div>
+            <label style={LABEL}>Date of birth{REQUIRED}</label>
             <input
               type="date"
               name="dateOfBirth"
               value={formData.dateOfBirth}
               max={new Date().toISOString().slice(0, 10)}
               onChange={handleChange}
-              className={`w-full p-2 border rounded ${
-                validationErrors.dateOfBirth ? "border-red-500" : "border-gray-300"
-              }`}
+              style={fieldStyle(!!validationErrors.dateOfBirth)}
+              onFocus={focusRing}
+              onBlur={blurRing}
             />
-            {validationErrors.dateOfBirth && (
-              <p className="text-red-500 text-xs mt-1">{validationErrors.dateOfBirth}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Gender <span className="text-red-500">*</span>
-            </label>
-            <select
-              name="gender"
-              value={formData.gender}
-              onChange={handleChange}
-              className={`w-full p-2 border rounded ${
-                validationErrors.gender ? "border-red-500" : "border-gray-300"
-              }`}
-            >
-              <option value="female">Female</option>
-              <option value="male">Male</option>
-              <option value="non-binary">Non-binary</option>
-              <option value="transgender">Transgender</option>
-              <option value="other">Other</option>
-              <option value="prefer-not-to-say">Prefer not to say</option>
-            </select>
-            {validationErrors.gender && (
-              <p className="text-red-500 text-xs mt-1">{validationErrors.gender}</p>
-            )}
+            <Err>{validationErrors.dateOfBirth}</Err>
           </div>
         </div>
-
-        {/* Pronouns (optional) */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Pronouns <span className="text-gray-400 font-normal">(optional)</span>
-          </label>
+        <label style={LABEL}>Gender{REQUIRED}</label>
+        <InlineEnum
+          value={formData.gender}
+          onChange={(v) => {
+            clearError("gender");
+            setFormData((prev) => ({ ...prev, gender: v }));
+          }}
+          options={GENDER_OPTIONS}
+          colors={GENDER_COLORS}
+        />
+        <Err>{validationErrors.gender}</Err>
+        <div style={{ maxWidth: 340 }}>
+          <label style={LABEL}>Pronouns{OPTIONAL}</label>
           <input
             type="text"
             name="pronouns"
             value={formData.pronouns}
             onChange={handleChange}
             placeholder="e.g. she/her, he/him, they/them"
-            className="w-full p-2 border border-gray-300 rounded"
+            style={fieldStyle(false)}
+            onFocus={focusRing}
+            onBlur={blurRing}
           />
         </div>
-
-        {/* Contact Information */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-          <input
-            type="email"
-            name="contactInfo.email"
-            value={formData.contactInfo.email}
-            onChange={handleChange}
-            className="w-full p-2 border border-gray-300 rounded"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-          <input
-            type="tel"
-            name="contactInfo.phone"
-            value={formData.contactInfo.phone}
-            onChange={handleChange}
-            className="w-full p-2 border border-gray-300 rounded"
-          />
-        </div>
-
-        {/* Emergency Contact */}
-        <div className="md:col-span-2">
-          <h3 className="text-sm font-medium text-gray-700 mb-2">Emergency Contact</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">Name</label>
-              <input
-                type="text"
-                name="contactInfo.emergencyContact.name"
-                value={formData.contactInfo.emergencyContact.name}
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded"
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">Relationship</label>
-              <input
-                type="text"
-                name="contactInfo.emergencyContact.relationship"
-                value={formData.contactInfo.emergencyContact.relationship}
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded"
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">Phone</label>
-              <input
-                type="tel"
-                name="contactInfo.emergencyContact.phone"
-                value={formData.contactInfo.emergencyContact.phone}
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Initial Clinical Assessment — light-structured (Round 16) */}
-        <div className="md:col-span-2">
-          <div className="mb-2">
-            <h3 className="text-base font-semibold text-gray-900">
-              Initial Clinical Assessment <span className="text-red-500">*</span>
-            </h3>
-            <p className="text-xs text-gray-500 mt-1">
-              A thorough note here improves the AI&apos;s assessment, diagnosis, and treatment
-              suggestions — write naturally; all sections are optional but more detail helps. At
-              least one section must be filled.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Presenting concerns
-              </label>
-              <textarea
-                value={intake.presentingConcerns}
-                onChange={(e) => {
-                  clearError("initialAssessment");
-                  setIntake((s) => ({ ...s, presentingConcerns: e.target.value }));
-                }}
-                rows={4}
-                className="w-full p-2 border border-gray-300 rounded"
-                placeholder="What brings them in — current symptoms, the precipitating event, what they're hoping to address."
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Relevant history
-              </label>
-              <textarea
-                value={intake.relevantHistory}
-                onChange={(e) => {
-                  clearError("initialAssessment");
-                  setIntake((s) => ({ ...s, relevantHistory: e.target.value }));
-                }}
-                rows={3}
-                className="w-full p-2 border border-gray-300 rounded"
-                placeholder="Mental health / treatment / medical history as known — prior diagnoses, medications, prior therapy."
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Risk indicators
-              </label>
-              <textarea
-                value={intake.riskIndicators}
-                onChange={(e) => {
-                  clearError("initialAssessment");
-                  setIntake((s) => ({ ...s, riskIndicators: e.target.value }));
-                }}
-                rows={3}
-                className="w-full p-2 border border-gray-300 rounded"
-                placeholder="Suicidal/homicidal ideation, safety concerns — or 'none noted'."
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Current stressors / context
-              </label>
-              <textarea
-                value={intake.currentStressors}
-                onChange={(e) => {
-                  clearError("initialAssessment");
-                  setIntake((s) => ({ ...s, currentStressors: e.target.value }));
-                }}
-                rows={3}
-                className="w-full p-2 border border-gray-300 rounded"
-                placeholder="Situational factors — relationships, work, finances, recent changes, supports."
-              />
-            </div>
-          </div>
-          {validationErrors.initialAssessment && (
-            <p className="text-red-500 text-xs mt-2">{validationErrors.initialAssessment}</p>
-          )}
-        </div>
-
-        {/* Status - Only shown when editing */}
-        {client && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-            <select
-              name="status"
-              value={formData.status}
-              onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded"
-            >
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="completed">Completed</option>
-              <option value="transferred">Transferred</option>
-            </select>
-          </div>
-        )}
       </div>
 
-      <div className="flex items-center justify-between">
+      <div style={CARD}>
+        <H>Contact</H>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", columnGap: 28 }}>
+          <div>
+            <label style={LABEL}>Email</label>
+            <input
+              type="email"
+              name="contactInfo.email"
+              value={formData.contactInfo.email}
+              onChange={handleChange}
+              style={fieldStyle(false)}
+              onFocus={focusRing}
+              onBlur={blurRing}
+              placeholder="name@example.com"
+            />
+          </div>
+          <div>
+            <label style={LABEL}>Phone</label>
+            <input
+              type="tel"
+              name="contactInfo.phone"
+              value={formData.contactInfo.phone}
+              onChange={handleChange}
+              style={fieldStyle(false)}
+              onFocus={focusRing}
+              onBlur={blurRing}
+              placeholder="Phone number"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div style={CARD}>
+        <H>Emergency contact</H>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", columnGap: 28 }}>
+          <div>
+            <label style={LABEL}>Name</label>
+            <input
+              type="text"
+              name="contactInfo.emergencyContact.name"
+              value={formData.contactInfo.emergencyContact.name}
+              onChange={handleChange}
+              style={fieldStyle(false)}
+              onFocus={focusRing}
+              onBlur={blurRing}
+            />
+          </div>
+          <div>
+            <label style={LABEL}>Relationship</label>
+            <input
+              type="text"
+              name="contactInfo.emergencyContact.relationship"
+              value={formData.contactInfo.emergencyContact.relationship}
+              onChange={handleChange}
+              style={fieldStyle(false)}
+              onFocus={focusRing}
+              onBlur={blurRing}
+            />
+          </div>
+          <div>
+            <label style={LABEL}>Phone</label>
+            <input
+              type="tel"
+              name="contactInfo.emergencyContact.phone"
+              value={formData.contactInfo.emergencyContact.phone}
+              onChange={handleChange}
+              style={fieldStyle(false)}
+              onFocus={focusRing}
+              onBlur={blurRing}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Initial Clinical Assessment — light-structured (Round 16) */}
+      <div style={CARD}>
+        <H>Intake notes{REQUIRED}</H>
+        <p style={HINT}>
+          A thorough note here improves the AI&apos;s assessment, diagnosis, and treatment
+          suggestions — write naturally; all sections are optional but more detail helps. At
+          least one section must be filled.
+        </p>
+        {intakeSection("presentingConcerns", "Presenting concerns", 6,
+          "What brings them in — current symptoms, the precipitating event, what they're hoping to address.")}
+        {intakeSection("relevantHistory", "Relevant history", 4,
+          "Mental health / treatment / medical history as known — prior diagnoses, medications, prior therapy.")}
+        {intakeSection("riskIndicators", "Risk indicators", 4,
+          "Suicidal/homicidal ideation, safety concerns — or 'none noted'.")}
+        {intakeSection("currentStressors", "Current stressors / context", 4,
+          "Situational factors — relationships, work, finances, recent changes, supports.")}
+        <Err>{validationErrors.initialAssessment}</Err>
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 12 }}>
         <DraftSaveIndicator state={saveState} />
         <button
           type="button"
           onClick={() => { clearDraft(); onCancel?.(); }}
-          className="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
           disabled={loading}
+          style={{ border: "1px solid #DCE6F3", cursor: "pointer", fontFamily: "inherit", background: "#fff", color: "#55698F", fontWeight: 700, fontSize: 13, padding: "10px 18px", borderRadius: 10 }}
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={loading}
-          className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90 disabled:bg-primary/50"
+          style={{ border: "none", cursor: loading ? "default" : "pointer", fontFamily: "inherit", background: "#2F80FF", color: "#fff", fontWeight: 700, fontSize: 13.5, padding: "11px 24px", borderRadius: 10, boxShadow: "0 12px 28px -12px rgba(47,128,255,.8)", opacity: loading ? 0.6 : 1 }}
         >
-          {loading ? "Saving..." : "Save Client"}
+          {loading ? "Creating…" : "Create client"}
         </button>
       </div>
     </form>

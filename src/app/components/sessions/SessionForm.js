@@ -1,26 +1,21 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, forwardRef } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { useFormDraft } from "@/hooks/useFormDraft";
 import { DraftRestoredNotice, DraftSaveIndicator } from "@/components/ui/DraftRestoredNotice";
+import { InlineEnum } from "@/components/ai/editable";
+import {
+  SESSION_TYPE_OPTIONS, SESSION_FORMAT_OPTIONS, SESSION_STATUS_OPTIONS,
+  SESSION_TYPE_COLORS, SESSION_FORMAT_COLORS, SESSION_STATUS_COLORS,
+} from "./InlineSessionEditor";
 
-function sessionFormValue(session, initialClientId, initialDate) {
-  if (session) {
-    return {
-      clientId: session.clientId._id || session.clientId,
-      date: session.date,
-      duration: session.duration,
-      type: session.type,
-      format: session.format,
-      status: session.status,
-      notes: session.notes || "",
-      concerns: session.concerns || "",
-      progress: session.progress || "",
-      nextSteps: session.nextSteps || "",
-    };
-  }
+// CREATION form only (Sky document vocabulary): one atomic POST on Create,
+// validation on submit, localStorage drafts — no autosave to the server.
+// Editing an existing session lives in InlineSessionEditor.
+
+function emptySession(initialClientId, initialDate) {
   return {
     clientId: initialClientId || "",
     date: initialDate || new Date().toISOString(),
@@ -35,26 +30,49 @@ function sessionFormValue(session, initialClientId, initialDate) {
   };
 }
 
-export default function SessionForm({
-  session,
-  onSuccess,
-  onCancel,
-  initialClientId,
-  initialDate,
-}) {
+// Sky document vocabulary (matches InlineSessionEditor / Overview sections)
+const CARD = { background: "#fff", border: "1px solid #E3ECF7", borderRadius: 20, boxShadow: "0 22px 50px -40px rgba(11,43,107,.25)", padding: "6px 20px 20px" };
+const H = ({ children }) => (
+  <h3 style={{ fontFamily: "var(--font-bricolage, sans-serif)", fontWeight: 700, fontSize: 16, color: "#0B2B6B", margin: "18px 0 2px" }}>{children}</h3>
+);
+const LABEL = { display: "block", fontSize: 11.5, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: "#7C93B8", margin: "16px 0 7px" };
+const REQUIRED = <span style={{ color: "#C0392B" }}> *</span>;
+const fieldStyle = (invalid) => ({
+  width: "100%", border: `1px solid ${invalid ? "#E4A9A2" : "#D9E5F4"}`, borderRadius: 10,
+  padding: "9px 12px", fontSize: 13.5, lineHeight: 1.6, color: "#24344F", fontFamily: "inherit",
+  outline: "none", background: "#fff", boxSizing: "border-box",
+});
+const focusRing = (e) => (e.target.style.boxShadow = "inset 0 0 0 2px #2F80FF");
+const blurRing = (e) => (e.target.style.boxShadow = "none");
+const Err = ({ children }) =>
+  children ? <p style={{ fontSize: 12.5, color: "#C0392B", margin: "6px 0 0" }}>{children}</p> : null;
+const HINT = { fontSize: 12, color: "#8298BC", margin: "2px 0 0" };
+
+// Sky-styled input for react-datepicker (behavior untouched — the picker's
+// own open/close handlers are merged, not overridden).
+const DateInput = forwardRef(function DateInput({ invalid, onFocus, onBlur, ...props }, ref) {
+  return (
+    <input
+      ref={ref}
+      {...props}
+      style={fieldStyle(invalid)}
+      onFocus={(e) => { onFocus?.(e); focusRing(e); }}
+      onBlur={(e) => { onBlur?.(e); blurRing(e); }}
+    />
+  );
+});
+
+export default function SessionForm({ onSuccess, onCancel, initialClientId, initialDate }) {
   const [clients, setClients] = useState([]);
   const [loadingClients, setLoadingClients] = useState(true);
-  const [formData, setFormData] = useState(() =>
-    sessionFormValue(session, initialClientId, initialDate)
-  );
+  const [formData, setFormData] = useState(() => emptySession(initialClientId, initialDate));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
-  // Recurrence (Round 15) — only meaningful on create.
-  const isEditing = !!session?._id;
-
+  // Recurrence (Round 15) — create-only by nature.
   const [recurrenceFrequency, setRecurrenceFrequency] = useState("none");
   const [recurrenceOccurrences, setRecurrenceOccurrences] = useState(8);
+
   const draftValue = useMemo(() => ({
     formData,
     recurrenceFrequency,
@@ -69,11 +87,11 @@ export default function SessionForm({
     if (next.recurrenceOccurrences !== undefined) setRecurrenceOccurrences(next.recurrenceOccurrences);
   }, []);
   const { draftRestored, dismissRestored, clearDraft, saveState } = useFormDraft(
-    `session-draft-${session?._id ?? "new"}`,
+    "session-draft-new",
     draftValue,
     applyDraft,
     true,
-    { serverUpdatedAt: session?.updatedAt }
+    {}
   );
 
   // Fetch all clients for the dropdown
@@ -94,29 +112,11 @@ export default function SessionForm({
     fetchClients();
   }, []);
 
-  // If editing, populate the form with existing session data
-  useEffect(() => {
-    if (session) {
-      setFormData(sessionFormValue(session, initialClientId, initialDate));
+  const set = (name, value) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (validationErrors[name]) {
+      setValidationErrors((prev) => { const n = { ...prev }; delete n[name]; return n; });
     }
-    // Re-seed only when opening a different session; background refreshes must
-    // not overwrite an in-progress local draft.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?._id]);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleDateChange = (date) => {
-    setFormData((prev) => ({
-      ...prev,
-      date: date.toISOString(),
-    }));
   };
 
   const validateForm = () => {
@@ -155,9 +155,9 @@ export default function SessionForm({
       ? { ...formData, status: "completed" }
       : formData;
 
-    // Attach recurrence on create only. The server creates one session per
-    // occurrence and links them with a shared seriesId.
-    if (!isEditing && recurrenceFrequency !== "none") {
+    // The server creates one session per occurrence and links them with a
+    // shared seriesId.
+    if (recurrenceFrequency !== "none") {
       const occ = Math.min(Math.max(parseInt(recurrenceOccurrences, 10) || 1, 1), 26);
       payload = {
         ...payload,
@@ -166,11 +166,8 @@ export default function SessionForm({
     }
 
     try {
-      const url = session?._id ? `/api/sessions/${session._id}` : "/api/sessions";
-      const method = session?._id ? "PATCH" : "POST";
-
-      const response = await fetch(url, {
-        method,
+      const response = await fetch("/api/sessions", {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
@@ -183,7 +180,6 @@ export default function SessionForm({
       }
 
       const savedSession = await response.json();
-      console.log("Session saved successfully:", savedSession);
 
       clearDraft();
 
@@ -200,12 +196,12 @@ export default function SessionForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
       {draftRestored && (
         <DraftRestoredNotice
           onDismiss={dismissRestored}
           onDiscard={() => {
-            const nextForm = sessionFormValue(session, initialClientId, initialDate);
+            const nextForm = emptySession(initialClientId, initialDate);
             clearDraft({ formData: nextForm, recurrenceFrequency: "none", recurrenceOccurrences: 8 });
             setFormData(nextForm);
             setRecurrenceFrequency("none");
@@ -214,220 +210,158 @@ export default function SessionForm({
         />
       )}
       {error && (
-        <div
-          className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative"
-          role="alert"
-        >
-          <span className="block sm:inline">{error}</span>
+        <div role="alert" style={{ background: "#FDECEC", border: "1px solid #F5C6C0", borderRadius: 12, padding: "10px 14px" }}>
+          <p style={{ fontSize: 13, color: "#C0392B", margin: 0 }}>{error}</p>
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Client Selection */}
-        <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Client <span className="text-red-500">*</span>
-          </label>
+      <div style={CARD}>
+        <H>Schedule</H>
+        <div>
+          <label style={LABEL}>Client{REQUIRED}</label>
           <select
-            name="clientId"
             value={formData.clientId}
-            onChange={handleChange}
-            className={`w-full p-2 border rounded ${
-              validationErrors.clientId ? "border-red-500" : "border-gray-300"
-            }`}
+            onChange={(e) => set("clientId", e.target.value)}
             disabled={loadingClients}
+            style={fieldStyle(!!validationErrors.clientId)}
+            onFocus={focusRing}
+            onBlur={blurRing}
           >
-            <option value="">Select Client</option>
+            <option value="">Select client</option>
             {clients.map((client) => (
               <option key={client._id} value={client._id}>
                 {client.name}
               </option>
             ))}
           </select>
-          {validationErrors.clientId && (
-            <p className="text-red-500 text-xs mt-1">{validationErrors.clientId}</p>
-          )}
+          <Err>{validationErrors.clientId}</Err>
         </div>
-
-        {/* Date and Time */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Date & Time <span className="text-red-500">*</span>
-          </label>
-          <DatePicker
-            selected={new Date(formData.date)}
-            onChange={handleDateChange}
-            showTimeSelect
-            timeFormat="h:mm aa"
-            timeIntervals={15}
-            dateFormat="MMMM d, yyyy h:mm aa"
-            className={`w-full p-2 border rounded ${
-              validationErrors.date ? "border-red-500" : "border-gray-300"
-            }`}
-          />
-          {validationErrors.date && (
-            <p className="text-red-500 text-xs mt-1">{validationErrors.date}</p>
-          )}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", columnGap: 28 }}>
+          <div>
+            <label style={LABEL}>Date &amp; time{REQUIRED}</label>
+            <DatePicker
+              selected={new Date(formData.date)}
+              onChange={(date) => set("date", date.toISOString())}
+              showTimeSelect
+              timeFormat="h:mm aa"
+              timeIntervals={15}
+              dateFormat="MMMM d, yyyy h:mm aa"
+              customInput={<DateInput invalid={!!validationErrors.date} />}
+              wrapperClassName="w-full"
+            />
+            <Err>{validationErrors.date}</Err>
+          </div>
+          <div>
+            <label style={LABEL}>Duration (minutes){REQUIRED}</label>
+            <input
+              type="number"
+              min="1"
+              value={formData.duration}
+              onChange={(e) => set("duration", e.target.value)}
+              style={fieldStyle(!!validationErrors.duration)}
+              onFocus={focusRing}
+              onBlur={blurRing}
+            />
+            <Err>{validationErrors.duration}</Err>
+          </div>
         </div>
-
-        {/* Duration */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Duration (minutes) <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="number"
-            name="duration"
-            value={formData.duration}
-            onChange={handleChange}
-            min="1"
-            className={`w-full p-2 border rounded ${
-              validationErrors.duration ? "border-red-500" : "border-gray-300"
-            }`}
-          />
-          {validationErrors.duration && (
-            <p className="text-red-500 text-xs mt-1">{validationErrors.duration}</p>
-          )}
-        </div>
-
-        {/* Session Type */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Session Type <span className="text-red-500">*</span>
-          </label>
+        {/* Recurrence — behavior unchanged, restyled only */}
+        <label style={LABEL}>Repeat</label>
+        <p style={HINT}>
+          Optional — pre-schedule a standing slot. Each occurrence is its own session
+          you can edit or cancel later.
+        </p>
+        <div style={{ marginTop: 10, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12 }}>
           <select
-            name="type"
-            value={formData.type}
-            onChange={handleChange}
-            className={`w-full p-2 border rounded ${
-              validationErrors.type ? "border-red-500" : "border-gray-300"
-            }`}
+            value={recurrenceFrequency}
+            onChange={(e) => setRecurrenceFrequency(e.target.value)}
+            style={{ ...fieldStyle(false), width: "auto", minWidth: 180 }}
+            onFocus={focusRing}
+            onBlur={blurRing}
           >
-            <option value="initial">Initial Assessment</option>
-            <option value="followup">Follow-up</option>
-            <option value="assessment">Assessment</option>
-            <option value="crisis">Crisis Intervention</option>
-            <option value="group">Group Session</option>
-            <option value="family">Family Session</option>
+            <option value="none">Does not repeat</option>
+            <option value="weekly">Weekly</option>
+            <option value="biweekly">Every 2 weeks</option>
           </select>
-          {validationErrors.type && (
-            <p className="text-red-500 text-xs mt-1">{validationErrors.type}</p>
-          )}
-        </div>
-
-        {/* Session Format */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Format <span className="text-red-500">*</span>
-          </label>
-          <select
-            name="format"
-            value={formData.format}
-            onChange={handleChange}
-            className={`w-full p-2 border rounded ${
-              validationErrors.format ? "border-red-500" : "border-gray-300"
-            }`}
-          >
-            <option value="in-person">In-Person</option>
-            <option value="video">Video</option>
-            <option value="phone">Phone</option>
-            <option value="chat">Chat</option>
-          </select>
-          {validationErrors.format && (
-            <p className="text-red-500 text-xs mt-1">{validationErrors.format}</p>
-          )}
-        </div>
-
-        {/* Session Status */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-          <select
-            name="status"
-            value={formData.status}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
-          >
-            <option value="scheduled">Scheduled</option>
-            <option value="in-progress">In Progress</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-            <option value="no-show">No-show</option>
-          </select>
-        </div>
-
-        {/* Session Notes */}
-        <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Session Notes{" "}
-            {formData.status === "completed" && <span className="text-red-500">*</span>}
-          </label>
-          <textarea
-            name="notes"
-            value={formData.notes}
-            onChange={handleChange}
-            rows={6}
-            className={`w-full p-2 border rounded ${
-              validationErrors.notes ? "border-red-500" : "border-gray-300"
-            }`}
-            placeholder="Enter session notes, observations, and next steps..."
-          ></textarea>
-          {validationErrors.notes && (
-            <p className="text-red-500 text-xs mt-1">{validationErrors.notes}</p>
+          {recurrenceFrequency !== "none" && (
+            <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#41557A" }}>
+              Occurrences
+              <input
+                type="number"
+                min={1}
+                max={26}
+                value={recurrenceOccurrences}
+                onChange={(e) => setRecurrenceOccurrences(e.target.value)}
+                style={{ ...fieldStyle(false), width: 84 }}
+                onFocus={focusRing}
+                onBlur={blurRing}
+              />
+              <span style={{ fontSize: 12, color: "#8298BC" }}>(max 26)</span>
+            </label>
           )}
         </div>
       </div>
 
-      {!isEditing && (
-        <div className="rounded-md border border-gray-200 p-4 bg-gray-50">
-          <p className="text-sm font-medium text-gray-700">Repeat</p>
-          <p className="text-xs text-gray-500 mt-1">
-            Optional — pre-schedule a standing slot. Each occurrence is its own session
-            you can edit or cancel later.
-          </p>
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            <select
-              value={recurrenceFrequency}
-              onChange={(e) => setRecurrenceFrequency(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="none">Does not repeat</option>
-              <option value="weekly">Weekly</option>
-              <option value="biweekly">Every 2 weeks</option>
-            </select>
-            {recurrenceFrequency !== "none" && (
-              <label className="flex items-center gap-2 text-sm text-gray-700">
-                Occurrences
-                <input
-                  type="number"
-                  min={1}
-                  max={26}
-                  value={recurrenceOccurrences}
-                  onChange={(e) => setRecurrenceOccurrences(e.target.value)}
-                  className="w-20 px-2 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-                <span className="text-xs text-gray-500">(max 26)</span>
-              </label>
-            )}
-          </div>
-        </div>
-      )}
+      <div style={CARD}>
+        <H>Details</H>
+        <label style={LABEL}>Session type{REQUIRED}</label>
+        <InlineEnum
+          value={formData.type}
+          onChange={(v) => set("type", v)}
+          options={SESSION_TYPE_OPTIONS}
+          colors={SESSION_TYPE_COLORS}
+        />
+        <Err>{validationErrors.type}</Err>
+        <label style={LABEL}>Format{REQUIRED}</label>
+        <InlineEnum
+          value={formData.format}
+          onChange={(v) => set("format", v)}
+          options={SESSION_FORMAT_OPTIONS}
+          colors={SESSION_FORMAT_COLORS}
+        />
+        <Err>{validationErrors.format}</Err>
+        <label style={LABEL}>Status</label>
+        <InlineEnum
+          value={formData.status}
+          onChange={(v) => set("status", v)}
+          options={SESSION_STATUS_OPTIONS}
+          colors={SESSION_STATUS_COLORS}
+        />
+      </div>
 
-      <div className="flex justify-end space-x-4 pt-4">
+      <div style={CARD}>
+        <H>Notes</H>
+        <label style={LABEL}>
+          Session notes{formData.status === "completed" && REQUIRED}
+        </label>
+        <textarea
+          value={formData.notes}
+          onChange={(e) => set("notes", e.target.value)}
+          rows={10}
+          style={{ ...fieldStyle(!!validationErrors.notes), resize: "vertical" }}
+          onFocus={focusRing}
+          onBlur={blurRing}
+          placeholder="Enter session notes, observations, and next steps..."
+        />
+        <Err>{validationErrors.notes}</Err>
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 12 }}>
         <DraftSaveIndicator state={saveState} />
         <button
           type="button"
           onClick={() => { clearDraft(); onCancel?.(); }}
-          className="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
           disabled={loading}
+          style={{ border: "1px solid #DCE6F3", cursor: "pointer", fontFamily: "inherit", background: "#fff", color: "#55698F", fontWeight: 700, fontSize: 13, padding: "10px 18px", borderRadius: 10 }}
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 disabled:opacity-50"
           disabled={loading}
+          style={{ border: "none", cursor: loading ? "default" : "pointer", fontFamily: "inherit", background: "#2F80FF", color: "#fff", fontWeight: 700, fontSize: 13.5, padding: "11px 24px", borderRadius: 10, boxShadow: "0 12px 28px -12px rgba(47,128,255,.8)", opacity: loading ? 0.6 : 1 }}
         >
-          {loading ? "Saving..." : "Save Session"}
+          {loading ? "Creating…" : "Create session"}
         </button>
       </div>
     </form>

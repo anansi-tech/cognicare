@@ -446,6 +446,8 @@ function InlineListRow({ value, onChange, onRemove, placeholder, autoFocus }) {
 
 // Enum pill picker. PIN 3: re-clicking the currently selected value is a
 // no-op — close the picker, fire NO onChange (so no PATCH, no editedAt).
+// `onDone` optional: creation forms reuse the pills as a plain selected-state
+// picker (controlled form state, nothing to close, no server writes).
 export function InlineEnum({ value, onChange, options, colors, onDone }) {
   return (
     <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -460,7 +462,7 @@ export function InlineEnum({ value, onChange, options, colors, onDone }) {
             aria-pressed={current}
             onClick={() => {
               if (!current) onChange(o.value);
-              onDone();
+              onDone?.();
             }}
             style={{
               fontFamily: "inherit", textTransform: "uppercase", fontSize: 10.5, fontWeight: 700,

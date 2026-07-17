@@ -50,6 +50,17 @@ const BLUE = { bg: "#EAF3FF", color: "#2F80FF" };
 const TYPE_COLORS = Object.fromEntries(TYPE_OPTIONS.map((o) => [o.value, BLUE]));
 const FORMAT_COLORS = Object.fromEntries(FORMAT_OPTIONS.map((o) => [o.value, BLUE]));
 
+// Shared session-enum vocabulary — the creation form (SessionForm) renders
+// the same pills.
+export {
+  TYPE_OPTIONS as SESSION_TYPE_OPTIONS,
+  FORMAT_OPTIONS as SESSION_FORMAT_OPTIONS,
+  STATUS_OPTIONS as SESSION_STATUS_OPTIONS,
+  TYPE_COLORS as SESSION_TYPE_COLORS,
+  FORMAT_COLORS as SESSION_FORMAT_COLORS,
+  STATUS_COLORS as SESSION_STATUS_COLORS,
+};
+
 const toLocalInput = (iso) => {
   if (!iso) return "";
   const d = new Date(iso);

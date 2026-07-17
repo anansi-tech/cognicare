@@ -410,7 +410,7 @@ export default function SessionList({ initialStatusFilter = "" }) {
               borderRadius: 20,
               padding: "28px 28px 24px",
               width: "100%",
-              maxWidth: 672,
+              maxWidth: 940,
               maxHeight: "90vh",
               overflowY: "auto",
               boxShadow: "0 32px 64px -24px rgba(11,43,107,.35)",
