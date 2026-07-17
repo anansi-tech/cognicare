@@ -266,7 +266,7 @@ export default function ClientInsights({ clientId, refreshKey = 0, onRegenerated
         title="Assessment"
         icon={<ClipboardList size={16} />}
         summary={assessment?.summary}
-        subtitle={fmtDate(assessment?.createdAt) ? `Updated ${fmtDate(assessment?.createdAt)}` : "Assessment agent"}
+        subtitle={fmtDate(assessment?.createdAt) ? `Generated ${fmtDate(assessment?.createdAt)}` : "Assessment agent"}
         draft={assessment?.status === "draft"}
         actions={assessment ? <SectionHeaderActions tx={ax} report={assessment} editLabel="Edit assessment" /> : undefined}
         nudge={
@@ -296,7 +296,7 @@ export default function ClientInsights({ clientId, refreshKey = 0, onRegenerated
         title="Diagnostic impression"
         icon={<Stethoscope size={16} />}
         summary={diagnostic?.summary}
-        subtitle={fmtDate(diagnostic?.createdAt) ? `Updated ${fmtDate(diagnostic?.createdAt)}` : "Diagnostic agent"}
+        subtitle={fmtDate(diagnostic?.createdAt) ? `Generated ${fmtDate(diagnostic?.createdAt)}` : "Diagnostic agent"}
         draft={diagnostic?.status === "draft"}
         actions={diagnostic ? <SectionHeaderActions tx={dx} report={diagnostic} editLabel="Edit diagnosis" /> : undefined}
         nudge={
@@ -331,7 +331,7 @@ export default function ClientInsights({ clientId, refreshKey = 0, onRegenerated
         }
         icon={<Route size={16} />}
         summary={treatment?.summary}
-        subtitle={fmtDate(treatment?.createdAt) ? `Updated ${fmtDate(treatment?.createdAt)}` : "Treatment agent"}
+        subtitle={fmtDate(treatment?.createdAt) ? `Generated ${fmtDate(treatment?.createdAt)}` : "Treatment agent"}
         draft={treatment?.status === "draft"}
         actions={
           treatment ? (
@@ -387,7 +387,7 @@ export default function ClientInsights({ clientId, refreshKey = 0, onRegenerated
         title="Progress report"
         icon={<TrendingUp size={16} />}
         summary={progress?.summary}
-        subtitle={fmtDate(progress?.createdAt) ? `Updated ${fmtDate(progress?.createdAt)}` : "Progress agent"}
+        subtitle={fmtDate(progress?.createdAt) ? `Generated ${fmtDate(progress?.createdAt)}` : "Progress agent"}
         draft={progress?.status === "draft"}
         badge={progress?.payload?.reassessmentRecommended ? "Reassessment recommended" : undefined}
         actions={progress ? <SectionHeaderActions tx={px} report={progress} editLabel="Edit progress" /> : undefined}

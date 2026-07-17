@@ -138,8 +138,11 @@ export function SectionHeaderActions({ tx, report, editLabel = "Edit", extra = n
     );
   }
 
+  // Read mode: last-touched stays visible in the same header spot as every
+  // other state (subtitle dates are generation dates, not modification).
   return (
     <>
+      <SaveDot state={tx.saveState} savedAt={tx.savedAt} updatedAt={report.updatedAt} />
       {report.status === "approved" && <ApproveControl approved />}
       {extra}
       <IconButton title={editLabel} onClick={tx.startEdit}>

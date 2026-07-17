@@ -184,7 +184,10 @@ export default function InlineClientProfile({ client, onChanged, onDone }) {
       <InlineEditScope>
         <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
           <div style={CARD}>
-            <H>Identity</H>
+            <H>Profile</H>
+            {/* Short fields sit in a responsive two-column grid; the intake
+                card below stays single-column (paragraph content). */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", columnGap: 28 }}>
             <InlineField
               id="name"
               label="Full name"
@@ -241,10 +244,6 @@ export default function InlineClientProfile({ client, onChanged, onDone }) {
                 <InlineEnum value={formData.status} onChange={(v) => setField("status", v)} options={STATUS_OPTIONS} colors={STATUS_COLORS} onDone={() => commit()} />
               )}
             />
-          </div>
-
-          <div style={CARD}>
-            <H>Contact</H>
             <InlineField
               id="email"
               label="Email"
@@ -261,6 +260,7 @@ export default function InlineClientProfile({ client, onChanged, onDone }) {
               read={<Para muted={!formData.contactInfo.phone}>{formData.contactInfo.phone || "Not set"}</Para>}
               editor={<InlineInput type="tel" value={formData.contactInfo.phone} onChange={(v) => setContact("phone", v)} placeholder="Phone number" />}
             />
+            <div style={{ gridColumn: "1 / -1" }}>
             <InlineField
               id="emergencyContact"
               label="Emergency contact"
@@ -279,6 +279,8 @@ export default function InlineClientProfile({ client, onChanged, onDone }) {
                 </div>
               }
             />
+            </div>
+            </div>
           </div>
 
           <div style={CARD}>

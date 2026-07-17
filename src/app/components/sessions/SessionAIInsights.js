@@ -170,7 +170,7 @@ export default function SessionAIInsights({ session, refreshKey = 0, focus, onNo
           title="Assessment"
           icon={<ClipboardList size={16} />}
           summary={assessment?.summary}
-          subtitle={fmtDate(assessment?.createdAt) ? `Updated ${fmtDate(assessment?.createdAt)}` : undefined}
+          subtitle={fmtDate(assessment?.createdAt) ? `Generated ${fmtDate(assessment?.createdAt)}` : undefined}
           draft={assessment?.status === "draft"}
           actions={actionsFor(assessment)}
         >
@@ -188,7 +188,7 @@ export default function SessionAIInsights({ session, refreshKey = 0, focus, onNo
           title="Diagnostic impression"
           icon={<Stethoscope size={16} />}
           summary={diagnostic?.summary}
-          subtitle={fmtDate(diagnostic?.createdAt) ? `Updated ${fmtDate(diagnostic?.createdAt)}` : undefined}
+          subtitle={fmtDate(diagnostic?.createdAt) ? `Generated ${fmtDate(diagnostic?.createdAt)}` : undefined}
           draft={diagnostic?.status === "draft"}
           actions={actionsFor(diagnostic)}
         >
@@ -210,7 +210,7 @@ export default function SessionAIInsights({ session, refreshKey = 0, focus, onNo
         }
         icon={<Route size={16} />}
         summary={treatment?.summary}
-        subtitle={fmtDate(treatment?.createdAt) ? `Client-scoped · Updated ${fmtDate(treatment?.createdAt)}` : undefined}
+        subtitle={fmtDate(treatment?.createdAt) ? `Client-scoped · Generated ${fmtDate(treatment?.createdAt)}` : undefined}
         draft={treatment?.status === "draft"}
         actions={actionsFor(treatment)}
       >
