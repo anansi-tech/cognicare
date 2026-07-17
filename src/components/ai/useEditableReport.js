@@ -9,6 +9,7 @@ export function useEditableReport({ clientId, report, onUpdated }) {
   const [isEditing, setIsEditing] = useState(false);
   const [edited, setEdited] = useState(null);
   const [saveState, setSaveState] = useState("idle"); // idle | saving | saved | error
+  const [savedAt, setSavedAt] = useState(null); // Date of last successful save (drives the header dot-time)
 
   // Seed edited payload whenever the report identity changes (new report loaded).
   // Does NOT re-seed on payload-only updates so in-flight edits are preserved.
@@ -44,6 +45,7 @@ export function useEditableReport({ clientId, report, onUpdated }) {
             sourceDiagnosticHash: data.sourceDiagnosticHash,
           });
           setSaveState("saved");
+          setSavedAt(new Date());
         } else {
           setSaveState("error");
         }
@@ -74,6 +76,7 @@ export function useEditableReport({ clientId, report, onUpdated }) {
       });
       setIsEditing(false);
       setSaveState("idle");
+      setSavedAt(new Date());
     }
   }
 
@@ -84,5 +87,5 @@ export function useEditableReport({ clientId, report, onUpdated }) {
 
   const canEdit = report?.status === "draft" || isEditing;
 
-  return { isEditing, startEdit, edited, setEdited, saveState, approve, canEdit };
+  return { isEditing, startEdit, edited, setEdited, saveState, savedAt, approve, canEdit };
 }

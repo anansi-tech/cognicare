@@ -1,7 +1,17 @@
 // Presentational renderers for each agent's report payload. Single source of truth —
 // when an envelope payload shape changes in schemas.js, edit ONLY this file.
+//
+// Editable contexts use INLINE PER-FIELD editing: the body always renders as
+// the read-mode document; each field is wrapped in InlineField (hover pencil →
+// edit that field in place). PIN 1: field edits merge into the FULL payload via
+// onChange and save through useEditableReport's existing debounced PATCH — no
+// per-field endpoints, no partial payloads (payloadHash reconciliation
+// depends on it).
 
-import { EditText, EditList, EditSelect, EditRows, DiagnosisCandidateEditor, DiagnosisCandidateList } from "@/components/ai/editable";
+import {
+  InlineEditScope, InlineField, InlineText, InlineList, InlineEnum,
+  EditRows, DiagnosisCandidateEditor, DiagnosisCandidateList,
+} from "@/components/ai/editable";
 
 // Options used only by editable branches — keep in sync with schemas.js enums.
 const RISK_OPTIONS = [
@@ -57,6 +67,14 @@ const Field = ({ label, children }) => (
   </div>
 );
 
+// Read-mode field OR inline-editable field — same read content either way.
+const IF = ({ editable, label, value, onChange, read, editor, bare }) =>
+  editable ? (
+    <InlineField id={label} label={label} value={value} onChange={onChange} read={read} editor={editor} bare={bare} />
+  ) : (
+    <Field label={label}>{read}</Field>
+  );
+
 const List = ({ items }) =>
   items?.length ? (
     <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
@@ -78,68 +96,50 @@ const Para = ({ children }) => (
 export function AssessmentBody({ payload: p, editable = false, onChange }) {
   if (!p) return null;
   const set = (k, v) => onChange?.({ ...p, [k]: v });
-  return (
+  const listField = (label, key, placeholder) => (
+    <IF
+      editable={editable}
+      label={label}
+      value={p[key]}
+      onChange={(v) => set(key, v)}
+      read={<List items={p[key]} />}
+      editor={<InlineList value={p[key] ?? []} onChange={(v) => set(key, v)} placeholder={placeholder} />}
+    />
+  );
+  const body = (
     <div>
-      <Field label="Risk level">
-        {editable ? (
-          <EditSelect value={p.riskLevel} onChange={(v) => set("riskLevel", v)} options={RISK_OPTIONS} />
-        ) : (
+      <IF
+        editable={editable}
+        label="Risk level"
+        value={p.riskLevel}
+        onChange={(v) => set("riskLevel", v)}
+        bare
+        read={
           <span style={{ textTransform: "uppercase", fontSize: 10.5, fontWeight: 700, letterSpacing: ".04em", padding: "3px 9px", borderRadius: 6, background: (SEV[p.riskLevel] || NEUTRAL).bg, color: (SEV[p.riskLevel] || NEUTRAL).color }}>
             {p.riskLevel}
           </span>
+        }
+        editor={({ commit }) => (
+          <InlineEnum value={p.riskLevel} onChange={(v) => set("riskLevel", v)} options={RISK_OPTIONS} colors={SEV} onDone={() => commit()} />
         )}
-      </Field>
-      <Field label="Primary concerns">
-        {editable ? (
-          <EditList value={p.primaryConcerns ?? []} onChange={(v) => set("primaryConcerns", v)} placeholder="Add a concern" />
-        ) : (
-          <List items={p.primaryConcerns} />
-        )}
-      </Field>
-      <Field label="Risk factors">
-        {editable ? (
-          <EditList value={p.riskFactors ?? []} onChange={(v) => set("riskFactors", v)} placeholder="Add a risk factor" />
-        ) : (
-          <List items={p.riskFactors} />
-        )}
-      </Field>
-      <Field label="Protective factors">
-        {editable ? (
-          <EditList value={p.protectiveFactors ?? []} onChange={(v) => set("protectiveFactors", v)} placeholder="Add a protective factor" />
-        ) : (
-          <List items={p.protectiveFactors} />
-        )}
-      </Field>
-      <Field label="Recommended instruments">
-        {editable ? (
-          <EditList value={p.recommendedInstruments ?? []} onChange={(v) => set("recommendedInstruments", v)} placeholder="Add an instrument" />
-        ) : (
-          <List items={p.recommendedInstruments} />
-        )}
-      </Field>
-      <Field label="Immediate attention">
-        {editable ? (
-          <EditList value={p.immediateAttention ?? []} onChange={(v) => set("immediateAttention", v)} placeholder="Add an item" />
-        ) : (
-          <List items={p.immediateAttention} />
-        )}
-      </Field>
-      <Field label="Clinical observations">
-        {editable ? (
-          <EditText value={p.clinicalObservations ?? ""} onChange={(v) => set("clinicalObservations", v)} rows={4} />
-        ) : (
-          <Para>{p.clinicalObservations}</Para>
-        )}
-      </Field>
-      <Field label="Suggested next steps">
-        {editable ? (
-          <EditList value={p.suggestedNextSteps ?? []} onChange={(v) => set("suggestedNextSteps", v)} placeholder="Add a next step" />
-        ) : (
-          <List items={p.suggestedNextSteps} />
-        )}
-      </Field>
+      />
+      {listField("Primary concerns", "primaryConcerns", "Add a concern")}
+      {listField("Risk factors", "riskFactors", "Add a risk factor")}
+      {listField("Protective factors", "protectiveFactors", "Add a protective factor")}
+      {listField("Recommended instruments", "recommendedInstruments", "Add an instrument")}
+      {listField("Immediate attention", "immediateAttention", "Add an item")}
+      <IF
+        editable={editable}
+        label="Clinical observations"
+        value={p.clinicalObservations}
+        onChange={(v) => set("clinicalObservations", v)}
+        read={<Para>{p.clinicalObservations}</Para>}
+        editor={<InlineText value={p.clinicalObservations ?? ""} onChange={(v) => set("clinicalObservations", v)} rows={4} />}
+      />
+      {listField("Suggested next steps", "suggestedNextSteps", "Add a next step")}
     </div>
   );
+  return editable ? <InlineEditScope>{body}</InlineEditScope> : body;
 }
 
 export function DiagnosticBody({ payload: p, editable = false, onChange }) {
@@ -156,9 +156,16 @@ export function DiagnosticBody({ payload: p, editable = false, onChange }) {
       differentials: p.primaryDiagnosis ? [...rest, p.primaryDiagnosis] : rest,
     });
   };
-  const Dx = ({ d }) =>
+  // PIN 2: "Make primary" keeps a read-mode home — hover-revealed on the
+  // differential card (same reveal pattern as field pencils, focusable).
+  const Dx = ({ d, action }) =>
     d ? (
-      <div style={{ border: "1px solid #E7EEF7", background: "#F9FBFE", borderRadius: 12, padding: "12px 14px" }}>
+      <div className="group" style={{ position: "relative", border: "1px solid #E7EEF7", background: "#F9FBFE", borderRadius: 12, padding: "12px 14px" }}>
+        {action && (
+          <div className="opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity" style={{ position: "absolute", top: 9, right: 10 }}>
+            {action}
+          </div>
+        )}
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <span style={{ fontFamily: "var(--font-bricolage, sans-serif)", background: "#0B2B6B", color: "#fff", fontWeight: 700, padding: "3px 9px", borderRadius: 7, fontSize: 12 }}>
             {d.code}
@@ -181,75 +188,90 @@ export function DiagnosticBody({ payload: p, editable = false, onChange }) {
         ) : null}
       </div>
     ) : null;
-  return (
+  const MakePrimary = ({ i }) => (
+    <button
+      type="button"
+      onClick={(e) => { e.stopPropagation(); promote(i); }}
+      style={{ border: "1px solid #C7DCF5", background: "#fff", borderRadius: 8, cursor: "pointer", fontFamily: "inherit", fontSize: 12, fontWeight: 700, color: "#2F80FF", padding: "3px 10px" }}
+      onFocus={(e) => (e.currentTarget.style.boxShadow = "0 0 0 2px #2F80FF")}
+      onBlur={(e) => (e.currentTarget.style.boxShadow = "none")}
+    >
+      Make primary
+    </button>
+  );
+  const dxList = (items) =>
+    items?.length ? (
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {items.map((d, i) => (
+          <Dx key={i} d={d} />
+        ))}
+      </div>
+    ) : (
+      <p style={{ fontSize: 13, color: "#8298BC" }}>None noted.</p>
+    );
+  const body = (
     <div>
-      <Field label="Primary diagnosis">
-        {editable ? (
-          <DiagnosisCandidateEditor
-            value={p.primaryDiagnosis ?? {}}
-            onChange={(v) => set("primaryDiagnosis", v)}
-          />
-        ) : (
-          <Dx d={p.primaryDiagnosis} />
-        )}
-      </Field>
-      <Field label="Differentials">
-        {editable ? (
-          <DiagnosisCandidateList
-            value={p.differentials ?? []}
-            onChange={(v) => set("differentials", v)}
-            onPromote={promote}
-          />
-        ) : p.differentials?.length ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {p.differentials.map((d, i) => (
-              <Dx key={i} d={d} />
-            ))}
-          </div>
-        ) : (
-          <p style={{ fontSize: 13, color: "#8298BC" }}>None noted.</p>
-        )}
-      </Field>
-      <Field label="Rule out">
-        {editable ? (
-          <EditList value={p.ruleOut ?? []} onChange={(v) => set("ruleOut", v)} placeholder="Add a rule-out" />
-        ) : (
-          <List items={p.ruleOut} />
-        )}
-      </Field>
-      <Field label="Comorbidities">
-        {editable ? (
-          <DiagnosisCandidateList
-            value={p.comorbidities ?? []}
-            onChange={(v) => set("comorbidities", v)}
-            addLabel="+ Add comorbidity"
-          />
-        ) : p.comorbidities?.length ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {p.comorbidities.map((d, i) => (
-              <Dx key={i} d={d} />
-            ))}
-          </div>
-        ) : (
-          <p style={{ fontSize: 13, color: "#8298BC" }}>None noted.</p>
-        )}
-      </Field>
-      <Field label="Cultural considerations">
-        {editable ? (
-          <EditList value={p.culturalConsiderations ?? []} onChange={(v) => set("culturalConsiderations", v)} placeholder="Add a consideration" />
-        ) : (
-          <List items={p.culturalConsiderations} />
-        )}
-      </Field>
-      <Field label="Clinical justification">
-        {editable ? (
-          <EditText value={p.clinicalJustification ?? ""} onChange={(v) => set("clinicalJustification", v)} rows={4} />
-        ) : (
-          <Para>{p.clinicalJustification}</Para>
-        )}
-      </Field>
+      <IF
+        editable={editable}
+        label="Primary diagnosis"
+        value={p.primaryDiagnosis}
+        onChange={(v) => set("primaryDiagnosis", v)}
+        read={<Dx d={p.primaryDiagnosis} />}
+        editor={<DiagnosisCandidateEditor value={p.primaryDiagnosis ?? {}} onChange={(v) => set("primaryDiagnosis", v)} />}
+      />
+      <IF
+        editable={editable}
+        label="Differentials"
+        value={p.differentials}
+        onChange={(v) => set("differentials", v)}
+        read={
+          p.differentials?.length ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {p.differentials.map((d, i) => (
+                <Dx key={i} d={d} action={editable ? <MakePrimary i={i} /> : null} />
+              ))}
+            </div>
+          ) : (
+            <p style={{ fontSize: 13, color: "#8298BC" }}>None noted.</p>
+          )
+        }
+        editor={<DiagnosisCandidateList value={p.differentials ?? []} onChange={(v) => set("differentials", v)} onPromote={promote} />}
+      />
+      <IF
+        editable={editable}
+        label="Rule out"
+        value={p.ruleOut}
+        onChange={(v) => set("ruleOut", v)}
+        read={<List items={p.ruleOut} />}
+        editor={<InlineList value={p.ruleOut ?? []} onChange={(v) => set("ruleOut", v)} placeholder="Add a rule-out" />}
+      />
+      <IF
+        editable={editable}
+        label="Comorbidities"
+        value={p.comorbidities}
+        onChange={(v) => set("comorbidities", v)}
+        read={dxList(p.comorbidities)}
+        editor={<DiagnosisCandidateList value={p.comorbidities ?? []} onChange={(v) => set("comorbidities", v)} addLabel="+ Add comorbidity" />}
+      />
+      <IF
+        editable={editable}
+        label="Cultural considerations"
+        value={p.culturalConsiderations}
+        onChange={(v) => set("culturalConsiderations", v)}
+        read={<List items={p.culturalConsiderations} />}
+        editor={<InlineList value={p.culturalConsiderations ?? []} onChange={(v) => set("culturalConsiderations", v)} placeholder="Add a consideration" />}
+      />
+      <IF
+        editable={editable}
+        label="Clinical justification"
+        value={p.clinicalJustification}
+        onChange={(v) => set("clinicalJustification", v)}
+        read={<Para>{p.clinicalJustification}</Para>}
+        editor={<InlineText value={p.clinicalJustification ?? ""} onChange={(v) => set("clinicalJustification", v)} rows={4} />}
+      />
     </div>
   );
+  return editable ? <InlineEditScope>{body}</InlineEditScope> : body;
 }
 
 const GOAL_FIELDS = [
@@ -265,22 +287,63 @@ export function TreatmentBody({ payload: p, editable = false, onChange }) {
     onChange({ ...p, [key]: value });
   }
 
-  return (
+  const listField = (label, key, placeholder) => (
+    <IF
+      editable={editable}
+      label={label}
+      value={p[key]}
+      onChange={(v) => set(key, v)}
+      read={<List items={p[key]} />}
+      editor={<InlineList value={p[key] ?? []} onChange={(v) => set(key, v)} placeholder={placeholder} />}
+    />
+  );
+
+  const goalsRead = p.goals?.length ? (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      {p.goals.map((g, i) => (
+        <div key={i} style={{ borderLeft: "3px solid #2F80FF", background: "#F7FAFE", borderRadius: "0 12px 12px 0", padding: "11px 14px" }}>
+          <div style={{ fontWeight: 600, color: "#24344F", fontSize: 13.5 }}>{g.goal}</div>
+          {g.measurable && (
+            <div style={{ marginTop: 4, fontSize: 13, color: "#158A98" }}>
+              Measure: {g.measurable}
+            </div>
+          )}
+          {g.targetTimeframe && (
+            <div style={{ marginTop: 6 }}>
+              <span style={{ display: "inline-flex", alignItems: "center", background: "#EAF3FF", color: "#2F80FF", fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 999 }}>
+                {g.targetTimeframe}
+              </span>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  ) : (
+    <p style={{ fontSize: 13, color: "#8298BC" }}>None noted.</p>
+  );
+
+  const body = (
     <div>
       {p.changeSummary && (
         <div style={{ background: "#FBF2DA", border: "1px solid #F6D87A", borderRadius: 10, padding: "10px 14px", fontSize: 13.5, color: "#A9821F", marginBottom: 4 }}>
           <span style={{ fontWeight: 700 }}>What changed: </span>{p.changeSummary}
         </div>
       )}
-      <Field label="Approach">
-        {editable ? (
-          <EditText value={p.approach ?? ""} onChange={(v) => set("approach", v)} rows={2} />
-        ) : (
-          <Para>{p.approach}</Para>
-        )}
-      </Field>
-      <Field label="Goals">
-        {editable ? (
+      <IF
+        editable={editable}
+        label="Approach"
+        value={p.approach}
+        onChange={(v) => set("approach", v)}
+        read={<Para>{p.approach}</Para>}
+        editor={<InlineText value={p.approach ?? ""} onChange={(v) => set("approach", v)} rows={2} />}
+      />
+      <IF
+        editable={editable}
+        label="Goals"
+        value={p.goals}
+        onChange={(v) => set("goals", v)}
+        read={goalsRead}
+        editor={
           <EditRows
             value={p.goals ?? []}
             onChange={(v) => set("goals", v)}
@@ -288,62 +351,22 @@ export function TreatmentBody({ payload: p, editable = false, onChange }) {
             addLabel="+ Add goal"
             emptyRow={{ goal: "", measurable: "", targetTimeframe: "" }}
           />
-        ) : (
-          p.goals?.length ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {p.goals.map((g, i) => (
-                <div key={i} style={{ borderLeft: "3px solid #2F80FF", background: "#F7FAFE", borderRadius: "0 12px 12px 0", padding: "11px 14px" }}>
-                  <div style={{ fontWeight: 600, color: "#24344F", fontSize: 13.5 }}>{g.goal}</div>
-                  {g.measurable && (
-                    <div style={{ marginTop: 4, fontSize: 13, color: "#158A98" }}>
-                      Measure: {g.measurable}
-                    </div>
-                  )}
-                  {g.targetTimeframe && (
-                    <div style={{ marginTop: 6 }}>
-                      <span style={{ display: "inline-flex", alignItems: "center", background: "#EAF3FF", color: "#2F80FF", fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 999 }}>
-                        {g.targetTimeframe}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p style={{ fontSize: 13, color: "#8298BC" }}>None noted.</p>
-          )
-        )}
-      </Field>
-      <Field label="Interventions">
-        {editable ? (
-          <EditList value={p.interventions ?? []} onChange={(v) => set("interventions", v)} placeholder="Add an intervention" />
-        ) : (
-          <List items={p.interventions} />
-        )}
-      </Field>
-      <Field label="Homework">
-        {editable ? (
-          <EditList value={p.homework ?? []} onChange={(v) => set("homework", v)} placeholder="Add a homework item" />
-        ) : (
-          <List items={p.homework} />
-        )}
-      </Field>
-      <Field label="Referrals">
-        {editable ? (
-          <EditList value={p.referrals ?? []} onChange={(v) => set("referrals", v)} placeholder="Add a referral" />
-        ) : (
-          <List items={p.referrals} />
-        )}
-      </Field>
-      <Field label="Review cadence">
-        {editable ? (
-          <EditText value={p.reviewCadence ?? ""} onChange={(v) => set("reviewCadence", v)} rows={2} />
-        ) : (
-          <Para>{p.reviewCadence}</Para>
-        )}
-      </Field>
+        }
+      />
+      {listField("Interventions", "interventions", "Add an intervention")}
+      {listField("Homework", "homework", "Add a homework item")}
+      {listField("Referrals", "referrals", "Add a referral")}
+      <IF
+        editable={editable}
+        label="Review cadence"
+        value={p.reviewCadence}
+        onChange={(v) => set("reviewCadence", v)}
+        read={<Para>{p.reviewCadence}</Para>}
+        editor={<InlineText value={p.reviewCadence ?? ""} onChange={(v) => set("reviewCadence", v)} rows={2} />}
+      />
     </div>
   );
+  return editable ? <InlineEditScope>{body}</InlineEditScope> : body;
 }
 
 export function ProgressBody({ payload: p, editable = false, onChange }) {
@@ -367,39 +390,79 @@ export function ProgressBody({ payload: p, editable = false, onChange }) {
     );
   };
 
-  return (
-    <div>
-      <Field label="Measure interpretation">
-        {p.measureInterpretation?.length ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
-            {p.measureInterpretation.map((m, i) => (
-              <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                <MeasureScoreHeader m={m} />
-                {/* Scores are objective data — only the clinical interpretation text is editable. */}
-                {editable ? (
-                  <EditText
-                    value={m.interpretation ?? ""}
-                    onChange={(v) =>
-                      set("measureInterpretation",
-                        p.measureInterpretation.map((x, j) => (j === i ? { ...x, interpretation: v } : x))
-                      )
-                    }
-                    rows={2}
-                  />
-                ) : (
-                  m.interpretation && <span style={{ fontSize: 12.5, color: "#7C8DA8", lineHeight: 1.5 }}>{m.interpretation}</span>
-                )}
-              </div>
-            ))}
+  const measuresRead = p.measureInterpretation?.length ? (
+    <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+      {p.measureInterpretation.map((m, i) => (
+        <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+          <MeasureScoreHeader m={m} />
+          {m.interpretation && <span style={{ fontSize: 12.5, color: "#7C8DA8", lineHeight: 1.5 }}>{m.interpretation}</span>}
+        </div>
+      ))}
+    </div>
+  ) : (
+    <p style={{ fontSize: 13, color: "#8298BC" }}>
+      No standardized measures recorded for this period.
+    </p>
+  );
+
+  const goalProgressRead = p.goalProgress?.length ? (
+    <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+      {p.goalProgress.map((g, i) => (
+        <div key={i} style={{ display: "flex", gap: 11, alignItems: "flex-start" }}>
+          <span style={{ flexShrink: 0, minWidth: 92, textAlign: "center", textTransform: "uppercase", fontSize: 10.5, fontWeight: 700, letterSpacing: ".04em", padding: "3px 9px", borderRadius: 6, background: (GOAL[g.status] || NEUTRAL).bg, color: (GOAL[g.status] || NEUTRAL).color }}>{g.status}</span>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#24344F", lineHeight: 1.45 }}>{g.goal}</div>
+            {g.notes && <div style={{ fontSize: 12, color: "#7C8DA8", lineHeight: 1.5, marginTop: 2 }}>{g.notes}</div>}
           </div>
-        ) : (
-          <p style={{ fontSize: 13, color: "#8298BC" }}>
-            No standardized measures recorded for this period.
-          </p>
-        )}
-      </Field>
-      <Field label="Goal progress">
-        {editable ? (
+        </div>
+      ))}
+    </div>
+  ) : (
+    <p style={{ fontSize: 13, color: "#8298BC" }}>None noted.</p>
+  );
+
+  const body = (
+    <div>
+      {p.measureInterpretation?.length ? (
+        <IF
+          editable={editable}
+          label="Measure interpretation"
+          value={p.measureInterpretation}
+          onChange={(v) => set("measureInterpretation", v)}
+          read={measuresRead}
+          editor={
+            <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+              {p.measureInterpretation.map((m, i) => (
+                <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start", flexWrap: "wrap" }}>
+                  <MeasureScoreHeader m={m} />
+                  {/* Scores are objective data — only the clinical interpretation text is editable. */}
+                  <div style={{ flex: 1, minWidth: 220 }}>
+                    <InlineText
+                      autoFocus={i === 0}
+                      value={m.interpretation ?? ""}
+                      rows={2}
+                      onChange={(v) =>
+                        set("measureInterpretation",
+                          p.measureInterpretation.map((x, j) => (j === i ? { ...x, interpretation: v } : x))
+                        )
+                      }
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          }
+        />
+      ) : (
+        <Field label="Measure interpretation">{measuresRead}</Field>
+      )}
+      <IF
+        editable={editable}
+        label="Goal progress"
+        value={p.goalProgress}
+        onChange={(v) => set("goalProgress", v)}
+        read={goalProgressRead}
+        editor={
           <EditRows
             value={p.goalProgress ?? []}
             onChange={(v) => set("goalProgress", v)}
@@ -411,54 +474,64 @@ export function ProgressBody({ payload: p, editable = false, onChange }) {
             emptyRow={{ goal: "", status: "emerging", notes: "" }}
             addLabel="+ Add goal"
           />
-        ) : p.goalProgress?.length ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
-            {p.goalProgress.map((g, i) => (
-              <div key={i} style={{ display: "flex", gap: 11, alignItems: "flex-start" }}>
-                <span style={{ flexShrink: 0, minWidth: 92, textAlign: "center", textTransform: "uppercase", fontSize: 10.5, fontWeight: 700, letterSpacing: ".04em", padding: "3px 9px", borderRadius: 6, background: (GOAL[g.status] || NEUTRAL).bg, color: (GOAL[g.status] || NEUTRAL).color }}>{g.status}</span>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: "#24344F", lineHeight: 1.45 }}>{g.goal}</div>
-                  {g.notes && <div style={{ fontSize: 12, color: "#7C8DA8", lineHeight: 1.5, marginTop: 2 }}>{g.notes}</div>}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p style={{ fontSize: 13, color: "#8298BC" }}>None noted.</p>
-        )}
-      </Field>
-      <Field label="Next session focus">
-        {editable ? (
-          <EditText value={p.nextSessionFocus ?? ""} onChange={(v) => set("nextSessionFocus", v)} rows={2} />
-        ) : (
-          <Para>{p.nextSessionFocus}</Para>
-        )}
-      </Field>
-      <Field label="Barriers">
-        {editable ? (
-          <EditList value={p.barriers ?? []} onChange={(v) => set("barriers", v)} placeholder="Add a barrier" />
-        ) : (
-          <List items={p.barriers} />
-        )}
-      </Field>
-      <Field label="Recommendations">
-        {editable ? (
-          <EditList value={p.recommendations ?? []} onChange={(v) => set("recommendations", v)} placeholder="Add a recommendation" />
-        ) : p.recommendations?.length ? (
-          <List items={p.recommendations} />
-        ) : null}
-      </Field>
-      <Field label="Treatment effectiveness">
-        {editable ? (
-          <EditText value={p.treatmentEffectiveness ?? ""} onChange={(v) => set("treatmentEffectiveness", v)} rows={3} />
-        ) : p.treatmentEffectiveness ? (
-          <Para>{p.treatmentEffectiveness}</Para>
-        ) : null}
-      </Field>
-      <div style={{ marginTop: 16 }}>
-        <p style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: "#7C93B8", margin: "0 0 6px" }}>Reassessment</p>
-        {editable ? (
-          <label className="flex items-center gap-2 text-sm">
+        }
+      />
+      <IF
+        editable={editable}
+        label="Next session focus"
+        value={p.nextSessionFocus}
+        onChange={(v) => set("nextSessionFocus", v)}
+        read={<Para>{p.nextSessionFocus}</Para>}
+        editor={<InlineText value={p.nextSessionFocus ?? ""} onChange={(v) => set("nextSessionFocus", v)} rows={2} />}
+      />
+      <IF
+        editable={editable}
+        label="Barriers"
+        value={p.barriers}
+        onChange={(v) => set("barriers", v)}
+        read={<List items={p.barriers} />}
+        editor={<InlineList value={p.barriers ?? []} onChange={(v) => set("barriers", v)} placeholder="Add a barrier" />}
+      />
+      {editable ? (
+        <IF
+          editable
+          label="Recommendations"
+          value={p.recommendations}
+          onChange={(v) => set("recommendations", v)}
+          read={p.recommendations?.length ? <List items={p.recommendations} /> : <p style={{ fontSize: 13, color: "#8298BC" }}>None noted.</p>}
+          editor={<InlineList value={p.recommendations ?? []} onChange={(v) => set("recommendations", v)} placeholder="Add a recommendation" />}
+        />
+      ) : (
+        <Field label="Recommendations">{p.recommendations?.length ? <List items={p.recommendations} /> : null}</Field>
+      )}
+      {editable ? (
+        <IF
+          editable
+          label="Treatment effectiveness"
+          value={p.treatmentEffectiveness}
+          onChange={(v) => set("treatmentEffectiveness", v)}
+          read={p.treatmentEffectiveness ? <Para>{p.treatmentEffectiveness}</Para> : <p style={{ fontSize: 13, color: "#8298BC" }}>None noted.</p>}
+          editor={<InlineText value={p.treatmentEffectiveness ?? ""} onChange={(v) => set("treatmentEffectiveness", v)} rows={3} />}
+        />
+      ) : (
+        <Field label="Treatment effectiveness">{p.treatmentEffectiveness ? <Para>{p.treatmentEffectiveness}</Para> : null}</Field>
+      )}
+      <IF
+        editable={editable}
+        label="Reassessment"
+        value={p.reassessmentRecommended}
+        onChange={(v) => set("reassessmentRecommended", v)}
+        read={
+          p.reassessmentRecommended ? (
+            <span style={{ display: "inline-flex", alignItems: "center", background: "#FBF2DA", color: "#A9821F", fontSize: 11, fontWeight: 700, padding: "2px 9px", borderRadius: 999 }}>
+              Recommended
+            </span>
+          ) : (
+            <span style={{ fontSize: 13, color: "#8298BC" }}>Not recommended at this time</span>
+          )
+        }
+        editor={
+          <label className="flex items-center gap-2 text-sm" style={{ color: "#41557A" }}>
             <input
               type="checkbox"
               checked={!!p.reassessmentRecommended}
@@ -466,16 +539,11 @@ export function ProgressBody({ payload: p, editable = false, onChange }) {
             />
             Recommended
           </label>
-        ) : p.reassessmentRecommended ? (
-          <span style={{ display: "inline-flex", alignItems: "center", background: "#FBF2DA", color: "#A9821F", fontSize: 11, fontWeight: 700, padding: "2px 9px", borderRadius: 999 }}>
-            Recommended
-          </span>
-        ) : (
-          <span style={{ fontSize: 13, color: "#8298BC" }}>Not recommended at this time</span>
-        )}
-      </div>
+        }
+      />
     </div>
   );
+  return editable ? <InlineEditScope>{body}</InlineEditScope> : body;
 }
 
 export function DocumentationBody({ payload: p }) {

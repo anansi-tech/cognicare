@@ -1,5 +1,8 @@
 // Shared controlled editing primitives for AI report bodies.
 // All free-text fields use textarea (not input) — clinical content is long.
+"use client";
+
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 
 const BASE = "w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm";
 
@@ -46,20 +49,73 @@ const CheckIcon = ({ size = 13 }) => (
 const PILL = { fontSize: 11.5, fontWeight: 700, padding: "3px 10px", borderRadius: 999, whiteSpace: "nowrap" };
 const SOLID_BTN = { display: "inline-flex", alignItems: "center", gap: 6, border: "none", borderRadius: 9, color: "#fff", fontFamily: "inherit", fontSize: 12.5, fontWeight: 700, padding: "7px 13px", cursor: "pointer" };
 
-// Section-header action slot (Overview v2): the full draft/approved/editing
-// control set in one always-visible place. Same functions the old in-body
-// EditApproveBar + bottom "Edit …" links exposed — startEdit, approve,
-// SaveIndicator — no new behavior. `extra` renders caller-owned buttons
-// (e.g. the treatment revise icon) whose handlers stay with the caller.
+// Dot-time save indicator (inline-editing header): 7px dot — idle #D9E5F4,
+// saving #F0C24B, saved #3B9E57 — plus last-saved time once saved. Errors
+// stay loud text; a silent gray dot must never mean "failed".
+export function SaveDot({ state, savedAt }) {
+  if (state === "error") return <span className="text-xs text-destructive">Couldn&apos;t save</span>;
+  const color = state === "saving" ? "#F0C24B" : state === "saved" ? "#3B9E57" : "#D9E5F4";
+  const time = savedAt
+    ? new Date(savedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+    : null;
+  return (
+    <span
+      title={time ? `All changes saved at ${time}` : "No changes yet"}
+      style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, color: "#8298BC", whiteSpace: "nowrap" }}
+    >
+      <span style={{ width: 7, height: 7, borderRadius: "50%", background: color, transition: "background .2s", flexShrink: 0 }} />
+      {state !== "saving" && time ? time : null}
+    </span>
+  );
+}
+
+const GreenCheck = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3B9E57" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+);
+
+// 32px icon approve control. Single click, no confirm — acceptable ONLY
+// because approve is non-destructive and reversible via edit; if approve
+// ever becomes final, add a confirm.
+export function ApproveControl({ approved = false, onApprove }) {
+  if (approved) {
+    return (
+      <span title="Approved" aria-label="Approved" style={{ display: "grid", placeItems: "center", width: 32, height: 32, borderRadius: 9, background: "#E7F6EC", border: "1px solid #BFE5CB", flexShrink: 0 }}>
+        <GreenCheck />
+      </span>
+    );
+  }
+  return (
+    <button
+      type="button"
+      title="Approve this report"
+      aria-label="Approve this report"
+      onClick={onApprove}
+      className="hover:bg-[#F0FAF3] transition-colors"
+      style={{ display: "grid", placeItems: "center", width: 32, height: 32, borderRadius: 9, background: "#fff", border: "1px solid #CDE8D6", cursor: "pointer", flexShrink: 0 }}
+      onFocus={(e) => (e.currentTarget.style.boxShadow = "0 0 0 2px #2F80FF")}
+      onBlur={(e) => (e.currentTarget.style.boxShadow = "none")}
+    >
+      <GreenCheck />
+    </button>
+  );
+}
+
+// Section-header action slot (Overview v2, inline-editing revision): draft
+// pill + dot-time save indicator + 32px icon approve. Same hook functions as
+// before — startEdit, approve — no new behavior. `extra` renders caller-owned
+// buttons (e.g. the treatment revise icon) whose handlers stay with the caller.
 export function SectionHeaderActions({ tx, report, editLabel = "Edit", extra = null }) {
   if (!report) return null;
   const isDraft = report.status === "draft";
 
-  // Re-editing an approved (or pre-status) report: autosave state + Done.
+  // Re-editing an approved (or pre-status) report: fields are inline-editable;
+  // Done re-approves and exits, exactly as before.
   if (!isDraft && tx.isEditing) {
     return (
       <>
-        <SaveIndicator state={tx.saveState} />
+        <SaveDot state={tx.saveState} savedAt={tx.savedAt} />
         <button type="button" onClick={tx.approve} style={{ ...SOLID_BTN, background: "#2F80FF", boxShadow: "0 10px 24px -12px rgba(47,128,255,.7)" }}>
           <CheckIcon />Done
         </button>
@@ -67,30 +123,305 @@ export function SectionHeaderActions({ tx, report, editLabel = "Edit", extra = n
     );
   }
 
-  // Draft: body is already editable (canEdit), so no pencil — review & approve.
+  // Draft: fields are inline-editable (canEdit) — review & approve.
   if (isDraft) {
     return (
       <>
         <span style={{ ...PILL, background: "#FBF2DA", color: "#A9821F" }}>Draft — review</span>
-        <SaveIndicator state={tx.saveState} />
+        <SaveDot state={tx.saveState} savedAt={tx.savedAt} />
         {extra}
-        <button type="button" onClick={tx.approve} title="Approve" style={{ ...SOLID_BTN, background: "#3B9E57", boxShadow: "0 10px 24px -12px rgba(59,158,87,.7)" }}>
-          <CheckIcon />Approve
-        </button>
+        <ApproveControl onApprove={tx.approve} />
       </>
     );
   }
 
   return (
     <>
-      {report.status === "approved" && (
-        <span style={{ ...PILL, background: "#E7F6EC", color: "#3B9E57" }}>Approved</span>
-      )}
+      {report.status === "approved" && <ApproveControl approved />}
       {extra}
       <IconButton title={editLabel} onClick={tx.startEdit}>
         <PencilIcon />
       </IconButton>
     </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Inline per-field editing (replaces the all-fields-editable draft mode).
+//
+// PIN 1 — payload semantics unchanged: these wrappers only edit local state
+// through the caller's onChange, which merges into the FULL payload object and
+// flows through useEditableReport's existing debounced PATCH. No per-field
+// endpoints, no partial payloads — payloadHash reconciliation depends on it.
+// ---------------------------------------------------------------------------
+
+const InlineEditCtx = createContext(null);
+
+// One field editable at a time per report body. Opening another field closes
+// the current one (commit, not cancel — autosave makes this safe).
+export function InlineEditScope({ children }) {
+  const [openKey, setOpenKey] = useState(null);
+  return <InlineEditCtx.Provider value={{ openKey, setOpenKey }}>{children}</InlineEditCtx.Provider>;
+}
+
+// Inline field wrapper: read mode always; hover reveals the pencil; clicking
+// the pencil or the read text edits ONLY this field in place.
+// - `value`/`onChange`: the field's slice of the payload (snapshot for cancel).
+// - `read`: read-mode node. `editor`: node, or ({ commit, cancel }) => node.
+// - `bare`: no hint/Done chrome (enum pickers close themselves on pick).
+// Keyboard: Escape cancels (restores pre-edit value), Cmd/Ctrl+Enter commits,
+// Enter commits on single-line inputs. Focus returns to the pencil on close.
+export function InlineField({ id, label, value, onChange, read, editor, bare = false }) {
+  const ctx = useContext(InlineEditCtx);
+  const isOpen = ctx?.openKey === id;
+  const [hover, setHover] = useState(false);
+  const pencilRef = useRef(null);
+  const boxRef = useRef(null);
+  const snapRef = useRef(null);
+
+  const openEditor = () => {
+    snapRef.current = value; // editors never mutate — reference snapshot is safe
+    ctx?.setOpenKey(id);
+  };
+  const close = (focusPencil) => {
+    ctx?.setOpenKey(null);
+    if (focusPencil) setTimeout(() => pencilRef.current?.focus(), 0);
+  };
+  // Commit = close; the value already saved via the debounced autosave.
+  const commit = (focusPencil = true) => close(focusPencil);
+  // Cancel = restore the pre-edit value. If a debounced save was pending for
+  // this change, restoring the value reschedules/clears it to the old state.
+  const cancel = () => {
+    onChange(snapRef.current);
+    close(true);
+  };
+
+  // Click outside = commit/close (no focus steal).
+  useEffect(() => {
+    if (!isOpen) return;
+    const onDown = (e) => {
+      if (boxRef.current && !boxRef.current.contains(e.target)) commit(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
+  const onKeyDown = (e) => {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();
+      cancel();
+    } else if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      commit();
+    } else if (e.key === "Enter" && e.target.tagName === "INPUT") {
+      e.preventDefault();
+      commit();
+    }
+  };
+
+  return (
+    <div
+      ref={boxRef}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      onKeyDown={isOpen ? onKeyDown : undefined}
+      style={{
+        margin: "6px -12px 0",
+        borderRadius: 12,
+        padding: 12,
+        background: isOpen ? "#F3F8FF" : hover ? "#F7FAFE" : "transparent",
+        transition: "background .13s",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 7 }}>
+        <p style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: "#7C93B8", margin: 0 }}>{label}</p>
+        {!isOpen && (
+          <button
+            ref={pencilRef}
+            type="button"
+            title={`Edit ${label}`}
+            aria-label={`Edit ${label}`}
+            onClick={openEditor}
+            style={{
+              display: "grid", placeItems: "center", width: 24, height: 24, borderRadius: 7,
+              border: "none", background: "transparent", color: "#A6B8D4", cursor: "pointer",
+              opacity: hover ? 1 : 0, transition: "opacity .12s, background .12s, color .12s",
+            }}
+            onFocus={(e) => { e.currentTarget.style.opacity = 1; e.currentTarget.style.boxShadow = "0 0 0 2px #2F80FF"; }}
+            onBlur={(e) => { e.currentTarget.style.boxShadow = "none"; if (!hover) e.currentTarget.style.opacity = 0; }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#EAF3FF"; e.currentTarget.style.color = "#2F80FF"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#A6B8D4"; }}
+          >
+            <PencilIcon size={13} />
+          </button>
+        )}
+      </div>
+      {isOpen ? (
+        <div>
+          {typeof editor === "function" ? editor({ commit, cancel }) : editor}
+          {!bare && (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginTop: 8 }}>
+              <span style={{ fontSize: 11.5, color: "#8298BC" }}>Saves automatically · Esc to cancel</span>
+              <button
+                type="button"
+                onClick={() => commit()}
+                style={{ border: "none", cursor: "pointer", fontFamily: "inherit", background: "#2F80FF", color: "#fff", fontSize: 12, fontWeight: 700, padding: "6px 14px", borderRadius: 8 }}
+                onFocus={(e) => (e.currentTarget.style.boxShadow = "0 0 0 2px #2F80FF, 0 0 0 4px #fff inset")}
+                onBlur={(e) => (e.currentTarget.style.boxShadow = "none")}
+              >
+                Done
+              </button>
+            </div>
+          )}
+        </div>
+      ) : (
+        // Clicking the read-mode text also opens the editor (bigger target).
+        <div onClick={openEditor} style={{ cursor: "text" }}>{read}</div>
+      )}
+    </div>
+  );
+}
+
+const INLINE_INPUT = {
+  width: "100%",
+  border: "1px solid #D9E5F4",
+  borderRadius: 10,
+  padding: "10px 12px",
+  fontSize: 13.5,
+  lineHeight: 1.6,
+  color: "#24344F",
+  fontFamily: "inherit",
+  outline: "none",
+  background: "#fff",
+};
+const focusRing = (e) => (e.target.style.boxShadow = "inset 0 0 0 2px #2F80FF");
+const blurRing = (e) => (e.target.style.boxShadow = "none");
+
+export function InlineText({ value = "", onChange, rows = 3, placeholder, autoFocus = true }) {
+  const ref = useRef(null);
+  // Caret to the end on open (autofocus alone leaves it at the start).
+  useEffect(() => {
+    if (autoFocus && ref.current) {
+      const end = ref.current.value.length;
+      ref.current.setSelectionRange(end, end);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return (
+    <textarea
+      ref={ref}
+      autoFocus={autoFocus}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      rows={rows}
+      placeholder={placeholder}
+      style={{ ...INLINE_INPUT, resize: "vertical" }}
+      onFocus={focusRing}
+      onBlur={blurRing}
+    />
+  );
+}
+
+// List editor: rows of single-line inputs. Local rows may hold empties while
+// typing; only non-empty rows propagate upward, so empty rows are dropped on
+// commit without a special commit step.
+export function InlineList({ value = [], onChange, placeholder }) {
+  const [rows, setRows] = useState(value.length ? value : [""]);
+  const propagate = (next) => {
+    setRows(next);
+    onChange(next.filter((s) => s.trim() !== ""));
+  };
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      {rows.map((item, i) => (
+        <InlineListRow
+          key={i}
+          value={item}
+          autoFocus={i === 0}
+          placeholder={placeholder}
+          onChange={(v) => propagate(rows.map((x, j) => (j === i ? v : x)))}
+          onRemove={() => propagate(rows.filter((_, j) => j !== i))}
+        />
+      ))}
+      <button
+        type="button"
+        onClick={() => setRows([...rows, ""])}
+        style={{ alignSelf: "flex-start", border: "none", background: "none", cursor: "pointer", fontFamily: "inherit", fontSize: 12, fontWeight: 700, color: "#2F80FF", padding: "2px 0" }}
+      >
+        + Add
+      </button>
+    </div>
+  );
+}
+
+function InlineListRow({ value, onChange, onRemove, placeholder, autoFocus }) {
+  const [hover, setHover] = useState(false);
+  return (
+    <div
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{ display: "flex", alignItems: "center", gap: 10 }}
+    >
+      <span style={{ flexShrink: 0, width: 6, height: 6, borderRadius: "50%", background: "#9FB6D8" }} />
+      <input
+        autoFocus={autoFocus}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        style={{ ...INLINE_INPUT, flex: 1, padding: "8px 12px" }}
+        onFocus={focusRing}
+        onBlur={blurRing}
+      />
+      <button
+        type="button"
+        aria-label="Remove item"
+        onClick={onRemove}
+        style={{ flexShrink: 0, border: "none", background: "none", cursor: "pointer", fontSize: 13, color: "#A6B8D4", opacity: hover ? 1 : 0, transition: "opacity .12s, color .12s", padding: "2px 4px" }}
+        onFocus={(e) => (e.currentTarget.style.opacity = 1)}
+        onBlur={(e) => { if (!hover) e.currentTarget.style.opacity = 0; }}
+        onMouseEnter={(e) => (e.currentTarget.style.color = "#C0392B")}
+        onMouseLeave={(e) => (e.currentTarget.style.color = "#A6B8D4")}
+      >
+        ✕
+      </button>
+    </div>
+  );
+}
+
+// Enum pill picker. PIN 3: re-clicking the currently selected value is a
+// no-op — close the picker, fire NO onChange (so no PATCH, no editedAt).
+export function InlineEnum({ value, onChange, options, colors, onDone }) {
+  return (
+    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+      {options.map((o) => {
+        const c = colors[o.value] ?? { bg: "#EEF1F5", color: "#6E7E97" };
+        const current = o.value === value;
+        return (
+          <button
+            key={o.value}
+            type="button"
+            autoFocus={current}
+            aria-pressed={current}
+            onClick={() => {
+              if (!current) onChange(o.value);
+              onDone();
+            }}
+            style={{
+              fontFamily: "inherit", textTransform: "uppercase", fontSize: 10.5, fontWeight: 700,
+              letterSpacing: ".04em", padding: "4px 11px", borderRadius: 999, cursor: "pointer",
+              background: c.bg, color: c.color,
+              border: current ? `2px solid ${c.color}` : "2px solid transparent",
+            }}
+            onFocus={(e) => (e.currentTarget.style.boxShadow = "0 0 0 2px #2F80FF")}
+            onBlur={(e) => (e.currentTarget.style.boxShadow = "none")}
+          >
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
