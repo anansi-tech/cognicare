@@ -140,16 +140,20 @@ export default function InlineSessionEditor({ session, onChanged, onDone }) {
     await flush();
     const f = formRef.current;
     const promote = f.notes.trim() && (f.status === "scheduled" || f.status === "in-progress");
+    let promoted = false;
     if (promote) {
       const body = { ...sessionBody(session, f), status: "completed" };
       const saved = await patch(body);
       if (saved) {
+        promoted = true;
         markSaved(body);
         onChanged?.(saved);
       }
     }
     setFinishing(false);
-    onDone?.();
+    // Reports whether the quiet flip actually happened, so the parent can
+    // announce it (informational banner — never a confirm).
+    onDone?.(promoted);
   };
 
   return (

@@ -48,6 +48,7 @@ export default function SessionDetail({ sessionId }) {
   const [isEditing, setIsEditing] = useState(false);
   const [aiRefreshKey, setAiRefreshKey] = useState(0);
   const [riskRefreshKey, setRiskRefreshKey] = useState(0);
+  const [completedNotice, setCompletedNotice] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [cancelApplyToFuture, setCancelApplyToFuture] = useState(false);
@@ -152,9 +153,24 @@ export default function SessionDetail({ sessionId }) {
     }
   };
 
-  const handleEditSuccess = () => {
+  // Banner lifetime: the AutoPostSession panel appearing is the durable
+  // feedback (dismisses it immediately); ~8s is the fallback.
+  useEffect(() => {
+    if (!completedNotice) return;
+    const t = setTimeout(() => setCompletedNotice(false), 8000);
+    return () => clearTimeout(t);
+  }, [completedNotice]);
+  const handleGeneratingChange = useCallback((generating) => {
+    if (generating) setCompletedNotice(false);
+  }, []);
+
+  const handleEditSuccess = (promoted) => {
     setIsEditing(false);
     fetchSession();
+    // Announced, not silent (and not a confirm): the quiet Done-time flip
+    // gets a transient informational banner. State-driven only — never
+    // derived from session status, so reopening a completed session is quiet.
+    if (promoted === true) setCompletedNotice(true);
   };
 
   // Same endpoint + confirm as RegenerateButton — the nudge is just a second
@@ -352,6 +368,24 @@ export default function SessionDetail({ sessionId }) {
           </IconButton>
         </div>
       </div>
+
+      {/* Transient announcement of the Done-time completion flip —
+          informational only, same quiet notice pattern as DraftRestoredNotice. */}
+      {completedNotice && (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, background: "#E7F6EC", border: "1px solid #BFE5CB", borderRadius: 12, padding: "10px 14px", marginBottom: 18 }}>
+          <p style={{ fontSize: 13, color: "#2C5E3E", margin: 0 }}>
+            <strong style={{ fontWeight: 600 }}>Session marked completed</strong> — generating note &amp; progress.
+          </p>
+          <button
+            type="button"
+            onClick={() => setCompletedNotice(false)}
+            aria-label="Dismiss"
+            style={{ fontSize: 12.5, fontWeight: 600, color: "#3B9E57", background: "none", border: "none", cursor: "pointer", padding: 0, flexShrink: 0 }}
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {/* Cancel / no-show / delete dialog */}
       {showCancelDialog && (
@@ -651,6 +685,7 @@ export default function SessionDetail({ sessionId }) {
                 sessionId={session._id}
                 sessionStatus={session.status}
                 onDone={() => setAiRefreshKey((k) => k + 1)}
+                onGeneratingChange={handleGeneratingChange}
               />
             </div>
 

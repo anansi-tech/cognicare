@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 // Post-session trigger: when a completed session has no documentation report yet,
 // run the post-session workflow. Produces the progress report and the SOAP draft
 // note. (Notes are guaranteed by SessionForm validation on "completed".)
-export function AutoPostSession({ clientId, sessionId, sessionStatus, onDone }) {
+export function AutoPostSession({ clientId, sessionId, sessionStatus, onDone, onGeneratingChange }) {
   const eligible = sessionStatus === "completed" && !!clientId && !!sessionId;
   const [loaded, setLoaded] = useState(false);
   const [hasDocumentation, setHasDocumentation] = useState(false);
@@ -40,6 +40,12 @@ export function AutoPostSession({ clientId, sessionId, sessionStatus, onDone }) 
     sessionId,
     onDone,
   });
+
+  // Optional (stable) observer: lets the parent hand off transient feedback
+  // (the "marked completed" banner) once this panel's own state is visible.
+  useEffect(() => {
+    onGeneratingChange?.(generating);
+  }, [generating, onGeneratingChange]);
 
   if (!generating && !error) return null;
   if (error)
